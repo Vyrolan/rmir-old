@@ -1,0 +1,164 @@
+[General]
+Name=Control 4 URC-81000B00 UniWand
+EepromSize=$400
+AdvCodeAddr=$01C..$0FF
+UpgradeAddr=$100..$3FC
+Processor=6805
+ProcessorVersion=C9
+MacroSupport=0
+MaxProtocolLength=121
+DevComb=,$FDB,$1108,$FBE,,$66,$107
+RDFSync=3
+ImageMap=Control-4-Uniwand.map
+SetupValidation=Warn
+
+[SpecialProtocols]
+Multiplex=01FE
+Pause=01FB (Pause)
+
+[Checksums]
+^$000:$002..$3FC
+
+# This remote shares the same signature with the Navigator URC-43000B01.
+# Setup codes entered on the remote are 3 digits only. However, a 4 digit setup
+# code may be assigned in IR.
+# This remote cannot execute macros on any of the physical buttons on the remote.
+# Setup functions:
+# 975 - reset scrambled-keymap counter
+# 980 - factory reset
+# 981 - user reset
+# 990 - setup code blink-back (3 digits only)
+# 991 - setup code search
+# 992 - change device button device type
+# 993 - VPT device select (setting not stored in EEPROM)
+# 994 - enter keymoves
+# 995 - enter macros (but no buttons on this remote will accept macros)
+# Buttons at the bottom of the remote may be be custom-labelled, or not labelled
+# at all. This RDF refers to those buttons with a single letter, A through L.
+#   A  B  C   Note: Button C is part of the transport keyset (TV/VCR function)
+#   D  E  F
+#   G  H  I
+#   J  K  L
+# This remote has transport-key punch-through. The transport buttons listed below
+# will punch through from VCR or AUX device types. The transport buttons are:
+# Play, Pause Stop, Rec, Rew, FF & C.
+# Some buttons are defined as part of the keymaps that are not present on the
+# remote. They are listed in this RDF file with {} around the button name, but
+# cannot be used for any practical purpose without macro capability.
+# The {P&P} device button is not present, and without macro support, cannot be
+# accessed. The remote has 3 built-in setup codes for the P&P device type: 252, 465, 537.
+# Byte $015 is the scrambled-keymap counter byte.
+# Bytes $016-$01B are control bytes for multi-macros, not operational on this remote.
+
+[AutoSet]
+$015 = $00
+$016 = $00 $00 $00 $00 $00 $00
+
+[DeviceTypes]
+Cable = 0
+TV    = 1
+VCR   = 2
+CD    = 2
+P&P   = 2
+
+[DeviceTypeAliases]
+Cable = Cable,SAT,Video Acc
+TV    = TV
+VCR   = VCR,DVD,Tape,Laserdisc,PVR
+CD    = CD,Tuner,DAT,Misc Audio,Phono,Amp
+P&P   = Home Auto
+
+[DeviceButtons]
+Cable = $00B $006 $010
+TV    = $00C $007 $011
+VCR   = $00D $008 $012
+AUX   = $00E $009 $013
+{P&P} = $00F $00A $014
+
+[Buttons]
+Cable=$02,
+TV=$03,
+VCR=$01,
+AUX=$09,
+{P&P}=$0A,
+Setup=$10,
+power=$04,
+"channel up":ch+=$18,
+"channel down":ch-=$20,
+"vol up":vol+=$34,
+"vol down":vol-=$08,
+mute=$14,
+1=$31,2=$32,3=$33,4=$05,5=$06,6=$07,7=$0D,8=$0E,9=$0F,0=$16,
+enter:ent=$17,
+"prev ch":last=$1F,
+rewind:rew=$21,
+"fast fwd":ff=$24,
+play=$1C,
+record:rec=$19,
+stop=$1B,
+pause=$15,
+A=$37,
+B=$38,
+C-TV/VCR=$1A,
+D=$30,
+E=$35,
+F=$36,
+G=$2D,
+H=$2E,
+I=$2F,
+J=$25,
+K=$26,
+L=$27,
+select:{select}=$1E,
+display:{info}=$23,
+"left arrow":{left}=$29,
+"up arrow":{up}=$2A,
+"down arrow":{down}=$2B,
+"right arrow":{right}=$2C
+
+
+[ButtonMaps]
+0 = ($16, $31, $32, $33, $05, $06, $07, $0D, $0E, $0F), ($34, $08, $14), ($18, $20),
+    $04, $17, $1F, $1E, $2D, $35, $2E, $36, $2F, $37, $30, $38, $25, $26, $27, $40,
+    $2A, $2B, $29, $2C, $1C, $1B, $23, $21, $24, $97
+1 = ($16, $31, $32, $33, $05, $06, $07, $0D, $0E, $0F), ($34, $08, $14), ($18, $20),
+    $04, $17, $1F, $97
+2 = ($16, $31, $32, $33, $05, $06, $07, $0D, $0E, $0F), ($34, $08, $14), ($18, $20),
+    $04, $17, $1F, $1C, $21, $24, $19, $15, $1B, $1A, $97
+
+[DigitMaps]
+072 048 053 107 054 096 097 094 092 086 109 112 113 046 077 114
+064 021 032 075 149 029 136 083 084 027 011 150 034 061 137 033
+151 152 013 018 059 039 017 031 153 103
+
+[Protocols]
+0000, 0004, 0006, 0007, 0008, 000A, 000C, 000D, 000E, 0011, 
+0013, 0014, 0015, 0016, 0018, 0019, 001A, 001B, 001C, 001D, 
+001E, 0021, 0022, 0024, 0025, 0026, 0029, 002A, 002D, 0030, 
+0032, 0034, 0035, 0039, 003A, 003B, 003C, 003D, 003F, 0042, 
+0045, 0051, 0055, 0056, 005A, 005B, 005C, 005D, 0060, 0065:old, 
+0067, 006E, 0071, 0072, 0078, 0083, 0087, 008A, 008D, 008F, 
+0091, 0093, 009D, 00A4, 00C4, 00C7, 00C9, 00CA, 00CE, 00D5, 
+00D7, 00E2, 00E3, 00E8, 00F5
+
+
+[SetupCodes]
+0 = 0000,0001,0002,0003,0006,0007,0008,0009,0011,0012,0013,0014,0015,0017,0019,0020,
+    0021,0023,0024,0025,0026,0032,0033,0034,0040,0054,0059,0069,0070,0098,0107,0144,
+    0155,0207,0221,0225,0244,0248,0258,0259,0260,0267,0273,0276,0277,0279,0304,0307,
+    0330,0334,0355,0361,0400,0422,0476,0477,0479,0525,0533,0542,0566
+1 = 0000,0002,0003,0011,0015,0016,0017,0018,0019,0020,0021,0024,0027,0028,0029,0030,
+    0031,0032,0036,0038,0039,0046,0047,0049,0051,0052,0053,0054,0055,0056,0060,0065,
+    0066,0067,0069,0080,0090,0092,0093,0095,0096,0097,0098,0111,0135,0145,0146,0148,
+    0149,0150,0151,0153,0154,0155,0156,0158,0159,0160,0161,0162,0165,0166,0168,0171,
+    0172,0173,0174,0175,0177,0178,0179,0180,0181,0182,0183,0185,0186,0187,0202,0208,
+    0217,0218,0226,0227,0232,0236,0250,0270,0278,0280,0282,0338,0451,0463
+2 = 0000,0002,0008,0011,0018,0020,0032,0033,0034,0035,0036,0037,0038,0039,0040,0041,
+    0042,0043,0045,0046,0047,0048,0049,0050,0051,0053,0054,0057,0058,0060,0061,0062,
+    0065,0066,0067,0068,0072,0075,0077,0081,0082,0087,0088,0104,0105,0106,0121,0149,
+    0162,0166,0167,0168,0173,0184,0202,0206,0207,0208,0209,0210,0211,0212,0214,0225,
+    0227,0232,0235,0240,0242,0277,0278,0279,0294
+3 = 0000,0003,0016,0028,0029,0032,0034,0035,0037,0045,0048,0072,0096,0098,0101,0126,
+    0139,0149,0155,0157,0180,0185,0187,0190,0244,0252,0459,0460,0465,0520,0537
+4 = 0252,0465,0537
+

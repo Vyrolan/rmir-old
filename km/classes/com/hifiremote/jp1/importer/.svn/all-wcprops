@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svnroot/controlremote/!svn/ver/852/trunk/km/com/hifiremote/jp1/importer
+END
+Importer.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/844/trunk/km/com/hifiremote/jp1/importer/Importer.java
+END
+AiwaDeviceImporter.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svnroot/controlremote/!svn/ver/844/trunk/km/com/hifiremote/jp1/importer/AiwaDeviceImporter.java
+END
+ReorderImporter.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/controlremote/!svn/ver/844/trunk/km/com/hifiremote/jp1/importer/ReorderImporter.java
+END
+RC5_5xDevImporter.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/controlremote/!svn/ver/844/trunk/km/com/hifiremote/jp1/importer/RC5_5xDevImporter.java
+END
+ImporterFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/controlremote/!svn/ver/847/trunk/km/com/hifiremote/jp1/importer/ImporterFactory.java
+END
+AddImporter.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/852/trunk/km/com/hifiremote/jp1/importer/AddImporter.java
+END
+RC5Importer.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/844/trunk/km/com/hifiremote/jp1/importer/RC5Importer.java
+END

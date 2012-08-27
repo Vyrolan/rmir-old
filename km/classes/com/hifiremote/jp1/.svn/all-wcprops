@@ -1,0 +1,1703 @@
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svnroot/controlremote/!svn/ver/1125/trunk/km/com/hifiremote/jp1
+END
+KeyMovePanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/1025/trunk/km/com/hifiremote/jp1/KeyMovePanel.java
+END
+AutoClockSet.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/850/trunk/km/com/hifiremote/jp1/AutoClockSet.java
+END
+FavScanButtonRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/controlremote/!svn/ver/877/trunk/km/com/hifiremote/jp1/FavScanButtonRenderer.java
+END
+MAXQProcessor.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1115/trunk/km/com/hifiremote/jp1/MAXQProcessor.java
+END
+TextFileViewer.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/1103/trunk/km/com/hifiremote/jp1/TextFileViewer.java
+END
+DeviceTypeEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/848/trunk/km/com/hifiremote/jp1/DeviceTypeEditor.java
+END
+CmdParmEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CmdParmEditorPanel.java
+END
+KeyChooser.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/KeyChooser.java
+END
+RMSetterEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/1115/trunk/km/com/hifiremote/jp1/RMSetterEditor.java
+END
+Setting.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/controlremote/!svn/ver/1045/trunk/km/com/hifiremote/jp1/Setting.java
+END
+CombinerDevice.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CombinerDevice.java
+END
+KeyedEncrypterDecrypter.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/KeyedEncrypterDecrypter.java
+END
+StatusBit.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/721/trunk/km/com/hifiremote/jp1/StatusBit.java
+END
+JP1TableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/706/trunk/km/com/hifiremote/jp1/JP1TableModel.java
+END
+HexIntegerFormatter.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/HexIntegerFormatter.java
+END
+ButtonAssignments.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ButtonAssignments.java
+END
+CodeSelectorDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/969/trunk/km/com/hifiremote/jp1/CodeSelectorDialog.java
+END
+Activity.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/1103/trunk/km/com/hifiremote/jp1/Activity.java
+END
+EncrypterDecrypter.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/706/trunk/km/com/hifiremote/jp1/EncrypterDecrypter.java
+END
+GeneralPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/1108/trunk/km/com/hifiremote/jp1/GeneralPanel.java
+END
+KeyMoveDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1099/trunk/km/com/hifiremote/jp1/KeyMoveDialog.java
+END
+ActivityGroupTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/controlremote/!svn/ver/1100/trunk/km/com/hifiremote/jp1/ActivityGroupTableModel.java
+END
+HexInteger.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/HexInteger.java
+END
+RawDataDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1091/trunk/km/com/hifiremote/jp1/RawDataDialog.java
+END
+DSMSpecialProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/870/trunk/km/com/hifiremote/jp1/DSMSpecialProtocol.java
+END
+HexReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/724/trunk/km/com/hifiremote/jp1/HexReader.java
+END
+KeyMoveTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/1117/trunk/km/com/hifiremote/jp1/KeyMoveTableModel.java
+END
+ProcessorManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/1107/trunk/km/com/hifiremote/jp1/ProcessorManager.java
+END
+RawDataTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/717/trunk/km/com/hifiremote/jp1/RawDataTableModel.java
+END
+FormattedRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/FormattedRenderer.java
+END
+ProtocolEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ProtocolEditorNode.java
+END
+ImageMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/controlremote/!svn/ver/726/trunk/km/com/hifiremote/jp1/ImageMap.java
+END
+DigitMaps.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/DigitMaps.java
+END
+LineTokenizer.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/724/trunk/km/com/hifiremote/jp1/LineTokenizer.java
+END
+KeyMoveEFC5.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1109/trunk/km/com/hifiremote/jp1/KeyMoveEFC5.java
+END
+EFC5.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/controlremote/!svn/ver/1109/trunk/km/com/hifiremote/jp1/EFC5.java
+END
+PauseFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1109/trunk/km/com/hifiremote/jp1/PauseFunction.java
+END
+SpinnerCellEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/SpinnerCellEditor.java
+END
+ProtocolUpgradePanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/controlremote/!svn/ver/1069/trunk/km/com/hifiremote/jp1/ProtocolUpgradePanel.java
+END
+DSMFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/DSMFunction.java
+END
+BinaryUpgradeWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/1043/trunk/km/com/hifiremote/jp1/BinaryUpgradeWriter.java
+END
+ExternalFunctionEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/controlremote/!svn/ver/841/trunk/km/com/hifiremote/jp1/ExternalFunctionEditor.java
+END
+DeviceUpgrade.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1125/trunk/km/com/hifiremote/jp1/DeviceUpgrade.java
+END
+TablePanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/1065/trunk/km/com/hifiremote/jp1/TablePanel.java
+END
+RMNewDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1103/trunk/km/com/hifiremote/jp1/RMNewDialog.java
+END
+ByteEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/892/trunk/km/com/hifiremote/jp1/ByteEditor.java
+END
+HexEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/HexEditorPanel.java
+END
+HexRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/HexRenderer.java
+END
+MultiMacro.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/724/trunk/km/com/hifiremote/jp1/MultiMacro.java
+END
+DecodeTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/903/trunk/km/com/hifiremote/jp1/DecodeTableModel.java
+END
+FunctionRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/FunctionRenderer.java
+END
+ManualSettingsDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/controlremote/!svn/ver/1074/trunk/km/com/hifiremote/jp1/ManualSettingsDialog.java
+END
+SetupPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/1125/trunk/km/com/hifiremote/jp1/SetupPanel.java
+END
+WrappingSpinnerNumberModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/WrappingSpinnerNumberModel.java
+END
+MacroPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/706/trunk/km/com/hifiremote/jp1/MacroPanel.java
+END
+SetupCodeRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/906/trunk/km/com/hifiremote/jp1/SetupCodeRenderer.java
+END
+ULDKPFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/ULDKPFunction.java
+END
+NumberDeviceParm.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/903/trunk/km/com/hifiremote/jp1/NumberDeviceParm.java
+END
+Remote.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/controlremote/!svn/ver/1116/trunk/km/com/hifiremote/jp1/Remote.java
+END
+HexEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/841/trunk/km/com/hifiremote/jp1/HexEditor.java
+END
+OEMDevice.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/721/trunk/km/com/hifiremote/jp1/OEMDevice.java
+END
+RMFileChooser.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/RMFileChooser.java
+END
+DeviceType.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/896/trunk/km/com/hifiremote/jp1/DeviceType.java
+END
+FunctionItem.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/FunctionItem.java
+END
+Highlight.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/1108/trunk/km/com/hifiremote/jp1/Highlight.java
+END
+DevParmEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/DevParmEditorNode.java
+END
+LittleEndianProcessor.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/controlremote/!svn/ver/1046/trunk/km/com/hifiremote/jp1/LittleEndianProcessor.java
+END
+ImportRawUpgradeDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/controlremote/!svn/ver/1065/trunk/km/com/hifiremote/jp1/ImportRawUpgradeDialog.java
+END
+TimedMacroTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/controlremote/!svn/ver/1099/trunk/km/com/hifiremote/jp1/TimedMacroTableModel.java
+END
+DeviceUpgradeEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/1125/trunk/km/com/hifiremote/jp1/DeviceUpgradeEditor.java
+END
+Processor.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/1071/trunk/km/com/hifiremote/jp1/Processor.java
+END
+MacroDefinitionBox.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/1098/trunk/km/com/hifiremote/jp1/MacroDefinitionBox.java
+END
+Hex.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/controlremote/!svn/ver/1118/trunk/km/com/hifiremote/jp1/Hex.java
+END
+RMSetterDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/1098/trunk/km/com/hifiremote/jp1/RMSetterDialog.java
+END
+TableSorter.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1001/trunk/km/com/hifiremote/jp1/TableSorter.java
+END
+FixedData.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/1116/trunk/km/com/hifiremote/jp1/FixedData.java
+END
+DaySchedule.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/894/trunk/km/com/hifiremote/jp1/DaySchedule.java
+END
+ButtonShape.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ButtonShape.java
+END
+ChoiceCmdParm.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ChoiceCmdParm.java
+END
+LearnedSignalTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/controlremote/!svn/ver/1099/trunk/km/com/hifiremote/jp1/LearnedSignalTableModel.java
+END
+IntOrNullFormatter.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/IntOrNullFormatter.java
+END
+ParameterTokenizer.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/706/trunk/km/com/hifiremote/jp1/ParameterTokenizer.java
+END
+LearnedSignalDecode.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/903/trunk/km/com/hifiremote/jp1/LearnedSignalDecode.java
+END
+UDSMFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/UDSMFunction.java
+END
+PropertyWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/PropertyWriter.java
+END
+FunctionLabel.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/826/trunk/km/com/hifiremote/jp1/FunctionLabel.java
+END
+RemoteManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1103/trunk/km/com/hifiremote/jp1/RemoteManager.java
+END
+RegexFormatter.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/RegexFormatter.java
+END
+DeviceCombinerPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/1109/trunk/km/com/hifiremote/jp1/DeviceCombinerPanel.java
+END
+KeyEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/1100/trunk/km/com/hifiremote/jp1/KeyEditor.java
+END
+Macro.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/controlremote/!svn/ver/1117/trunk/km/com/hifiremote/jp1/Macro.java
+END
+SetupCodeEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/906/trunk/km/com/hifiremote/jp1/SetupCodeEditor.java
+END
+ProtocolUpgradeTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/controlremote/!svn/ver/1099/trunk/km/com/hifiremote/jp1/ProtocolUpgradeTableModel.java
+END
+PortDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/750/trunk/km/com/hifiremote/jp1/PortDialog.java
+END
+ExtenderVersionParm.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/1116/trunk/km/com/hifiremote/jp1/ExtenderVersionParm.java
+END
+MultiplexSpecialProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/controlremote/!svn/ver/870/trunk/km/com/hifiremote/jp1/MultiplexSpecialProtocol.java
+END
+RemoteMaster.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/1125/trunk/km/com/hifiremote/jp1/RemoteMaster.java
+END
+ToadTogFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/1027/trunk/km/com/hifiremote/jp1/ToadTogFunction.java
+END
+ModeNameSpecialProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/controlremote/!svn/ver/870/trunk/km/com/hifiremote/jp1/ModeNameSpecialProtocol.java
+END
+LearnedSignal.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1099/trunk/km/com/hifiremote/jp1/LearnedSignal.java
+END
+HexFormatter.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/932/trunk/km/com/hifiremote/jp1/HexFormatter.java
+END
+ParameterTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/844/trunk/km/com/hifiremote/jp1/ParameterTableModel.java
+END
+FavScanTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/1099/trunk/km/com/hifiremote/jp1/FavScanTableModel.java
+END
+ActivityPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1117/trunk/km/com/hifiremote/jp1/ActivityPanel.java
+END
+Value.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/Value.java
+END
+BigEndianProcessor.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/721/trunk/km/com/hifiremote/jp1/BigEndianProcessor.java
+END
+MacroDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1098/trunk/km/com/hifiremote/jp1/MacroDialog.java
+END
+ChoiceRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ChoiceRenderer.java
+END
+ClassPathAdder.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ClassPathAdder.java
+END
+DeviceEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/1125/trunk/km/com/hifiremote/jp1/DeviceEditorPanel.java
+END
+LearnedSignalPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/982/trunk/km/com/hifiremote/jp1/LearnedSignalPanel.java
+END
+MultiplexFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/MultiplexFunction.java
+END
+ProtocolManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/1110/trunk/km/com/hifiremote/jp1/ProtocolManager.java
+END
+NumberCmdParm.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/NumberCmdParm.java
+END
+AssemblerItem.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1084/trunk/km/com/hifiremote/jp1/AssemblerItem.java
+END
+SpringUtilities.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/SpringUtilities.java
+END
+FunctionImportDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/FunctionImportDialog.java
+END
+ULDKPSpecialProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/870/trunk/km/com/hifiremote/jp1/ULDKPSpecialProtocol.java
+END
+BoundedIntegerEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/841/trunk/km/com/hifiremote/jp1/BoundedIntegerEditor.java
+END
+SpecialProtocolFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/controlremote/!svn/ver/1045/trunk/km/com/hifiremote/jp1/SpecialProtocolFunction.java
+END
+KeyCodeRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/707/trunk/km/com/hifiremote/jp1/KeyCodeRenderer.java
+END
+UnpackLearned.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1040/trunk/km/com/hifiremote/jp1/UnpackLearned.java
+END
+RMTimePanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/894/trunk/km/com/hifiremote/jp1/RMTimePanel.java
+END
+DeviceCombiner.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/1074/trunk/km/com/hifiremote/jp1/DeviceCombiner.java
+END
+Parameter.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/Parameter.java
+END
+ToadTogSpecialProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/controlremote/!svn/ver/870/trunk/km/com/hifiremote/jp1/ToadTogSpecialProtocol.java
+END
+DevParmEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/DevParmEditorPanel.java
+END
+HexCodeEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/892/trunk/km/com/hifiremote/jp1/HexCodeEditor.java
+END
+UnsignedByteRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/controlremote/!svn/ver/1039/trunk/km/com/hifiremote/jp1/UnsignedByteRenderer.java
+END
+ChoiceDeviceParm.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ChoiceDeviceParm.java
+END
+BinaryFileFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/BinaryFileFilter.java
+END
+Choice.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/Choice.java
+END
+GeneralEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/GeneralEditorNode.java
+END
+HexParmEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/841/trunk/km/com/hifiremote/jp1/HexParmEditorPanel.java
+END
+UDSMSpecialProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/870/trunk/km/com/hifiremote/jp1/UDSMSpecialProtocol.java
+END
+PauseSpecialProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/PauseSpecialProtocol.java
+END
+DeviceUpgradeTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/controlremote/!svn/ver/1122/trunk/km/com/hifiremote/jp1/DeviceUpgradeTableModel.java
+END
+KeyMapMaster.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/1096/trunk/km/com/hifiremote/jp1/KeyMapMaster.java
+END
+SpecialFunctionPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/706/trunk/km/com/hifiremote/jp1/SpecialFunctionPanel.java
+END
+ProtocolEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/1001/trunk/km/com/hifiremote/jp1/ProtocolEditor.java
+END
+EndingFileFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/EndingFileFilter.java
+END
+CmdEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CmdEditorNode.java
+END
+ChoiceArea.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/985/trunk/km/com/hifiremote/jp1/ChoiceArea.java
+END
+RMDirectoryChooser.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/985/trunk/km/com/hifiremote/jp1/RMDirectoryChooser.java
+END
+ProtocolEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ProtocolEditorPanel.java
+END
+ProtocolFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ProtocolFactory.java
+END
+ModeNameFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/ModeNameFunction.java
+END
+XorCheckSum.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1097/trunk/km/com/hifiremote/jp1/XorCheckSum.java
+END
+GridFlowPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/GridFlowPanel.java
+END
+CmdParmEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CmdParmEditorNode.java
+END
+DeviceParameter.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/940/trunk/km/com/hifiremote/jp1/DeviceParameter.java
+END
+UnsignedByte.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/UnsignedByte.java
+END
+SetupCodeFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/719/trunk/km/com/hifiremote/jp1/SetupCodeFilter.java
+END
+Segment.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/controlremote/!svn/ver/1098/trunk/km/com/hifiremote/jp1/Segment.java
+END
+JP1Frame.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/1065/trunk/km/com/hifiremote/jp1/JP1Frame.java
+END
+KeyCodeListRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/KeyCodeListRenderer.java
+END
+ActivityGroup.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1100/trunk/km/com/hifiremote/jp1/ActivityGroup.java
+END
+PreferredRemoteDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/controlremote/!svn/ver/1001/trunk/km/com/hifiremote/jp1/PreferredRemoteDialog.java
+END
+CmdParmFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CmdParmFactory.java
+END
+DirectDefaultValue.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/DirectDefaultValue.java
+END
+MacroButtonRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/MacroButtonRenderer.java
+END
+TableMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/TableMap.java
+END
+KeyMoveEFC.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/1088/trunk/km/com/hifiremote/jp1/KeyMoveEFC.java
+END
+EFC.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/controlremote/!svn/ver/1109/trunk/km/com/hifiremote/jp1/EFC.java
+END
+TextPopupMenu.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/TextPopupMenu.java
+END
+KeyMoveLong.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1109/trunk/km/com/hifiremote/jp1/KeyMoveLong.java
+END
+KMTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/KMTableModel.java
+END
+HexEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1001/trunk/km/com/hifiremote/jp1/HexEditorNode.java
+END
+IndirectDefaultValue.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/IndirectDefaultValue.java
+END
+IniSection.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/IniSection.java
+END
+ButtonAssignment.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ButtonAssignment.java
+END
+GeneralEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/GeneralEditorPanel.java
+END
+TimedMacroPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/894/trunk/km/com/hifiremote/jp1/TimedMacroPanel.java
+END
+KeyMapPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/750/trunk/km/com/hifiremote/jp1/KeyMapPanel.java
+END
+BinaryUpgradeReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/712/trunk/km/com/hifiremote/jp1/BinaryUpgradeReader.java
+END
+ExternalFunctionRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ExternalFunctionRenderer.java
+END
+FixedDataEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/FixedDataEditorPanel.java
+END
+IntegerFormatter.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/IntegerFormatter.java
+END
+ExternalFunctionTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/controlremote/!svn/ver/750/trunk/km/com/hifiremote/jp1/ExternalFunctionTableModel.java
+END
+RMColorEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/982/trunk/km/com/hifiremote/jp1/RMColorEditor.java
+END
+IntVerifier.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/IntVerifier.java
+END
+PLEncrypterDecrypter.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/PLEncrypterDecrypter.java
+END
+JTableX.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/controlremote/!svn/ver/1001/trunk/km/com/hifiremote/jp1/JTableX.java
+END
+Protocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/1124/trunk/km/com/hifiremote/jp1/Protocol.java
+END
+ChoiceEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/892/trunk/km/com/hifiremote/jp1/ChoiceEditor.java
+END
+FavScanPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/886/trunk/km/com/hifiremote/jp1/FavScanPanel.java
+END
+AddressRange.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/978/trunk/km/com/hifiremote/jp1/AddressRange.java
+END
+CheckSum.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/1097/trunk/km/com/hifiremote/jp1/CheckSum.java
+END
+CmdParameter.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CmdParameter.java
+END
+ButtonTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ButtonTableModel.java
+END
+RMTablePanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/982/trunk/km/com/hifiremote/jp1/RMTablePanel.java
+END
+RowNumberRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/707/trunk/km/com/hifiremote/jp1/RowNumberRenderer.java
+END
+GridFlowLayout.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/GridFlowLayout.java
+END
+SoftDevices.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1100/trunk/km/com/hifiremote/jp1/SoftDevices.java
+END
+SpinnerEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/820/trunk/km/com/hifiremote/jp1/SpinnerEditor.java
+END
+ExternalFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/933/trunk/km/com/hifiremote/jp1/ExternalFunction.java
+END
+ActivityFunctionTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svnroot/controlremote/!svn/ver/1103/trunk/km/com/hifiremote/jp1/ActivityFunctionTableModel.java
+END
+LDKPFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/LDKPFunction.java
+END
+CodeEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CodeEditorPanel.java
+END
+RMColorRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/1045/trunk/km/com/hifiremote/jp1/RMColorRenderer.java
+END
+RMSetter.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/controlremote/!svn/ver/894/trunk/km/com/hifiremote/jp1/RMSetter.java
+END
+FixedDataEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/FixedDataEditorNode.java
+END
+ExternalFunctionPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/controlremote/!svn/ver/1065/trunk/km/com/hifiremote/jp1/ExternalFunctionPanel.java
+END
+ButtonMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/919/trunk/km/com/hifiremote/jp1/ButtonMap.java
+END
+FlagDeviceParm.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/FlagDeviceParm.java
+END
+RMConstants.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/892/trunk/km/com/hifiremote/jp1/RMConstants.java
+END
+LDKPSpecialProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/870/trunk/km/com/hifiremote/jp1/LDKPSpecialProtocol.java
+END
+SpecialFunctionTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/controlremote/!svn/ver/1117/trunk/km/com/hifiremote/jp1/SpecialFunctionTableModel.java
+END
+DeviceLabels.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/848/trunk/km/com/hifiremote/jp1/DeviceLabels.java
+END
+DeviceButtonTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/controlremote/!svn/ver/1104/trunk/km/com/hifiremote/jp1/DeviceButtonTableModel.java
+END
+FavKey.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/controlremote/!svn/ver/877/trunk/km/com/hifiremote/jp1/FavKey.java
+END
+Function.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/1065/trunk/km/com/hifiremote/jp1/Function.java
+END
+MacroCodingType.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/894/trunk/km/com/hifiremote/jp1/MacroCodingType.java
+END
+CodeEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CodeEditorNode.java
+END
+SetupCode.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/1100/trunk/km/com/hifiremote/jp1/SetupCode.java
+END
+PauseParameters.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/PauseParameters.java
+END
+RawDataPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/1090/trunk/km/com/hifiremote/jp1/RawDataPanel.java
+END
+PropertyReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/717/trunk/km/com/hifiremote/jp1/PropertyReader.java
+END
+AssemblerOpCode.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/1062/trunk/km/com/hifiremote/jp1/AssemblerOpCode.java
+END
+ProtocolUpgrade.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/1045/trunk/km/com/hifiremote/jp1/ProtocolUpgrade.java
+END
+PopupEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/892/trunk/km/com/hifiremote/jp1/PopupEditor.java
+END
+ButtonAssignmentTable.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ButtonAssignmentTable.java
+END
+FunctionTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/1065/trunk/km/com/hifiremote/jp1/FunctionTableModel.java
+END
+KeyMove.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/controlremote/!svn/ver/1109/trunk/km/com/hifiremote/jp1/KeyMove.java
+END
+FavScan.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/controlremote/!svn/ver/877/trunk/km/com/hifiremote/jp1/FavScan.java
+END
+TimedMacro.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/894/trunk/km/com/hifiremote/jp1/TimedMacro.java
+END
+CustomNameDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CustomNameDialog.java
+END
+ButtonPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1015/trunk/km/com/hifiremote/jp1/ButtonPanel.java
+END
+RMTime.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/controlremote/!svn/ver/894/trunk/km/com/hifiremote/jp1/RMTime.java
+END
+HexFormat.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/HexFormat.java
+END
+RMPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/controlremote/!svn/ver/820/trunk/km/com/hifiremote/jp1/RMPanel.java
+END
+ManualProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/1124/trunk/km/com/hifiremote/jp1/ManualProtocol.java
+END
+SoftHomeTheater.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/848/trunk/km/com/hifiremote/jp1/SoftHomeTheater.java
+END
+FavScanDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/FavScanDialog.java
+END
+FunctionPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1065/trunk/km/com/hifiremote/jp1/FunctionPanel.java
+END
+DependentUpgradeComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/controlremote/!svn/ver/876/trunk/km/com/hifiremote/jp1/DependentUpgradeComparator.java
+END
+AddCheckSum.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1097/trunk/km/com/hifiremote/jp1/AddCheckSum.java
+END
+Button.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/controlremote/!svn/ver/1109/trunk/km/com/hifiremote/jp1/Button.java
+END
+RDFParameter.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/721/trunk/km/com/hifiremote/jp1/RDFParameter.java
+END
+SelectAllCellEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/892/trunk/km/com/hifiremote/jp1/SelectAllCellEditor.java
+END
+TranslatorEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/controlremote/!svn/ver/750/trunk/km/com/hifiremote/jp1/TranslatorEditorPanel.java
+END
+HexParmEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/HexParmEditorNode.java
+END
+DeviceUpgradePanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/1125/trunk/km/com/hifiremote/jp1/DeviceUpgradePanel.java
+END
+KeyMoveKey.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/controlremote/!svn/ver/933/trunk/km/com/hifiremote/jp1/KeyMoveKey.java
+END
+MacroTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/1099/trunk/km/com/hifiremote/jp1/MacroTableModel.java
+END
+LayoutPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/841/trunk/km/com/hifiremote/jp1/LayoutPanel.java
+END
+S3C80Processor.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/1071/trunk/km/com/hifiremote/jp1/S3C80Processor.java
+END
+S3F80Processor.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/1046/trunk/km/com/hifiremote/jp1/S3F80Processor.java
+END
+DayScheduleBox.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/894/trunk/km/com/hifiremote/jp1/DayScheduleBox.java
+END
+EFCEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/841/trunk/km/com/hifiremote/jp1/EFCEditor.java
+END
+DeviceParmFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/DeviceParmFactory.java
+END
+CellEditorModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CellEditorModel.java
+END
+LocalObjectTransferable.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/controlremote/!svn/ver/750/trunk/km/com/hifiremote/jp1/LocalObjectTransferable.java
+END
+SlingLearnParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/controlremote/!svn/ver/903/trunk/km/com/hifiremote/jp1/SlingLearnParser.java
+END
+FocusSelector.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/750/trunk/km/com/hifiremote/jp1/FocusSelector.java
+END
+OutputPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/1074/trunk/km/com/hifiremote/jp1/OutputPanel.java
+END
+RemoteConfiguration.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/1119/trunk/km/com/hifiremote/jp1/RemoteConfiguration.java
+END
+PropertyFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/1072/trunk/km/com/hifiremote/jp1/PropertyFile.java
+END
+Property.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/Property.java
+END
+DeviceButton.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/1100/trunk/km/com/hifiremote/jp1/DeviceButton.java
+END
+RDFReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/controlremote/!svn/ver/706/trunk/km/com/hifiremote/jp1/RDFReader.java
+END
+CombinerDeviceDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/841/trunk/km/com/hifiremote/jp1/CombinerDeviceDialog.java
+END
+AdvancedCode.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/controlremote/!svn/ver/1109/trunk/km/com/hifiremote/jp1/AdvancedCode.java
+END
+Preferences.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/726/trunk/km/com/hifiremote/jp1/Preferences.java
+END
+SpecialProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/912/trunk/km/com/hifiremote/jp1/SpecialProtocol.java
+END
+JP1Table.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/controlremote/!svn/ver/706/trunk/km/com/hifiremote/jp1/JP1Table.java
+END
+ButtonEnabler.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1098/trunk/km/com/hifiremote/jp1/ButtonEnabler.java
+END
+TimedMacroDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/controlremote/!svn/ver/1098/trunk/km/com/hifiremote/jp1/TimedMacroDialog.java
+END
+ManualSettingsEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/967/trunk/km/com/hifiremote/jp1/ManualSettingsEditor.java
+END
+SpecialFunctionDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/controlremote/!svn/ver/1117/trunk/km/com/hifiremote/jp1/SpecialFunctionDialog.java
+END
+AssemblerTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/1106/trunk/km/com/hifiremote/jp1/AssemblerTableModel.java
+END
+TranslatorEditorNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/TranslatorEditorNode.java
+END
+UpdateChecker.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/1019/trunk/km/com/hifiremote/jp1/UpdateChecker.java
+END
+RemoteComboBoxRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/controlremote/!svn/ver/724/trunk/km/com/hifiremote/jp1/RemoteComboBoxRenderer.java
+END
+DefaultValue.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/DefaultValue.java
+END
+EFCRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/EFCRenderer.java
+END
+KMPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/controlremote/!svn/ver/750/trunk/km/com/hifiremote/jp1/KMPanel.java
+END
+LearnedSignalDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/controlremote/!svn/ver/1096/trunk/km/com/hifiremote/jp1/LearnedSignalDialog.java
+END
+SettingsTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/controlremote/!svn/ver/1099/trunk/km/com/hifiremote/jp1/SettingsTableModel.java
+END
+CmdEditorPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/CmdEditorPanel.java
+END
+ByteRenderer.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ByteRenderer.java
+END
+FormattedEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/FormattedEditor.java
+END
+ButtonAssignmentTableModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/controlremote/!svn/ver/703/trunk/km/com/hifiremote/jp1/ButtonAssignmentTableModel.java
+END

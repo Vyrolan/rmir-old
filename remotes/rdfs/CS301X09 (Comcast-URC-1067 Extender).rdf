@@ -1,0 +1,158 @@
+[General]
+Name=Comcast URC-1067 Extender
+EepromSize=$400
+AdvCodeAddr=$01B..$1FF
+UpgradeAddr=$200..$3F3
+Processor=HCS08
+BaseAddr=$F800
+RAMAddr=$FF00
+DevComb=,$CE8B,$D3B0,,$19CD,,
+RDFSync=3
+SectionTerminator=$FF
+AdvCodeBindFormat=LONG
+AdvCodeFormat=EFC
+EFCDigits=5
+ImageMap=URC-1067.map
+Shift=$80, Shift
+XShift=$C0, XShift
+SetupValidation=Warn
+
+[Extender]
+OEMSignature=CS301009
+
+[SpecialProtocols]
+DSM=01FC
+LDKP=01F9
+Multiplex=01FE
+Pause=01FB
+ToadTog=0181
+
+[Settings]
+C_ Device=$03F4.7.8.2.0 DeviceButtons
+T_ Device=$03F5.7.8.2.0 DeviceButtons
+V_ Device=$03F6.7.8.2.0 DeviceButtons
+P_ Device=$03F7.7.8.2.0 DeviceButtons
+0_ Device=$03F8.7.8.2.0 DeviceButtons
+
+
+[Checksums]
+
+[FixedData]
+
+[DeviceTypes]
+CBL     = 0
+TV      = 1
+AUX     = 2
+
+[DeviceTypeAliases]
+CBL     = Cable,SAT,Video Acc
+TV      = TV
+AUX     = VCR,Tape,DAT,DVD,Laserdisc,CD,Home Auto,Phono,Tuner,Misc Audio,Amp
+
+[DeviceButtons]
+CABLE = $008 $009
+TV    = $00A $00B
+AUX   = $00C $00D
+SAT   = $00E $00F
+DVD   = $010 $011
+
+
+[Buttons]
+CABLE=$08
+TV=$20
+AUX=$28
+Setup=$18
+Power=$10
+"All On":All_On=$07
+"On Demand":On_Demand=$0f
+0=$2a
+1=$11
+2=$12
+3=$13
+4=$19
+5=$1a
+6=$1b
+7=$21
+8=$22
+9=$23
+"vol up":Vol+=$01
+"vol down":Vol-=$09
+Mute=$0A
+"channel up":Ch+=$03
+"channel down":Ch-=$0B
+"prev ch":Last=$04
+tv/vcr:"TV/VCR{Input}"=$29
+enter:"HD_Zoom{Enter}"=$2B
+"up arrow":Up=$1d
+"down arrow":Down=$0d
+"left arrow":Left=$16
+"right arrow":Right=$14
+select:OK/Select=$15
+Menu=$0c
+Guide=$0e
+Info=$05
+Exit=$06
+"fav/scan":Fav=$02
+Help=$2d
+A:"A{Lock}"=$26
+B:"B{Day-}"=$25
+C:"C{Day+}"=$24
+"prev track":Page_Up=$1e
+"next track":Page_Down=$1c
+Play=$1f
+Pause=$2f
+Stop=$2e
+rewind:Rew=$27
+"fast fwd":FF=$17
+record:Rec=$2c
+Replay=$31
+list:"My_DVR"=$32
+Live=$33
+"PIP On/Off":PIP_On/Off=$34
+"PIP Swap":PIP_Swap=$35
+"PIP Move":PIP_Move=$36
+"PIP Ch+":PIP_Ch+=$37
+"PIP Ch-":PIP_Ch-=$38
+Phantom1=$3D,Phantom2,Phantom3
+C_CBL=$61:AllBind,T_CBL,V_CBL,P_CBL,O_CBL,X_CBL
+C_TV=$67:AllBind, T_TV, V_TV, P_TV, O_TV, X_TV
+C_AUX=$6D:ALLBind,T_AUX,V_AUX,P_AUX,O_AUX,X_AUX
+C_SAT=$73:AllBind,T_SAT,V_SAT,P_SAT,O_SAT,X_SAT
+C_DVD=$79:AllBind,T_DVD,V_DVD,P_DVD,O_DVD,X_DVD
+X_Cancel=$7F:AllBind
+
+[ButtonMaps]
+0 = ($2A, $11, $12, $13, $19, $1A, $1B, $21, $22, $23), ($01, $09, $0A), ($03, $0B),
+    $10, $0C, $29, $1D, $0D, $16, $14, $06, $05, $0E, $04, $15, $02, $1E, $1C, $1F,
+    $2F, $27, $17, $2E, $2C, $26, $25, $24, $2B, $2D, $0F, $31, $32, $33, $34, $35,
+    $36, $37, $38
+1 = ($2A, $11, $12, $13, $19, $1A, $1B, $21, $22, $23), ($01, $09, $0A), ($03, $0B),
+    $10, $29, $2B, $04
+2 = ($2A, $11, $12, $13, $19, $1A, $1B, $21, $22, $23), ($01, $09, $0A), ($03, $0B),
+    $10, $1F, $2E, $27, $17, $2F, $2C, $29, $2B, $04, $0C, $1D, $0D, $16, $14, $15,
+    $06, $05, $0E, $33
+    
+[Protocols]
+0000, 0006, 0014, 0015, 001C, 001D, 001F:8, 0022, 0027:new, 002D, 
+0034, 003A, 0045, 0058:2, 005A, 005C, 005D, 005E:2, 0060, 0065:2, 
+006A, 0073, 007E:3, 009C, 00AF, 00B6, 00C4, 00C9, 00CA, 00CD:2, 
+00DE, 00E2, 00E8, 00F8:3, 0111, 0114:2, 0117, 011A:2, 011B
+
+[DigitMaps]
+72 53 94 03 90 21 46 29 86 83 11 92 34 32 75 33 30 01 64 13 209 210 131 241 242
+
+[SetupCodes]
+0 = 0000,0003,0008,0009,0012,0017,0144,0276,0476,0477,0533,0877,1376,1877
+1 = 0000,0001,0003,0016,0017,0021,0027,0030,0038,0046,0047,0051,0053,0054,0056,0060,
+    0090,0092,0093,0111,0145,0150,0151,0154,0156,0165,0166,0171,0177,0178,0179,0180,
+    0186,0236,0250,0280,0282,0451,0463,0466,0497,0603,0683,0690,0701,0702,0706,0707,
+    0720,0748,0751,0761,0765,0774,0809,0842,0843,0865,0879,1755,1756,1933
+2 = 0000,0014,0027,0032,0035,0037,0039,0042,0043,0045,0047,0048,0060,0067,0074,0078,
+    0081,0104,0110,0135,0158,0162,0165,0176,0184,0189,0209,0225,0240,0269,0321,0331,
+    0354,0405,0490,0503,0521,0522,0525,0531,0533,0534,0539,0545,0558,0571,0573,0582,
+    0591,0616,0618,0623,0630,0632,0634,0636,0651,0664,0670,0672,0675,0682,0695,0698,
+    0715,0717,0755,0783,0794,0796,0797,0798,0807,0820,0821,0822,0842,0854,0864,0867,
+    1022,1023,1027,1035,1039,1045,1060,1104,1132,1176,1229,1232,1237,1254,1266,1278,
+    1308,1313,1360,1384,1479,1490,1518,1570,1758,1759,1781,1903,1904,1907,1913,1914,
+    1915,1932
+

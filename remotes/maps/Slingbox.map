@@ -1,0 +1,51 @@
+#$MTIMFH
+#$-:Image Map file created by Map THIS!
+#$-:Map THIS! free image map editor by Todd C. Wilson
+#$-:Please do not edit lines starting with "#$"
+#$VERSION:1.30
+#$TITLE:Atlas4
+#$DATE:Thu Aug 18 10:28:19 2005
+#$PATH:C:\rm\km\images\
+#$GIF:Slingbox.jpg
+#$FORMAT:ncsa
+#$EOH
+default Slingbox
+circle Power  118,99 130,111
+circle CH+  34,353 47,366
+circle CH-  34,381 47,394
+circle num_1 38,478 50,490
+circle num_2 78,478 90,490
+circle num_3 118,478 130,490
+circle num_4 38,505 50,517
+circle num_5 78,505 90,517
+circle num_6 118,505 130,517
+circle num_7 38,533 50,545
+circle num_8 78,533 90,545
+circle num_9 118,533 130,545
+circle num_0 78,561 90,573
+circle Last_ch 38,561 50,573
+circle Enter 118,561 130,573
+circle Play  78,105 93,120
+circle Skip- 38,177 53,192
+circle Skip+ 118,177 133,192
+circle rewind 38,141 53,154
+circle ffwd 118,141 133,154
+circle Stop 78,141 93,154
+circle Pause 78,177 93,192
+circle Record 78,213 93,228
+circle Red 22,445 31,454
+circle green 50,445,59,454
+circle yellow 78,445,87,454
+circle blue 106,445,115,454
+circle White 134,445,143,454
+circle Select 78,324 90,336
+poly up_arrow 67,312 56,301 78,290 100,301 89,312
+poly down_arrow 67,336 56,347 78,358 100,347 89,336 
+poly right_arrow 90,313 101,302 112,324 101,346 90,335
+poly left_arrow 66,313 55,302 44,324 55,346 66,335 
+rect Guide 18,270 56,284
+rect Menu 58,270 96,284
+rect Exit 58,374 96,388
+rect Info 98,270 136,284
+circle Page+  122,353 135,366
+circle Page-  122,381 135,394

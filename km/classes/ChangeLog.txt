@@ -1,0 +1,1512 @@
+Changes for v2.02
+-- Alpha --
+- Fix bug that prevented fixed data being tested on download (Graham)
+- Prevent ArrayIndexOutOfBoundsException when loading a .rmir file containing a device upgrade with missing protocol code (Graham)
+- Fix bug that has prevented raw download from working since highlighting was added (Graham)
+- Show upload/download message in status bar during uploads, normal and raw downloads, and initializations to 00 or FF (Graham)
+-- Alpha 2
+- Change format of timing displays in Learned Signal Advanced Details to allow pasting as a timing list into IRScope (Graham)
+- In decoding a learned signal, if a burst index is out of range, treat as zero duration but put error message in Misc column (Graham)
+- Fix bug in recognising keycode key moves when AdvCodeFormat = EFC (Graham)
+-- Alpha 3 --
+- Enhancements to upload/download/memory initializations status
+- Upgrade to jp1usb.dll v0.031
+- Fix incorrect inclusion of protocol code in exported binary files
+-- Alpha 4 --
+- Save changes to General Notes
+-- Alpha 5 --
+- When Highlighting is active, show as text in the Color column the number of bytes used by that item (Graham)
+-- Alpha 6 --
+- Implemented disassembler in Manual Settings dialog (Graham)
+-- Alpha 7
+- Made code of built-in protocols visible in Manual Settings dialog, so that all protocols can be disassembled. (Graham)
+- Minor refinements to disassembler to handle certain error situations (Graham)
+- Corrected an error in protocols.ini, in that HCS08 code for NEC1 (pid 005A) had final byte E8 missing. (Graham)
+-- Alpha 8
+- Incorporate those predefined constants given in Protocol Builder read-me into the disassembler, using them in place of addresses where applicable (Graham)
+- Add comment column to disassembler and in it show some info about protocol data bytes (Graham)
+-- Alpha 9
+- Add interpretation of data bytes, in style of Protocol Builder, to disassembler in Manual Settings (Graham)
+- Add additional predefined constants, based on data from Mike England (Graham)
+- Fix bug in Hex indexOf routine, it was failing to check last position in file (Graham)
+-- Alpha 10
+- Add checkboxes to disassembler to select whether or not to use predefined constants (Graham)
+- Add radio buttons to disassembler to select display format for S3C80 working registers (Graham)
+- Save states of checkboxes and radio buttons in properties file between invocations (Graham)
+- Add button to hide/show upper left panel of Manual Settings, to make more space available for protocol data panel (Graham)
+- Add register addresses to pf and pd annotations in disassembly comments column (Graham)
+- Add a third tab, "PF Details", in Manual Settings to show interpretation of PF bytes bit by bit, for S3C80 and HCS08 only (Graham)
+- In the device upgrade editor:
+  - Rename the Load button to Open, changed the mouse-over text to "Open a (RM or KM) device upgrade file." (Greg)
+  - Rename the Import button to Paste, changed the mouse-over help to "Paste a (RM, KM or IR) device upgrade from the clipboard.", enhanced to accept IR-formatted upgrades containing Device Upgrade and Protocol Upgrade text (Greg)
+  - Rename the Save button to "Save as..." (Greg)
+-- Alpha 10a
+- Change the Paste to simply pop up the Import Raw Upgrade dialog. so change the text to "Import Raw" (Greg)    
+- The Import Raw Upgrade dialog will prefill its fields if it finds an IR formatted upgrade in the clipboard.  Pasting an IR formatted upgrade into either the device or protocol code fields will parse the upgrade and update the appropriate fields in the dialog. (Greg)
+-- Alpha 11
+- Add a fourth tab, "PD Details", in Manual Settings to show normal usage of PD bytes, for S3C80 and HCS08 only (Graham)
+- Add a fifth tab, "Functions", in Manual Settings to provide descriptions of register and function addresses specified as predefined constants (Graham)
+- Fix bug in RM (only) preventing Cancel button in Prompt to Save from working correctly (Graham)
+-- Alpha 12
+- Change the button texts "Hide Upper" and "Show Upper" to "Expand" and "Collapse" (Graham)
+- Block the ability to select a protocol when the remote has a different variant of the same protocol built in and there is no Alternate PID (Graham)
+- Change the display of PFn Details to use drop-down boxes instead of plain text (Graham)
+- When editing a protocol, enter Manual Settings with the code for processor of current remote selected (Graham)
+- Restructure the disassembler code (Graham)
+- Add code for the main body of the assembler, though not yet linked to user interface (Graham)
+- Remove Primacy advanced menu item, move to Setup panel of Device  Upgrade Editor (Greg)
+- In a device upgrade, you can now delete a function that is assigned to a button; all those assignments are removed as well (Greg)
+- Change Help -> Tutorial to point to JP Wiki page "JP1 - Just How Easy Is It? - RM-IR Version" (Greg)
+- Upgrade to DecodeIR 2.43 (Greg)
+  - Added NibbleSumChk translator class
+  - Incorporated protocols.ini updates
+- Fix loading KM upgrades with Manual Protocols for remotes that use 2-byte pids. (Greg)
+- Show a dialog for entering PB-/KM-/IR- formatted protocol upgrades when the "Import Protocol Upgrade" button is pressed, instead of reading directly from the clipboard. (Greg)
+- Add assembler and protocol builder facilities (Graham)
+-- Alpha 12a
+- Fix two bugs preventing some protocols from loading or disassembling (Graham)
+- Enable an assembler line to be commented out by putting a semicolon at start of label field (Graham)
+-- Beta
+- Minor corrections to assembler/disassembler syntax for S3C80 and HCS08 (Graham)
+- Create separate displays for disassembly and assembly, switchable with radio buttons (Graham)
+- Add additional editing buttons for assembler (Graham)
+- Preserve the assembler copy/cut clipboard during changes of protocol and/or remote (Graham)
+- Add "Allow Preserve Control" to Options menu, that shows/hide the drop-down that controls whether OBC or EFC/Hex are preserved when changing protocols (Greg)
+- Updates to the About panels to give Graham more credit for the work he has done (Greg)
+- Create facility for user to specify an Alternate PID when there would otherwise be a conflict (Graham)
+- Maintain in Properties file a history of such Alternate PIDs used in uploads, or in copying protocol from output tab (Graham)
+- Use the Alternate PID history to help recognise protocols in downloads from remote or in importing .ir files (Graham)
+- Add item to Advanced menu of RMIR to clear Alternate PID history, which in its dialog also reports the number of entries in this history (Graham)
+- When RMIR minimized while Device Editor is open, automatically minimize Device Editor as well; also restore RMIR if Device Editor restored (Graham)
+- Correct bug introduced in Alpha 11 that caused RMIR to close if an RM opened from it by File/New/Device Upgrade was closed (Graham)
+- If more than about six entries in Protocol Parameters panel of Device Editor screen, make them scroll to limit maximum height of editor (Graham)
+- Fix permissions for DecodeIR.html and DecodeIR_ChangeLog.txt (Greg)
+- Make JP1 Parallel the last available interface (Greg)
+- Update Digit Maps through 520 (Greg)
+-- Beta 2
+- Rename "Clean Upper Memory..." to "Blast Upper Memory..." (Greg)
+- Fix preventing program to exit if properties could not be written (Barf)
+- Change how RM locates the properties file at startup, when not specified on the command-line (Barf and Greg)
+- Made installation directory read-only by putting rmaster.err in java.io.tmpdir, and (on non-Windows, Windows already had similar fix) putting resource file in home directory. (Bengt)
+- Allow editing of a built-in protocol with code missing from protocols.ini, to permit custom code to be entered (Graham)
+- When autodetecting interface, if returned port name is an empty string, treat at null, which solves issue of jp12serial port being found even when not connected (Graham)
+- Fix bug that repeated use of Edit Device button on General panel was not recognising changes made in earlier edit (Graham)
+- For S3C80 disassembly, label absolute addresses within the protocol code as well as relative ones, since CALL only takes absolute addresses and upgrades are executed from a standard location (Graham)
+- Skip blank lines when looping through Functions table of device editor (Graham)
+- When creating new key move with Function selected, correct bug that made default selection not be recognised (Graham)
+- Make RM windowClosing() be failsafe by adding a "finally dispose()"; already done for RMIR by Barf (Graham)
+- Add support for JP1.4 and JP2 remotes to existing facilities of RMIR (Graham)
+- Add support for JP1.4 Activities (Graham)
+- When RM is opened from RMIR, open it as a new application rather than as a window within RM, to prevent protocol crosstalk issues caused by RMIR and RM sharing same instance of ProtocolManager (Graham)
+- When an upgrade containing a Manual Protocol is deleted and that protocol is not used elsewhere, delete it also from ProtocolManager (Graham)
+- When adding a device upgrade, require the setup code not to clash with an existing upgrade (Graham)
+- Handle import of manual protocol when there is an existing manual protocol with same name and PID but different code (Graham)
+- Fix bug with import of KM file when OBC column is after, rather than before, the other column of hex (Graham)
+- Support change of PID of Manual Protocol when it is in use by more than device upgrade (already supported when used by only one such upgrade) (Graham)
+- Fix bug causing successive imports of KM files that use same protocol to interfere with one another (Graham)
+- Improve handling of pid change for Manual Protocol (Graham)
+- Bugfix: When an import or load of manual protocol checks it against those in ProtocolManager, test for same translators as well as same code (Graham)
+- Reset ProtocolManager before loading .rmir file, to prevent protocol crosstalk (Graham)
+- Provide facility in Device Upgrade Editor to convert custom code to a Manual Settings protocol (Graham)
+
+Changes for v2.01
+-- Alpha --
+- Fix NullPointerException when editing DeviceCombiner protocol (Graham)
+- Implement upgrade overflow into learned signal and advanced code regions (Graham)
+- When loading a KM file with a protocol named "Manual Settings", append the PID to the name to prevent mis-identification if there is a similar subsequent load (Graham)
+- Fix bug causing button restrictions set by the Button class constructor to be overridden, rather than supplemented, by explicitly set restrictions (Graham)
+- Fix bug preventing KeyMove setup code values > 2047 from being correctly imported when loading a .ir file (Graham)
+- Implement highlighting (Graham)
+-- Alpha 2 --
+- Create File/Set Directory menu and implement entries to change RDF Path and Image Path (Graham)
+- Use JDirectoryChooser instead of JFileChooser when there are no RDF/Map files found on opening RemoteMaster (Graham)
+- Use JDirectoryChooser instead of JFileChooser in Options/Folders menu of KeyMapMaster (Graham)
+- Make highlighting an option, defaulting to off (Graham)
+-- Alpha 3 --
+- Create Advanced menu, add items Clean Upper Memory, Initialize to $00 and Initialize to $FF and implement them (Graham)
+- Add ExtInstall.jar as a referenced library and update build.xml to include it (Graham)
+- Add Install Extender item to File menu and implement it using procedures from ExtInstall.jar (Graham)
+-- Alpha 4 --
+- Clean up compiler warnings (Greg)
+- Enable correct copy'n'paste from IE (Greg)
+-- Alpha 5 --
+- On importing .ir file, treat invalid digit maps index as absent, to prevent RMIR crashing (Graham)
+- Improve use of ExtInstall, to avoid an issue when installing over an existing extender (Graham)
+-- Alpha 6 --
+- Restore old paste code (Greg)
+- Add "Paste (IE)" for pasting multi-column data from IE (windows only) (Greg)
+- Fix pasting EFC5s (Greg)
+- Move EFC5 column before EFC column on Functions tab for remotes that use EFC5. (Greg)
+-- Alpha 7 --
+- Prompt to save before exiting, downloading from remote, etc if data has changed (Graham) 
+- More copy'n'paste fixes (Greg)
+- Refactor check for updates (Greg)
+- Add check for updates to RMIR (Greg)
+-- Alpha 8 --
+- Correct wording of ToadTog ForceOn function:  On->Off corrected to Off->On (Graham)
+- Resolve various issues concerning device upgrades that both have key moves and are assigned to more than one device button (Graham)
+- Fix ToadTog bug that causes Special Function editor to display incorrect entries (Graham)
+- Add Advanced menu item Primacy in RM and RMIR to allow choice of whether OBC or EFC/Hex is preserved when a protocol is changed or edited (Graham)
+- Add Advanced menu item Edit Protocol in RM that allows adding and editing of custom code to standard protocols (Graham)
+-- Final --
+- Fix NEC 4DEV Combo entry in protocols.ini (3FG)
+
+Changes for v2.00
+- Fix very minor issue with Fav/Scan, an overlooked difference between Macros and Fav/Scan. (Graham)
+- Split off a new class, MacroDefinitionBox, from MacroDialog to allow its re-use with Timed Macros. (Graham)
+- Restore double-click to edit table cells (Greg)
+- Typing when not in edit mode will start edit mode and replace cell contents (Greg)
+- Create new interface, ButtonEnabler, and use it to improve logical separation between MacroDefinitionBox and MacroDialog. (Graham)
+- Fix Setup.vbs for Windows users who don't run as Admin, Updated Readme.html (Greg)
+- Implement Timed Macros (Graham)
+-- Preview 3 --
+- Implement File/New (Graham)
+- Implement File/Open of Sling Learned Signal XML files (Greg)
+- Add toolbar button to open RDF for viewing or live editing (Graham)
+- Fix Fujitsu protocol (Greg)
+- Append " (untested)" to notes for Sling Learned Signals when appropriate (Greg)
+- RMIR: allow multicell selection in most tables, and Copy item in popup menu to copy to the clipboard (Greg)
+- Add display of Signature, Processor, Interface and Extender Version to Raw Data tab (Graham)
+- Implement the ExtenderVersionAddr and RDFVersionAddr parameters of the RDF [General] section (Graham).
+- Change the toolbar icon for File/Open (Graham).
+- Added Bound Key to Learned Signal edit dialog, and enabled OK/Cancel button (Greg)
+- Removed New button and context menu item from Learned Signal tab (Greg)
+- Fixed Clone button and content menu item on Learned Signal tab (Greg)
+- Enable column reordering in most tables (Greg)
+- Always open RMIR, launch RM as separate window when opening RMDU files (Greg)
+- Add edit context menu to protocol parameters (Greg)
+- Add edit context menu to General Notes on General tab (Greg)
+- Remember the folder in which files are opened regardless of type (Greg)
+- Add an "All supported files" type to the file open dialog, and use it as the default (Greg)
+- Add transient, user controlled ignore field to learned signal decodes (Greg)
+-- Preview 4 --
+- Implement Setup Code Validation (Graham)
+- Resolve an issue with Device Upgrade Editor that caused, among other things, the OK and Cancel buttons to have the same effect (Graham)
+- Implement Code Selector (Graham)
+- Create user-friendly interface for Pause Special Protocol, implementing the PauseParams entry in RDF [General] section (Graham)
+- Commented out the entry in protocols.ini for "Panasonic Combo (flawed)", as it contains no code entries (Graham)
+- Corrected a bug present since v1.99preview3, an oversight caused by the introduction of Device Button Notes that caused Save As, when following a download, to give empty .rmir file (Graham)
+- Disable Save action after a download (Graham)
+- Allow execution to continue when base address in .ir file and RDF differ, as the .ir file is probably a raw download (Graham)
+- Add display of protocol ID, variant and name to Devices tab (Graham)
+- Add link to Wiki in About > Help (Greg)
+- Load IR file: maintain correct notes when invalid, empty device upgrade discarded (Greg)
+- Launch RM directly from RM icon (Run Setup.vbs to create/update the shortcuts)
+- Add .rmdu as well as .rmir files to RMIR's recent file list
+- Improve identification of raw protocols by checking variance of OEM and Parm device parameters from default values (Graham)
+-- Preview 5 --
+- Correct bug in reading of device upgrade button maps which caused spurious buttons to be treated as mapped (Graham)
+- Correct bug that would cause error with pids > $01FF (Graham)
+- When changing device button assignment from a device upgrade with key moves, ask if user wants to retain the key moves (Graham)
+- Show key moves of device upgrades on key move tab, as grayed out and not editable (Graham)
+- Added facility to import and edit protocols from ProtocolBuilder (Graham)
+- Tentative fix for Setup.vbs on 64-bit Windows 7 (Greg)
+- Disable context menu items for device upgrade keymoves shown on the keymove panel (Greg)
+-- Preview 6 --
+- Enable export as a .ir file (Graham)
+- Enable Open RDF toolbar button after a download (Graham)
+- Change bar color of Progress Bars to aquamarine, for greater contrast with blue text (Graham)
+- Avoid null pointer exception in Code Selector when a device type has no built-in setup codes (Graham)
+- Scroll notes of General Panel to top upon opening (Graham)
+- If new device upgrade is not assigned to a device button, open dialog giving user an opportunity to do so (Graham)
+- Prevented manual protocols from undergoing translation when updating buffer (Graham)
+- Add support for using device upgrade functions in the keymove editor (Greg)
+- Fix KM file filtering in Device Upgrade Editor open file dialog (Greg)
+- Fix key code keymove support (Greg)
+-- Preview 7 --
+- Add Detach button and context menu item to Key Moves tab, to detach keymoves what are associated to device upgrades.  Supports multiple selection (Greg)
+- Add installed upgrade selector to keymove editor, for upgrades that aren't assigned to a device button (Greg)
+- Add * after PID in Device tab to indicate a protocol upgrade will be installed with the device upgrade. (Greg)
+- Fixes for EFC5 handling of single-byte functions (Graham/Greg)
+- Fix bug to allow entry of Hex data in Key Move Dialog (Graham)
+- When decoding an E2image, don't associate keymoves to a device upgrade when the key is in the button map. (Greg)
+-- Preview 8 --
+- Check EEPROM size against RDF when importing .ir file (Graham)
+- Use Fixed Data as a matching criterion when downloading or importing a .ir file (Graham)
+- Ask whether to replace fixed data when there is a mismatch with RDF (Graham) 
+- Fix bug that made an empty RDF [FixedData] section cause an exception (Graham)
+- Treat tab character as white space when parsing hex string (Graham)
+- Prevent NullPointerException if a manual protocol has no code for the processor concerned (Graham)
+- Recognise processor type S3F8 in heading of imported manual protocol (Graham)
+- Set PID from heading when importing manual protocol (Graham)
+- Update device parameter label when parameter name is edited (Graham)
+- Save unassigned manual protocols, ie those shown on Protocols tab, in .rmir file (Graham)
+- Edit a Manual Protocol by double clicking any of PID, Variant or Protocol columns of Devices tab (Graham)
+- Fix bug in handling of entries in RDF [DeviceTypes] section when a DevTypeNum value is given with no high byte (Graham)
+- Fix bug that prevented keymoves being updated in buffer when a new device upgrade was assigned to a device button in answer to the prompt (Graham)
+- Fix bug with raw data of keymoves when AdvCodeFormat=EFC (Graham)
+- Prevent multiple fixed data prompts and prevent any appearing when opening a remote with New (Graham)
+- Make deleting a manual protocol from the Protocols tab delete it also from ProtocolManager (Graham)
+- Prevent special function key moves being interpreted as EFCs when AdvCodeFormat=EFC (Graham)
+- Enable conversion between old and new S3C80 codes in both directions and ensure it occurs only when necessary (Graham)
+- In Manual Settings dialog, trim string before testing for "End" token, as trailing spaces were causing NumberFormatException (Graham)
+- Correct the maximum value of the Duration spinner for LDKP Special Protocol, changing it from 255 to 15 (Graham)
+- When importing a .ir file with protocol upgrades not used by device upgrades, add them to ProtocolManager as manual protocols (Graham)
+- Make ProtocolManager.findNearestProtocol check against Old Names as a final search (Graham)
+- Initial support for custom executors for known protocols, when parsing E2 image (Greg)
+- Add editable display of raw signal to Learned Signals Dialog and provide New facility (Graham)
+- Correct various matters to do with restrictions on allowed button bindings (Graham)
+- Correct bug that prevented attempts at raw download failing with a null pointer exception (Graham)
+- Handle remotes with a signature of fewer than 8 characters (Graham)
+- Handle special case of data format in remotes with empty upgrade section (Graham)
+- Circumvent a bug in jp1parallel.dll concerning uninitialized variables (Graham)
+- Key Moves tab: show attached key moves using background color (light gray, dark gray when selected) (Greg)
+- Raw Data tab: Show modified bytes in bold only (no more red) (Greg)
+- Devices tab: Adjust column widths (Greg)
+- Handle multiple protocol upgrades with same pid, which occurs even though the remote can only access the first one (Graham)
+- Because of the possibility of repeated pids, add name column to Protocols tab (Graham)
+- If deleting a device upgrade would delete corresponding protocol upgrade, ask for confirmation (Graham)
+- If changing the protocol of a device upgrade would delete a protocol upgrade, add that upgrade to Protocols tab (Graham)
+- Prevent change of pid when editing protocol upgrade but not when cloning it (Graham)
+- Fix bug in opening .ir file that has device combiner as a protocol upgrade (Graham)
+- When downloading or opening a file, clear ProtocolManager of custom code and added protocols specific to previous configuration (Graham)
+- When migrating key moves, avoid basing function names on keymove notes as notes such as names of other keys can cause errors (Graham)
+- Add an Edit Protocol button to the Devices tab (Graham)
+- Enable all protocols to be edited, adding/editing/removing custom code as required (Graham)
+- When editing a device upgrade, recognize and use any protocol present that will be treated by the remote as custom code (Graham)
+- Handle the case of device upgrades where the protocol is missing, treating it as a form of custom code but marked with '-' rather than '*' (Graham)
+- Correct two places in protocols.ini where "VariantName" had a space between the two words (Graham)
+- Update JP1 USB library to v0.03 (Greg)
+- Correct bug causing Code Selector to malfunction after a change of remote (Graham)
+- Correct handling of derived protocols when loaded from a .rmir file (Graham)
+- Handle an issue with device types that can be caused by a malformed [DeviceTypes] section in RDF (Graham)
+-- After preview 8 --
+- Amendment in DeviceUpgrade to allow 4-device imports from KM (3FG)
+- Addition of YamahaStyleImporter as new translator class (3FG)
+- Addition of NEC 4DEV Yamaha Combo to protocols.ini (3FG)
+- Update latest DecodeIR v2.41, including Mac OS/X support (alpha)
+- Update to jp12serial interface v0.18, including Mac OS/X support (alpha)
+
+Changes for v1.99b
+- Add support for warnings etc. below table without hiding the buttons, move device upgrade bug warning back down (Graham)
+- Fixed null pointer exception caused by absence of FavKey entry in RDF (Graham)
+
+Changes for v1.99a
+- Fix harmless NullPointerExceptions logged when switching tabs before loading a remote configuration
+- Include .ico files in distribution zip
+- Fix missing buttons on Devices tab (moved upgrade bug warning to top) 
+
+Changes for v1.99
+- Add DigitMaps through 486
+- Fix TiVo (Official 2-byte) Unit Code encoding
+- Added Kathrein protocol support
+- Implemented the functionality of XPIDs in the Special Protocols section (Graham Dixon, a.k.a. mathdon)
+- Implemented the functionality of User Names in the Special Protocols section (Graham)
+- Corrected the interpretation of a "minus" prefix to PIDs in Special Protocols section (Graham)
+- Corrected the keyword WaveUpgrade to WavUpgrade in processing of the General section (Graham)
+- Fix keymove space used for keycode keymoves
+- Change Apex 1100w protocol to use PID 00 46
+- Bugfix:  RMIR crashed if a MacroCodingType entry omitted the optional parameters (Graham)
+- Completed the RDF4 syntax for [SpecialProtocols] section by implementing internal special protocols (Graham)
+- Corrected the logic that determines when to return the alternatePID instead of the main PID (Graham)
+- Corrected getUpgradeLength(), which gave wrong value if remote uses two-byte PID or if digit map is nonzero (Graham)
+- Implemented Device-specific Upgrades (RDF General entries DevUpgradeAddr and UpgradeBug) (Graham)
+- Made several minor mods specific to 740 processor (Graham)
+- Improved the readability of text strings on the Progress Bars (Graham)
+- Improved the representation of internal Special Protocols in .rmir files (Graham)
+- Implemented Fav/Scan (Graham)
+- Fix Setup.vbs for 64-bit Windows
+
+Changes for v1.99preview5
+- Device Upgrade Editor: enable maximize
+- Bugfix: did not allow remote to use Soft Devices without also using Labels (Graham Dixon, a.k.a. mathdon)
+- Bugfix: Corrected RDF General parameter from "PauseParameters" to "PauseParams" (Graham Dixon, a.k.a. mathdon)
+- Bugfix: Corrected error in reading RDF Fixed Data bytes > 127 (Graham Dixon, a.k.a. mathdon)
+- Bugfix: Corrected error in reading Device Setup codes with device type index > 7 (Graham Dixon, a.k.a. mathdon)
+- Bugfix: decodeUpgrades did not properly handle little-endian processors such as Mitsubishi 740 (Graham Dixon, a.k.a. mathdon)
+- Upgrade to DecodeIR 2.41
+- Implemented the functionality of the TimeAddr entry of the General section of an RDF (Graham Dixon, a.k.a. mathdon)
+- Bugfix:  Corrected problem with Device Button Notes on download from remote. (Graham Dixon, a.k.a. mathdon)
+- Implemented the missing functionality of the SoftDev, SoftHT and Labels entries of the General section of an RDF. (Graham Dixon, a.k.a. mathdon)
+- Bugfix: keycode style keymoves
+- Improved XMP protocol support
+- Bugfix: some function assignments were lost when importing KM files
+- Upgrade JP1.X USB/Serial support to 0.17  
+
+Changes for v1.99preview4
+- General Panel: default device button notes to description of assigned device upgrade, if there is one.
+- Buttons/Layout tabs: limit display of function names to 20 characters, but show full name in hover help.
+- Buttons tab: Move function popup menu down so previously assigned value is still visible.
+- Layout Tab: Add dragable divider along right edge of remote image; image scales to divider position.
+
+Changes for v1.99preview3
+- Add support for notes on device buttons
+- Add new protocols and translators
+- Add dragable divider to RMs Buttons panel along the left edge of the Available Functions
+- Replaced setup.bat with Setup.vbs for creating the Start Menu shortcuts and file associations.
+
+Changes for v1.99preview2
+- Make editable table cells enter edit mode when single-clicked, and auto-select the contents
+- Detect bad RDFs where address ranges extend beyond the EEPROM size
+
+Changes for v1.99preview1
+- Added Start Menu entries for Windows users.  Run setup.bat
+- Prompt to assign a new device upgrade to a device button if not already assigned.
+- Make sure Lost Function Assignment warning gets focus when shown.
+
+Changes for v1.98
+- Corrected fix for corruption of fixed data when multiple upgrades use the same protocol
+- Fix failure to update tabs when downloading from or loading a file for a different remote.
+
+Changes for v1.98beta8
+- Fix for Thomson variant 7
+- Upgrade to DecodeIR v2.40
+- Fix parsing of upgrade setup codes > 2047 on download from remote or import of IR file
+- Allow uploading when there is a signature mismatch, after a suitable warning.
+- Fix loading of IR files generated by extinstall
+- Close IO connection when download is canceled at remote selection dialog.
+- Fix corruption of fixed data when multiple upgrades use the same protocol 
+
+Changes for v1.98beta1-beta7
+- Enable setup codes up to 4095 for remotes that use 2-byte PIDs
+- Tweak column widths
+- Allow comments in image map files
+- Fix heap usage when viewing LOTS of remote images
+- RMIR:
+  - Fix jp12 serial driver for 64-bit Linux
+  - Fix for macros when AdvCodeBindFormat=LONG
+  - Fix warning messages when available space for advanced codes, 
+    upgrades, or learned signals is exceeded
+  - Fix Settings
+  - Fixes for erroneous upload verification failure messages
+  - Upgrade to DecodeIR v2.39
+  - Add help menu item "Interpreting Decoded IR Signals"
+  - Initial MultiMacro support
+  - Fix parsing of assigned setup codes > 2047 on download from remote or import of IR file
+  - Fix buttons available for assignment to macros
+- RM
+  - Option to show remote signature
+  - Added HCS08 support for Pause protocol
+  - Fix for setting protocol parameters
+  - Fix for Device Combiner (2)
+  - Fix for loading protocol (aka device) parameters
+
+Changes for v1.97
+- Fix Unicode characters in string literals
+- RMIR:
+  - Fix for keymoves when AdvCodeBindFormat=LONG
+  - Upgrade jp12serial communication library to version 0.14
+- RM:
+  - Fix for shuffled function hex when switching protocols and there are named functions without hex
+
+Changes for v1.96
+- Fix for importing old KM upgrades
+- Add CanalSat protocol
+- Fix for importing KM Aiwa upgrades with device > 255
+- Fix for importing KM GI 4DTV Protocol upgrades
+
+Changes for v1.95
+- Fix for importing KM upgrades that use RC-5/5x Combo
+
+Changes for v1.94
+- Fix for importing KM upgrades that use Manual Settings
+
+Changes for v1.93
+- Improve changed device upgrade detection
+- Improve parsing of DeviceTypeAlias
+- Exit on close correctly
+- Fix for saving preferences on Vista
+- Various fixes for Special Protocols
+- Raw download support
+- Additional logging
+
+Changes for v1.92b
+- Fix for keymoves when AdvCodeBindFormat=LONG and AdvCodeFormat=HEX
+
+Changes for v1.92a
+- Fix for parsing RDFs that use SetupValidation
+
+Changes for v1.92
+- Fix EFC5 to Hex translation
+- Manual Settings improvements
+
+Changes for v1.91
+- RM: 
+  - Make protocol upgrade code available but invisible when not required
+  - Allow HTML in the protocol notes (triggered when the first character in the notes is '<')
+  - Expand notes for DirecTV protocol to explain relationship between Device Number and Remote Address
+  - Show number of bytes used for device upgrade, key moves, and protocol upgrade
+  - Fixes for Manual Settings and unnamed protocols.
+  - Define variants of PID 01 61 - requires updated RDFs (newer than v1.28)
+  - Fixes for importing new(ish) KM upgrades
+  - Fix importing KM upgrades that use Sony Egg
+  - Minor updates to Readme.html
+- RMIR:
+  - Upgrade jp1parallel communication library to 0.02 (With support added for 64-bit Linux)
+  - Upgrade jp12serial/usb communication library to 0.13 (With support added for 64-bit Linux)
+  - When downloading from the remote, and the remote signature matches the signature of the current remote, assume it's the same remote.
+  - Don't show action icons in the menus, only in the tool bar
+  - Add "Verify uploads" option
+  - Improve tracking of bytes used/available for advanced functions, upgrades, and learned signals
+  - Support invisible special protocols (such as DSM in the 6131 and Atlas SA_7 extender)
+    This uses some of the new RDF v4 syntax from IR 8.0x, which makes the RDF incompatible with IR 7.x.
+    In the [SpecialProtocols] section use DSM=TV/1103:-01FC
+  - Save directory after opening .ir files, not just .rmir files.
+  - Fix key style keymove support
+  - Use split panes on General tab to allow resizing tables
+  - Bundle DecodeIR (Windows, Linux 32-bit, and Linux 64-bit)
+
+Changes for v1.90
+- Fix bug in special protocol dialog for protocols that use the 2nd column of functions.
+- Improvements for poorly learned/decoded IR signals
+- Fix column widths and header height in learned signals
+- Better error handling for unsupported versions of interface libraries/DLLs
+- Add duration control to Dish Network Combo as a device parameter encoded in the protocol code.
+- Show protocol code even when not required (when available)
+- Make protocol code required when there's an encoded device parameter with a non-default value.
+- RMIR: Add Edit button under device buttons on General tab to edit the device upgrade for the assigned setup code.
+- RMIR: Update the jp12serial interface .dll/.so to version 0.11   
+
+Changes for v1.89
+- Improvements to import raw upgrade
+- Fix Device Combiner for HCS08 remotes
+- Include tutorial (JP1 - Just How Easy Is It?)
+- Add help menu items (Readme, Tutorial, Home page, Forums)
+- Add parsing support for RDF enhancements for IR 8.05
+- Upgrade to Java 6 for Desktop support (specifically launching default browser).
+- Another fix for importing raw NEC upgrades
+- RMIR: Add support for changing the look and feel
+- RMIR: Fixes for loading .rmir files with special protocols
+- RMIR: Support for device button labels
+- RMIR: Support for soft device sequence numbers
+- RMIR: Support read-only settings
+- RMIR: Add Toolbar with buttons for Open, Save, Save As, Download, Upload
+
+Changes for v1.88
+- Better importing of KM upgrades that use Manual Settings
+- RMIR: Fix importing of IR files that use undefined (not in RDF) keys in keymoves or macros.
+
+Changes for v1.87b
+- More fixes for HCS08 Device Combiner
+
+Changes for v1.87a
+- Fix HCS08 Device Combiner so protocol upgrade code is shown. 
+
+Changes for v1.87
+- Fix importing of KM updates for remotes that use 2-byte PIDs
+- Update digitmaps through 447
+- Fix NEC 2/4DEV Combo bug requiring default sub-device
+- Fix DeviceCombiner for HCS08 to enable duration control
+
+Changes for v1.86
+- Fixed Bug 1835121: NPE during save operation
+- Add HCS08 Code to Pioneer DVD
+- Fix command parameter initializer for Pioneer DVD
+- Add HCS08 Code to Pioneer 4DEV
+- Add MZC-88 protocol
+- Fixed HCS08 Code for NEC 2DEV Combo
+- Added HCS08 Code for Sony DSP
+- Added HCS08 Code for Streamzap and Streamzap_57khz
+- Added HCS08 Code for Somfy
+- Added HCS08 Code for Lutron
+- Added HCS08 Code for RC5/6 Combo
+- NEC[1] (2/4)DEV Combo: On Function tab Device column changed to Dev.Sub
+
+Changed for v1.85
+- Improve importing of raw NEC upgrades
+- RMIR: General improvements to parsing remote images
+- Fix uploading through USB JP1 interface
+
+Changes for v1.84
+- Fix Sony20 and Sony Combo (12/20)
+- Update protocol notes (thanks Capn!)
+- RMIR: Add support for JP1 USB interface (Windows only)
+- RMIR: Add support for "other" ports
+- RMIR: Bring JP1.x USB/Serial support up to date
+- RMIR: Fix endian issues
+- Enable S3F80 processors to use S3C80 code for Device Combiner
+- Update digitmaps through 434
+
+Changed for v1.83
+- Fix for using custom function names
+- Make RM terminate when closed
+- RMIR: enable other port entry in port selection dialog
+- Update digitmaps through 430
+- Fix support for device type specific images
+- Make it easy to use with Eclipse
+
+Changed for v1.82
+- Fix for importing KM files with HCS08 protocol code.
+- Fix for buttons with keycodes >$40 that are not shifted/x-shifted
+- Improve manual settings support
+- RMIR: Fix for displaying EFC and Hex of learned signals
+- Add support for LearnedDevBtnSwapped
+
+Changed for v1.81
+- RMIR: add JP1 Parallel port interface (Windows and Linux).  Requires administrator (Windows) or superuser (Linux) privileges.
+
+Changes for v1.80
+- Fix for ReplayTV (Official) and unit code
+- Fix for TiVo (Official 2-byte)
+- Fix for importing KM files that use the Fujitsu protocol
+- Fix for importing KM files that use the NEC 2DEV Combo protocol
+- Add full support for Manual Settings (see Readme.html, Menus, Advanced)
+- Ignore improperly named RDF files
+- When importing raw upgrades that don't include protocol upgrade code, ignore
+  protocols that aren't built into the remote when matching the protocol.  Also
+  applies to RMIR when importing an IR file or downloading from a remote.
+- Add digit maps through 409
+- Allow named (x-)shifted buttons in button maps
+- RMIR: allow importing IR files (or downloading from a remote)
+  with device/protocol upgrades that have overflowed into the advanced code
+  or learning sections.
+- RMIR: under Linux (developed and tested on Ubuntu 7.04), enable communication with JP1.x
+  remotes
+
+Changes for v1.79
+- Fix for importing KM files that use Dish Network or Dish Network Combo protocols
+- Allow remotes that use the S3F80 processor to use S3C80 protocol code
+- Fix for importing KM files that use JVC Combo protocol
+
+Changes for v1.78
+- Add support for new upgrade format that uses two byte PIDs
+- Fix parsing of DeviceTypeImageMaps section to handle tabs
+- Correct variant name of Pioneer DVD
+- Add support for S3F80 processor
+- Addes Nokia32 protocol (thanks johnsfine)
+
+Changes for v1.77
+- Improve notes for Pioneer combo protocols
+- Improve handling of missing Images folder
+
+Changes for v1.76
+- Fix External Function tab where the EFC/Hex column was displaying the function name rather than the EFC/Hex for the function.
+
+Changes for v1.75
+- Allow user to revert to previous protocol when there are errors converting functions to the newly selected protocol, preserving the function details.
+
+Changes for v1.74
+- Fix NullPointerException when changing remote to a remote that doesn't support any variant of the current protocol.
+
+Changes for v1.73
+- Fix importing KM upgrades that use Manual Settings with 2 bytes in the "byte2" column
+- Add home directory to About screen
+
+Changes for v1.72
+- Fix for 'Save As' when no file has already been opened (RMIR).
+- Make parsing eeprom data work the same as parsing an IR file (RMIR).
+- Fix BitDoubler so extracting parms from hex works correctly.
+- Allow uploading to JP1.x remotes (RMIR)
+- Fix importing of KM files that use Manual Settings with hex device parameters
+
+Changes for v1.71
+- Fix for handling advanced codes assigned to the Fav key (RMIR)
+
+Changes for v1.70
+- Correctly enable/disable menu items when remote changes.
+- Fix for importing IR files with intermixed keymoves and macros with notes (RMIR)
+- Use BitDoubler instead of many Translate bits for some of the RC6 entries that need it. (johnsfine)
+- Added kludge for RC5/6 combo (johnsfine)
+- Changed my mind about variant naming (johnsfine)
+- Removed incorrect attempt to support the useless variant of 0184 (johsfine)
+- Fixed pid 114 for newer remotes.  (rdf file change is required before this fix has any effect). (johnsfine)
+
+Changes for v1.69
+- Fix for importing KM v9.05 upgrades
+- Add support of decoding learned signals (RMIR), requires DecodeIR 2.32 or later
+- Add RC-6 variant 2
+- PID 012A:2 for MCE and RC6-M-32 (thanks johnsfine)
+- Added PID 0092:3 for ReplayTV and RC6-M-24 (thanks johnsfine)
+- Improvements for using builtin protocols if possible when changing remotes
+- Import notes from IR files that use seperate sections for each category (RMIR)
+
+Changes for v1.68
+- Fix importing of KM upgrades that use the NEC 2DEV Combo or NEC 4DEV Combo protocol
+- After loading a device upgrade with external functions, remove any matching keymoves that may have been imported (RMIR)
+- Fix for button names being replaced by keycodes after adding keymoves (RMIR)
+- Fix for Other Settings where the value in the EEPROM image isn't in the set of allowed values as defined in the RDF (RMIR)
+- Add file name and timestamp to rmaster.err when loading/importing files.
+
+Changes for v1.67
+- Fix Device Combiner upgrades that use protocols with Alternate PIDs
+
+Changes for v1.66
+- Reinstate Device Combiner support
+- Another "don't abort import of .IR files that use Fav/Scan" fix.
+- Added support for new versions of PID 011A NEC 4DEV Combo
+- Move import and export of device upgrades into the device upgrade editor.
+
+Changes for v1.65
+- Fix error loading image files when double-clicking a .rmdu file
+- Fix failure to import KM files that use Manual Settings and don't specify devBits and/or cmdBits
+- Add support for remotes that use the long keymove format with hex codes (JP1.x)
+- Don't abort import of .IR files that use Fav/Scan
+- Add DigitMap entries 333-359
+- Add support for adding and editing Special Protocol Functions
+
+Changes for v1.64
+- Fix keymoves generated by external functions for remotes that use long keymoves
+- Enable import/display/saving of special protocol functions (Java IR)
+- Fixes for loading/saving preferences.
+- Add support for multi-byte digit maps.
+
+Changes for v1.63
+- Fixed all the broken menu items (broken in v1.62)
+- Fixed Device Combiner issues (importing and changing remotes)
+
+Changes for v1.62
+- Fixed importing of KM upgrades that have more than 4 device parms
+- Fixed problem with digitmaps when importing raw/binary upgrades
+
+Changes for v1.61
+- Fixes for Linux
+
+Changes for v1.60
+- Fixes for EFC5 display
+- Migrate to Java 5.0
+- Fix width of "Lost Function Assignments" window.
+
+Changes for v1.59
+- Fix scrambled button assignments when importing KM upgrades
+
+Changes for v1.58
+- Various Translator fixes
+- Fix for Pioneer 3DEV protocol generating incorrect commands
+
+Changes for v1.57
+- Fixes for HCS08 based remotes
+
+Changes for v1.56
+- Fix for map files created with "Keep NCSA circles true"
+- Add HCS08 protocol code entries
+
+Changes for v1.55
+- Allow custom protocol when importing raw upgrades that use a known PID.
+
+Changes for v1.54
+- Fix issue with .rmdu files that have external functions
+- Fix for importing raw/binary upgrades that use a digit map
+
+Changes for v1.53
+- Add "Check for updates" to the Help menu
+- Add support for more binary file formats
+- Fixes for importing KM upgrades that use Manual Settings
+
+Changes for v1.52b
+- Fix for exporting binary upgrades
+
+Changes for v1.52a
+- Added more executors for Streamzap protocol
+
+Changes for v1.52
+- Add DigitMaps through 332
+- Add support for device type specific maps and images
+- Improvements to column width handling
+- Change Streamzap pid to 0123 and use new executor that supports all OBCs for a device number
+
+Changes for v1.51
+- Add DigitMaps through 303
+
+Changes for v1.50
+- Add support for AdvCodeBindFormat RDF parameter
+
+Changes for v1.49
+- Fix bug in PioneerMixTranslator causing loss of command parameter values when changing remotes.
+
+Changes for v1.48
+- Fix for importing raw or binary upgrades that use an unknown/manual protocol.
+
+Changes for v1.47
+- Fix bug in loading Device Combiner upgrades.
+
+Changes for v1.46
+- Fix bug importing some KM upgrade files
+
+Changes for v1.45
+- Device Combiner fix for import functions from device upgrade files.
+
+Changes for v1.44
+- Fix for importing raw and binary upgrade files.
+
+Changes for v1.43
+- Final fix for binary upgrades for Manual Protocols where no protocol upgrade is required.
+- Manual Protocol-like enhancements to support for protocols where only the PID and code are available
+
+Changes for v1.42
+- Fix for exporting binary upgrades for Manual Protocols where no protocol upgrade is required.
+
+Changes for v1.41
+- Fix File->Open hang if there is a shortcut to the Desktop on the Desktop
+- Fix RC-5/5X Combo Protocol support
+- Fix protocols.ini syntax error in Dish Network Combo protocol definition
+- Add support for RelayTV 2000/3000 OBJ binary files
+- Default to OBC button style when importing KM upgrades
+
+Changes for v1.40
+- Only change column widths when protocol changes
+- Fix default value for Fujitsu Sub-Device
+
+Changes for v1.39
+- Some more progress on Protocol Editor
+- Add Fujitsu variants
+- Add JVC Combo protocol
+- Fixes to protocols.ini for "Dish Network:5" and "Dish Network Combo"
+- Fixes for importing binary upgrades
+
+Changes for v1.38
+- Enhancements for Lutron
+- Fixes for binary upgrade files.
+
+Changes for v1.37a
+- Correct Lutron S3C80 protocol code.
+
+Changes for v1.37
+- Add support for MaxUpgradeLength, MaxProtocolLength, and MaxUpgradeLength
+- Correctly handle declaration of shifted button before declaration of base button.
+- Add Dreambox protocol
+- Add Lutron protocol
+
+Changes for v1.36
+- Add ability to adjust font size.
+
+Changes for v1.35
+- Fix protocol offset in generated binary upgrade files.
+- Add support for delete key to remove assigned functions on Buttons and Layout panels
+- Get rid of the "- none -" function and add a "Remove" button to the Buttons and Layout panels.
+- Fix tool tip text for function labels, showing to what buttons a function has been assigned.
+
+Changes for v1.34a
+- More fixes for binary upgrade files (for Slingbox).
+
+Changes for v1.34
+- Fixes for binary upgrade files (for Slingbox).
+
+Changes for v1.33
+- More fixed for switching protocols.
+
+Changes for v1.32
+- Fix problems switching protocols.
+- Add support for binary upgrade files (for Slingbox)
+
+Changes for v1.31
+- Fix protocols.ini entry for Pause Protocol
+- Allow column resizing on the Function and External Function panels.
+- Add support for EFC5 display and editing for those remotes that use it.
+- Added Denon-K and fixed protocol notes that had become wrong when Panasonic Combo2 was renamed. (thanks johnsfine)
+
+Changes for v1.30
+- Add support for unknown protocols, where only the PID and code are known.
+- Fix the bug documented at http://www.hifi-remote.com/forums/viewtopic.php?t=4929
+- Add support for protocols that only support keymoves, such as the Pause Protocol.
+
+Changes for v1.29
+- Improve matching remotes when loading of KM (and old RM) upgrades, requires RDFs v1.24 or later.
+- RM images and maps v1.24
+
+Changes for v1.28
+- Automatically pick a remote when importing a KM upgrade.
+
+Changes for v1.27
+- Added ability to import raw device upgrades.
+
+Changes for v1.26
+- Fix bug importing upgrade using manual settings and hex commands
+
+Changes for v1.25
+- Add variant 3 of Pioneer MIX protocol
+- More fixes for importing External Functions
+
+Changes for v1.24a
+- Fixes for importing External Functions
+
+Changes for v1.24
+- Add support for importing External Functions
+
+Changes for v1.23
+- Fix Panasonic MIX Combo hex generation
+- Add Panasonic2 (LCD-Official)
+- Fix importing of KM upgrades with extra commas
+- Match PID as well as name when importing KM upgrades.
+
+Changes for v1.22
+- More progress on Protocol Editor
+- RM Images and Maps v1.21 from Nils
+- Added GXB protocol (thanks johnsfine)
+- Modified Streamzap protocol to be compatible with decodes (thanks johnsfine)
+- Added 56Khz version of Streamzap (thanks johnsfine)
+- Added Somfy (thanks johnsfine)
+- Fixes for Pioneer Mix protocol
+- Fixed startup problems when UpgradePath in properties file points to a drive that doesn't exist
+
+Changes for v1.21
+- Improvements to phantom button support on Layout panel
+- Fix bug with entering OBCs on Functions panel for some protocols
+
+Changes for v1.20
+- Fix saving of imported KM upgrades that use Manual Settings with byte2
+- Improve translation of new S3C80 protocol code to old S3C80.
+- Add phantom buttons to Layout panel
+- Add assigned buttons to hover help text for functions on Buttons and Layout panels
+
+Changes for v1.19
+- Fix importing of KM upgrades that use Manual Settings and have a value in byte2
+
+Changes for v1.18
+- Improve importing of KM upgrades that use Device Combiner
+- Fix importing of KM upgrades that use Panasonic MIX Combo
+
+Changes for v1.17
+- Fixed startup problems when using preferred remotes
+- Add MCE protocol.
+
+Changes for v1.16
+- First set of changes for Protocol Editor (see Advanced->Protocol Editor or pedit.bat)
+- Change RDF file name parsing for Nils
+- More changes for importing ManualSettngs
+- Added protocol RC6-6-32
+
+Changes for v1.15
+- Corrected Akai entry in protocols.ini (thanks johnsfine!)
+- Enabled pid-0083 for TV-0159 (thanks johnsfine!)
+- More fixes for importing KM device ugprades that use Manual Settings
+
+Changes for v1.14
+- Improve prompt for unkown remote when loading/importing an ugrade
+- More fixes for importing KM device upgrades that use Manual Settings
+- Handle 999 entries in DigitMaps graciously.
+- Images and Maps w 1.18a from Nils
+
+Changes for v1.13
+- Fix problems importing, loading, and saving upgrades that use Manual Settings.
+
+Changes for v1.12
+- Correct support for the Pioneer 3DEV protocol
+- Fix bug switching to Output panel when no values have been assigned to the
+  protocol parms.
+- Add TranslatorWithDevBool for cmd parms that use a bit from a dev parm to
+  determine the display value (e.g. Sub-device in RC-5x and OBC in NRC17)
+- Add support for NRC17 protocol
+- Correct keymove generation for 2-byte protocols with remotes that use the new
+  "EFC" style of keymoves.
+
+Change for v1.11
+- Add support for imported KM upgrades that use the Pioneer 4DEV protocol.
+
+Changes for v1.10
+- Add support for Pioneer 4DEV protocol
+- Added Lumagen protocol
+- Include RM version in Upgrade Protocol code when including embedded notes.
+
+Changes for v1.08
+- Renamed "Panasonic Combo2" protocol to "Panasonic Combo" protocol
+- Import KM upgrade: Make sure user is informed of function assignments that
+  aren't correctly imported
+- More work for ManualSettings, still not ready.
+
+Changes for v1.07
+- Update list of supported protocols in Readme.html
+- Add support for processor-specific protocol code translators, that allows
+  for encoding device parameters directly into the protocol code
+- Added RCA Combo (w/ Duraction) protocol
+
+Changes for v1.06
+- Added digit maps 171 and 172
+- Fix bug converting S3C80-F7 protocol code into S3C80-E5 protocol code,
+- Added DirecTV protocol
+- Added Sharp Combo (Official) protocol
+
+Changes for v1.05
+- Add support for defining Manual Settings, Phase 1 (not ready for use).
+- Add About dialog
+- Improve importing of KM upgrades that use Manual Settings
+- Make Device column wider for RC-5 protocol
+- Add mnemonics for menu items
+- Corrected entry for NEC 2DEV Combo protocol, courtesy Jon Armstrong
+- Fix bug saving upgrades with Manual Settings and no device parameters
+
+Changes for v1.04
+- Correction to Jerrold entry in protocols.ini
+- Updates to RC-5 protocols, courtesy of Jon Armstrong
+- Fix importing of KM upgrades that use byte2
+- Add button to import button names into custom function name dialog
+- Minor layout improvements to the preferred remote dialog
+- Remember the direcrtory used to open KM upgrade files as well as RM upgrade files
+
+Changes for v1.03
+- Add context menu to text controls
+- Enable customization of default function names
+- Improve handling of default values for cmd parms
+- Fix importing KM upgrades with bogus byte2 data.
+
+Changes for v1.02
+- Add "Clean Up" button to Function panels - delete all unused functions (no
+  hex).
+- Fix RC-5 and Dishplayer entries in protocols.ini
+- Enhance Rc5Translator to change the selected device (if possible) when the
+  user enters and out-of-range OBC
+- Add some error checking to Rc5Translator
+- Add AlternatePID entries for Sony Combo protocols
+- Make sub-device default to complement of device for NEC Combo protocols
+- Add support for default values for cmd parms, including the - to indicate
+  complementing
+- Fix bug importing upgrades notes from KM file.
+
+Changes for v1.01
+- More updates to the Dish Network protocols.  Thanks Jon Armstrong
+- Layout Panel: add assigned function to tool-tip text for buttons on remote
+- Fix paste problems.  A side-effect is that one must now double-click to
+  start editing a field
+- Make sure to switch to builtin protocol if possible when changing remotes
+- Fix protocol entry Dish Network:5
+- Add RC-5/5x Combo (the "ugly" version), thanks Jon Armstrong
+- Added RECS80 (90) protocol, thanks Jon Armstrong
+- Add infomation on using Device Combiner to Readme.html
+- Add Dish Network Combo protocol, thanks Jon Armstrong
+
+Changes for v1.00
+- Allow functions without names when loading a saved device upgrade
+- Corrected protocols.ini entry for Zenith protocol (courtesy of Jon Armstrong)
+- Added Acer Keyboard protocol (courtesy of Jon Armstrong)
+- Corrected protocols.ini entry for Acer Keyboard protocol (courtesy of Jon
+  Armstrong)
+- Allow scrolling of available functions in LayoutPanel
+- Fix use of "adjust" parameter to Translator and TranslatorFromDev
+- Use RM_Maps-and-Images_1.17.zip
+
+Changes for v0.99
+- Add support for alternate PIDs, requires updated RDFs
+- Fix importing of some KM upgrades that use Manual Settings
+- Add support for embedding notes in the device and protocol
+  upgrade code, requires IR v5.01 or later
+- Added Streamzap protocol (thanks Jon Armstrong)
+- Fixed RC-5x protocol (thanks Jon Armstrong)
+
+Changes for v0.98
+- Fix Bug [ 940251 ] Incorrect output for KM input file, related
+  to importing an upgrade that uses the RC-5 protocol.
+- Fix bug in converting hex to efc, as reported by AndrewZ
+
+Changes for v0.97
+- Add SharpDVDTranslator to correctly calculate command byte 2
+- Changed Dishplayer(old) to Dishplayer Network and reversed
+  the dev bits (as Rob requested), thanks John S Fine
+- Add support for protocol translations for non-S3C80 processors
+- Update protocol definitions and lists of supported protocols
+
+Here is a list of the protocols that SHOULD work.  If you find a
+problem with one of these, please open a Bug in SourceForge against
+the controlremote project.
+
+Aiwa
+Aiwa2
+Aiwa Combo
+Akai
+Anthem
+Apex 1100W
+Audiovox
+B&K
+Blaupunkt
+Boston Accoustics
+Boston Official
+Denon
+Denon Combo (Official)
+Denon Combo
+Device Combiner
+Dishplayer
+Dishplayer Network
+Echostar 2200
+Emerson
+F12
+GI 4DTV Hacked
+GI 4DTV Official
+GI Cable
+HK Combo
+Jerrold
+JVC
+JVC-48
+Kaseikyo
+Mitsubishi
+NEC1
+NEC2
+NEC Combo
+NEC1 Combo
+NEC1 2DEV Combo
+NECx1
+NECx2
+Nokia Quad
+Pace
+Panasonic (old)
+Panasonic
+Panasonic VCR Combo
+Panasonic Mixed Combo
+Panasonic Combo2
+Panasonic Multi-Device (Hacked)
+Panasonic Combo (flawed)
+Panasonic2 (LCD)
+Pause Protocol
+Pioneer
+Pioneer DVD
+Pioneer DVD2
+Pioneer MIX
+Pioneer 2CMD
+Pioneer 3DEV
+Proton
+RC-5
+RC-5x
+RC-6
+RC6-M-20n
+RC6-M-24n
+RCA
+RCA (Old)
+RCA Combo (Official)
+RECS80 (45)
+RECS80 (68)
+ReplayTV (Simple)
+ReplayTV (Advanced)
+ReplayTV (Official)
+Scientific Atlanta
+Sharp
+Sharp DVD
+Sony 12/15
+Sony20
+Sony Combo (old)
+Sony Combo (new)
+Sony DSP
+Thomson
+TiVo (Advanced)
+TiVo (Official)
+TiVo (Official 2-byte)
+X10
+Zenith
+
+This is the list of protocols that are present in RM, but are NOT supported:
+
+NEC 2DEV Combo (*)
+Panasonic MIX Combo (*)
+Sony Egg (*)
+Teac-K (*)
+
+
+Here is a list of the protocols that are not yet supported:
+
+RC-5/5x Combo
+RCA Combo (w/Duration)
+
+
+Changes for v0.96a
+- Fix RDF parsing error
+- RM Images and Maps v1.16
+
+Changes for v0.96
+- Fix DeviceCombiner support.
+
+Changes for v0.95
+- Fix bug parsing [DeviceTypes] section of RDF files.
+- Fix bug when button used in a ButtonMap isn't declared
+- Fix Setup panel layout for Manual Settings
+
+Changes for v0.94
+- Allow importing of KM upgrade files that use Device Combiner
+- Improvements to importing of KM upgrade files that use Manual Settings
+
+Changes for v0.93
+- Fix EFC entry on External Function panel
+- Allow $ when entering hex strings
+- Do not center EFC/Hex column on External Function panel
+- Fix intermittent Exceptions loading device upgrade files.
+
+Changes for v0.92
+- Fix protocol "Sony Combo (new)"
+- Minor fixes for Device Combiner
+
+Changes for v0.91
+
+- Improved Device Combiner support:
+  - Correct device and protocol upgrade code
+  - Direct entry of protocols (not just by importing)
+  - Support for 740 and 6805 based remotes.
+
+Changes for v0.90
+
+- Add DigitMap entires up to 170
+- Update images and maps to v1.14
+- Add most support for Device Combiner.  Importing a KM file that uses
+  Device Combiner is not yet supported
+
+Changes for v0.89
+
+- Fix NECx2 device translator declarations
+- Fix importing of hex device parameter values
+- Fix problem with indirect default values always being complemented.
+- Fix exceptions when user cancels file open dialog
+- Work around bug in AquaLookAndFeel preventing File->Open from working on Macs
+
+Changes for v0.88
+
+- Remove quotes from button names
+- Fix problem starting without a properties file
+- Enforce button restrictions
+- Lay ground work for Device Combiner support
+
+Changes for v0.87
+
+- Enable importing external functions from existing RM and KM upgrade files.
+- Use a single interface for loading RM or KM upgrade files.  Both are now
+  access from File->Open.  To Open a KM file, change the "Files of type:"
+  field.
+
+Changes for v0.86
+
+- Enable importing KM upgrades from the clipboard,
+  similar to KM's Import feature.
+- Enable importing RM upgrades from the clipboard
+- Added Readme.html the guide to "Using Remote Master",
+  with associated style sheets.  Still needs a lot of work.
+
+Changes for v0.85
+
+- Fix for importing old KM device upgrades
+
+Changes for v0.84
+
+- Added support for Pioneer MIX protocol
+- Added support for ReplayTV (Simple) protocol
+- Added support for ReplayTV (Advanced) protocol
+- Added support for Zenith protocol
+- Added error message when KM file is imported that uses an
+  unsupported protocol.
+- RM Maps-and-Images 1.13.zip
+
+Changes for v0.83
+
+- Add missing FixedData=00 to JVC protocol
+- Added 6805-C9 and 6805-RC16/18 code for NEC1 and NEC2 protocols
+- Added support for NEC1 2DEV Combo protocol
+- Added support for NECx1 and NECx2 protocols
+- Added support for Pioneer DVD2 protocol
+- Added support for Pioneer 3DEV protocol
+
+Changes for v0.82
+
+- If there is no function assigned to the normal or shifted button,
+  the x-shifted button won't be included in the upgrade code.
+- Fix a problem where external functions lose their device type and
+  device code. (courtesy of bgalbrecht)
+- RM Images and Maps 1.11 (courtesy of Nils)
+- Changes for Panasonic VCR and Mixed Combos (courtesy of johnsfine)
+- Special translator for Device and SubDevice in the new pid 001F
+  (courtesy of johnsfine)
+
+Changes for v0.81
+
+- Added both the built-in and short versions of RC6-M-20n
+- Added Replay(simple) and RC6-M24n
+- Fix bugs with honoring restrictions on un-shifted keys
+- Add support for Processor Versions, particularly 6805-C9 and 6805-RC16/18
+- Add 6805-C9, 6805-RC16/18, and 740 upgrade code for GI 4DTV Hacked
+- Give user a smaller list of remotes to choose from when importing
+  and the remote name isn't an exact match
+- Layout Panel: give preference to buttons in ButtonMap when figuring out
+  which button user is interacting with.
+
+Changes for v0.80
+
+- Change handling of DeviceTypeAliases.  No longer required in RDF, but
+  needed for ease of importing KM upgrades and for switching between
+  remotes.  DeviceTypeAlias names are no longer fixed, but consistent
+  values should be used.
+- Corrected bug in importing KM saved files that use 2-byte commands.
+
+Changes for v0.79
+
+- Manual Settings, stage 1: import, save, load.  Can't define or change
+  definition yet.
+- Default file name for "Save As..." built from upgrade description
+- Added support for Pioneer 2CMD protocol.
+
+Changes for v0.78
+
+- RM Maps-and-Images 1.10.zip
+- Fix support for Hex device parameters
+- Bug 849762: Key code and alternate name function not working together
+
+Changes for v0.77
+
+- Change default value for AdvCodeUpgrade to HEX
+
+Changes for v0.76
+
+- RM Maps-and-Images 1.08.zip
+- RM Maps-and-Images 1.07.zip
+- Added support for new Key Move format used by URC_6131 and Atlas DVR
+- Remove all RDFs
+- Correctly show "Look and Feel" and "Prompt to Save" settings at startup
+
+Changes for v0.75
+
+- Updated 10-17-03 Maps and Images from Nils
+- Updated 10-23-03 Maps and Images from Nils
+- Updated 10-28-03 Maps and Images from Nils
+
+Changes for v0.74
+
+- Remove RDFs from the distribution
+- Updated10-14-03Maps-Images-etc.zip from Nils
+- Add support for multiple image maps in a single RDF.
+
+Changes for v0.73
+
+- Allow undeclared buttons in ButtonMaps
+- Updated maps and rdfs, 10-12-2003
+- Updated10-13-03Maps-and-RDFs.zip
+- Ignore case when matching button names
+- Allow map file to use keycodes to identify buttons, instead of name
+
+Changes for v0.72
+
+- Add generic button names to URC-881x/801x/601x
+- Updated 10-9-03 Maps and Images.zip from Nils
+- Importing saved KM upgrade determines generic button names positionally
+
+Changes for v0.71
+
+- Handle extra spaces at end of lines in protocols.ini better.
+- Preferred remote dialog, Enable/disable move buttons when remotes are
+  selected/deselected
+- Request 820614: Allow EFC/Hex column to expand on External Functions panel
+
+Changes for v0.70
+
+- Add RC-5x protocol
+- Updated 10-6-03 Maps Images from Nils (and Chris): "skinny" images
+- Add choice of showing only preferred remotes.
+
+Changes for v0.69
+
+- Match KM changes for TiVo protocols
+- Handle user modifucation of directory structure more gracefully
+- All Maps Images and RDF's 10-3-03
+- Request 817148: Default current remote for new option
+
+Changes for v0.68
+
+- Fix bug in parsing composite restrictions
+- Add support for OldName attribute for protocols
+
+
+Changes for v0.67
+
+- Add/update remote image, maps, and rdfs
+- Request 814866: Print (added Key Map panel, with print function)
+- Skip over bool device parms when import a KM device upgrade
+- Add support for "All" restriction, and "-" restriction operator.
+- Move RemoteMaster.ico to the images directory
+
+Changes for v0.66
+
+- Add/update remote images, maps, and rdfs
+- Request 805120: Add Auto Assign button and feature to Layout panel
+- Add Exit to File menu
+- Improve error reporting when importing KM device upgrade
+- Add support for restrictions and xShift
+
+Changes for v0.65
+
+- Add/update remote images, maps, and rdfs
+- Feature Request 805107: Move Layout panel
+- Allow multiple shapes in the map file for the same RDF button
+- Allow an optional display name for a shape in the map file
+
+Changes for v0.64
+
+- Close .map file when done parsing
+- Add/update remote images, maps, and rdfs
+
+Changes for v0.63
+
+- Add/update remote images, maps and rdfs
+- Allow RDFs without [ButtonMaps] or [Protocols] sections
+- Import button assignments from KM upgrade files, needs standardized button
+  names.
+
+Changes for v0.62
+
+- Add/update remote images, maps and rdfs
+- Add DigitMaps 149-153
+- Fix Bug 797783: "Move Down" with next to last item on "Function" no response
+
+Changes for v0.61
+
+- Add/update remote images, maps and rdfs
+- Add Thomson protocol
+- Migrated command parameters when protocol changes are a result of changing
+  remote.
+
+Changes for v0.60
+
+- Add support for named shifted buttons
+- Add support for [NoBind] section in rdfs
+- Add/update remote images, maps, and rdfs
+- Output panel: clear out Upgrade Protocol Code if not required.
+
+Changes for v0.59
+
+- Add/update remote images and maps
+- Add support NCSA .map files, as generated by Map This!  The old RM format
+  is still supported.
+- Convert RM formatted .map files to NCSA formatted .map files.
+
+Changes for v0.58
+
+- Add/update remote images and maps for 15-1994, 15-1995, 15-2104,
+  15-2116/2117, URC-6131, URC-7800, URC-8080, URC-8811, URC-9800, URC-9910
+- Only prompt to save upgrades that have actually been changed, still
+  INCOMPLETE.
+
+Changes for v0.57
+
+- Include image map files in distribution ZIP file
+- Don't let vertical scroll bar (if present) obscure any part of remote image.
+- Add some of the missing digit maps.
+- 1st pass at only prompting to save upgrade if it has been changed.
+  INCOMPLETE.
+
+Changes for v0.56
+
+- Moved image file and button shapes out of RDF into an image map file.
+  The RDF now has an ImageMap= value in the [General] section that
+  specifies the name to the image map file.
+- No horizontal scroll bar on the remote image on the Layout Panel.
+- Pop-up menu for assigning functions to buttons on Layout Panel.  Hold down
+  Ctrl to assign shifted function.
+
+Changes for v0.55
+
+- First pass at support for importing saved KM upgrades.  Function to button
+  assignments are NOT imported.
+- Added Kaseikyo protocol
+- Fixed bug 789717: Protocol Notes doesn't refresh
+
+Changes for v0.54
+
+- Added images for 15-2117/2116 and 15-2104
+- Remote image has tooltips over buttons, displaying the name of the button.
+- Button highlighting has changed, as follows:
+  White outline: button is selected
+  Orange outline: button is in key map for current device
+  Blue fill-in: button has a function assigned
+  Yellow fill-in: button has a shifted function assigned
+  Green fill-in: button has both a function and a shifted function assigned
+
+Changes for v0.53
+
+- Layout panel now supports assigning functions to buttons using drag'n'drop
+  Use Ctrl to assign shifted function (Still strying to get Shift key working)
+
+Changes for v0.52
+
+- Layout panel now uses a vertical image of the remote, on the left side.
+
+Changes for v0.51
+
+- Win98 doesn't repaint Layout Panel when device type changed
+- Select a button on the Layout Panel by clicking on it.
+- Added text fields showing name of selected button and assigned functions.
+- Added popup menu for assigning functions to buttons.  Hold
+  shift key to assign shifted function.
+- Added function grid.  Double-click a function to assign it
+  to the selected button.  Hold shift key to assign shifted function.
+- Can't open .km files using File:Open
+
+Changes for v0.50
+
+- Added Layout Panel, which shows which buttons are included in the key map
+  for the selected device type.  This panel is driven by information in the
+  RDF file.  The first is the Image= entry in the [General] section, which
+  specifies the name of the file containing a picture of the remote.  It can
+  be a GIF or JPG file.  Next is the [ButtonShapes] section, which contains a
+  space separated list of button shape descriptors as follows:
+  (button name)=(shape description) where
+    (button name) is the name of a button defined in the [Buttons] section
+    (shape desctiption) is one of:
+      ellipse:(x),(y),(width),(height)
+      rect:(x),(y),(width),(height)
+      poly:(x),(y)[,(x),(y)]*
+  Currently only the RDFs for the 15-1994, URC-6131, and URC-7800 have these
+  these entries.
+
+Changes for v0.49
+
+- Device parms lost when changing remotes requires a different, but compatible
+  (same name, same parm names) protocol variant.
+- Bug 782601: "Move Down" not working same as "Move Up" on "Functions"
+
+Changes for v0.48
+
+- Changed name of default directory containing device upgrage files
+  to "Upgrades"
+- Changed default extension for new device upgrade files to ".rmdu"
+- Changed file open filter to accept both .km and .rmdu as valid
+  extensions for device upgrades
+- Changed command line arguments to RemoteMaster to better support
+  file associations
+- Added setup code to facilitate creating file associations in Windows.
+- Improve behavior in certain cases in which .km files, .rdf files and
+  the .ini file are inconsistent with each other (such as using .km
+  files saved by earlier versions).
+- Bug 746423: Vertical scroll in notes box
+
+Changes for v0.47
+
+- Changed digitMaps data type from byte to int in order to simplify
+  handling more than 127 maps and permit handling more than 255.
+- Request 761166: Non MS windows look and feel
+- Bug 759017: Load exception when protocol prop has boolean
+
+Changes for v0.46
+
+- Limit protocol choices on setup panel to protocols supported by remote.
+- Request  730285: Only show protocol upgrade code when actually required
+- Show warning when protocol and remote aren't compatible
+- Bug 750408:Look and feel processing
+- Change version to v0.46
+
+Changes for v0.45
+
+- Bugs in protocol variant support
+
+Changes for v0.44
+
+- Allow Dev data in hex commands
+- Fixed error in Dishplayer
+- Variants of Dishplayer(old)
+- Emerson
+- Changed Panasonic Combo2 to use the new variant of 00CD
+- Bug 748222: Changing remote causes an error message
+- Request 730257: Support protocol variants
+- Update list of supported protocols in Readme.txt
+
+Changes for v0.43
+
+- Fixed Panasonic2 and the notes for Sony12/15
+- [Protocols] lists (for most models) without variant data (yet)
+- Aiwa variants
+- Added RC-5
+- Bug 746428: Fixed data doesn't refresh
+- Update list of supported protocols in Readme.txt
+- Change version to v0.43
+
+Changes for v0.42
+
+- First cut at Protocols list (15-1994 RDF)
+- Update list of supported protocols in Readme.txt
+- Change version to v0.42
+- Enable Sony protocols
+
+Changes for v0.41
+
+- Big change to Default value processing, which so far just corrects
+  minor ToolTip problem in parameters with reference type defaults
+- Fixed default for Panasonic Combo2
+- John merged in Chris's changes to combo protocols
+- Changed version to v0.41
+- Change background of read-only text areas to match the background of labels.
+- Bug 745769: Wrong device upgrade setup code number on output panel
+- Updated list of supported/non-supported protocols in Readme.txt
+
+Changes for v0.40
+
+- Change version to v0.40
+- Add support for reading protocol notes from protocols.ini
+- Comment out unsupported protocols
+- Copy text from Protocols_ReadMe.txt to protocol notes

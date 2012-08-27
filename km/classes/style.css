@@ -1,0 +1,108 @@
+body
+{
+  background-color: white;
+  color: darkblue;
+  font-family: 'Trebuchet MS', 'Lucida Grande', Verdana, Lucida, Geneva, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0 0 0 10em;
+}
+
+div.navigation {
+        position:absolute;
+        top:0px;
+        left: 0px;
+        width: 11em;
+        margin: 0;
+        padding: 1em 0 0 0;
+        background-color: darkblue;
+        color: white;
+        height: 100%;
+}
+
+@media screen
+{
+  body>div.navigation
+  {
+    position: fixed;
+  }
+}
+
+div.navigation ul {
+        list-style: none;
+        list-style-image: none;
+        margin: 0;
+        padding: 0;
+        background-color: #2175bc;
+}
+
+div.navigation li {
+        margin: 0;
+        border-bottom: 1px solid #2175bc;
+}
+
+div.navigation li li {
+        margin-left: 1em;
+        border-bottom: 1px solid #2175bc;
+}
+
+div.navigation a {
+        border-bottom: 1px solid #90bade;
+        display: block;
+        background-color: #2175bc;
+        color: #fff;
+        margin: 0;
+        padding: 5px 0 5px 0.5em;
+        text-decoration: none;
+}
+
+div.navigation a:hover {
+        background-color: #2586d7;
+        color: yellow;
+        text-decoration: none; /* needed for IE */
+}
+
+div.content
+{
+  position: absolute;
+  left: 11em;
+  top: 0;
+  padding: 0 1em 0 1em;
+}
+
+th {
+  text-align: left;
+  vertical-align: top;
+  padding-right: 1em;
+}
+
+.Header {
+    margin-top: 10px;
+    margin-left: 160px;
+    }
+
+.box {/*this is a box where the bottom-navigation*/
+      /* and the copyright will be placed*/
+  background: white;
+  color : #000099;
+  font-family : Arial, Tahoma, Verdana, Helvetica, sans-serif;
+  font-size: 12px;
+  padding : 2px;
+  margin: 2px;
+  border-color : #48D1CC;
+  border-style : groove;
+  border-width : 2px;/* the border property in longhand*/
+  }
+
+a {
+  text-decoration: none;
+  background: white;
+  color:blue;
+  font-weight: bold;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.oldbrowser {display: none;}
+.noshow {display: none;}

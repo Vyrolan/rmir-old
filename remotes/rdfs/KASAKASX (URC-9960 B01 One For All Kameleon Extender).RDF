@@ -1,0 +1,201 @@
+[General]
+Name=One For All URC-9960 B01 Kameleon Extender (4K eeprom)
+EepromSize=$1000
+FavKey=$28, $021, 15, 5
+AdvCodeAddr=$600..$F19
+UpgradeAddr=$100..$5FE
+Processor=S3C80
+RAMAddr=$FF00
+RDFSync=3
+AdvCodeFormat=EFC
+AdvCodeBindFormat=LONG
+SectionTerminator=$FF
+EFCDigits=5
+XShift=$40
+\\ImageMap=urc-9960.map
+DevComb=$7E,$1776,$365F,,$83BF,$36C4,$100
+SetupValidation=Warn
+
+[Extender]
+OEMSignature=KASAKAS0
+
+[SpecialProtocols]
+Multiplex=01FE
+DSM=01FC
+LDKP=01F9
+Pause=01FB
+ToadTog=0181
+
+[Settings]
+Motion Sensor        =$01A.6.1.1.0 (Disable;Enable)
+First Key            =$01A.5.1.0.0 (Ignore;Use)
+Initial Trans dev    =$01C.7.8.0.0 DeviceButtons
+Initial Vol dev      =$01D.7.8.0.0 DeviceButtons
+Initial Chan dev     =$01E.7.8.0.0 DeviceButtons
+Initial Menu dev     =$01F.7.8.0.0 DeviceButtons
+Initial Other dev    =$020.7.8.0.0 DeviceButtons
+Backlight Timer      =$FFF.7.8.50.0
+Shift Keycode        =$FA5.7.8.2.0
+XShift Keycode       =$FAF.7.8.2.0
+HT Keycode           =$0C5.7.8.$12.0
+
+[Checksums]
+^$000:$002..$FFD
+
+[FixedData]
+
+[DeviceTypes]
+CBL 	= 3
+TV      = 0
+VCR     = 1
+DVD     = 2
+CD      = 4
+PVR     = 1
+AUDIO   = 5
+other	= 3
+
+[DeviceTypeImageMaps]
+CBL     = (urc-9960-cbl-main.map,urc-9960-cbl-menu.map)
+TV      = (urc-9960-tv-main.map,urc-9960-tv-menu.map,urc-9960-tv-pip.map)
+VCR     = (urc-9960-vcr-main.map,urc-9960-vcr-menu.map)
+DVD     = (urc-9960-dvd-main.map)
+CD      = (urc-9960-cd-main.map)
+PVR     = (urc-9960-pvr-main.map)
+AUDIO   = (urc-9960-aud-main.map,urc-9960-aud-sur.map,urc-9960-aud-menu.map,urc-9960-aud-preset.map)
+
+[DeviceTypeAliases]
+CBL	= Cable,SAT,Video Acc
+TV	= TV
+VCR	= VCR,Tape,DAT
+DVD	= DVD,Laserdisc
+CD	= CD,Home Auto,Phono
+AUDIO	= Tuner,Misc Audio,Amp
+PVR	= PVR
+other   = OEM Mode
+
+[DeviceButtons]
+CBL	= $00A $00B
+TV	= $00C $00D
+VCR	= $00E $00F
+DVD	= $010 $011
+CD	= $012 $013
+PVR	= $014 $015
+AUDIO	= $016 $017
+AUX	= $018 $019
+
+[Buttons]
+TV=$01, VCR=$0A, DVD=$21, CBL=$11, AUDIO=$22, CD=$09, PVR=$26, AUX=$23, "theater":HT=$12
+1=$15:XShiftBind,2,3
+4=$19:XShiftBind,5,6,7,8,9,0
+"vol up":VOL+=$04, "vol down":VOL-=$05, MUTE=$08
+"channel up":CH+=$06, "channel down":CH-=$07, "prev ch":Last{Rand}=$24
+Setup=$02, Scroll=$18
+Power=$03
+Format{Replay}=$3A
+Guide=$25
+"display":Info=$31
+Menu=$14:XShiftBind
+Exit=$32
+"up arrow":Up=$29:XShiftBind,"down arrow":Down,"left arrow":Left,"right arrow":Right
+"select":OK=$27:XShiftBind
+"tv/vcr":Input=$33
+"enter":Enter{Skip}=$39
+"rewind":Rewind{pip-on/off}=$0B
+"play":Play{pip-swap}=$0C
+"fast fwd":Fwd{pip-size}=$0D
+Record=$10
+Stop=$0E
+Pause=$0F
+live:LiveTV{pip-main}=$34
+"prev track":Skipback{pip-freeze}=$37
+"next track":Skipfwd{pip-move}=$38
+"fav/scan":FAV=$28
+PVR-VOD{Preset}=$20
+PVR-Menu=$54:ShiftBind
+Front=$69:ShiftBind,Rear,Test,Center
+Surround=$67:ShiftBind
+"page up":Page+{Audio}=$35
+"page down":Page-{Subtitle}=$36
+Tuner_1=$55:ShiftBind,Tuner_2,Tuner_3
+Tuner_4=$59:ShiftBind,Tuner_5,Tuner_6,Tuner_7,Tuner_8,Tuner_9,Tuner_0
+"macro1":Macro1=$2D
+"macro2":Macro2=$2E
+"macro3":Macro3=$2F
+"macro4":Macro4=$30
+Phantom1=$3B
+Phantom2=$3C
+Phantom3=$3D
+DiscreteOn=$3E
+DiscreteOff=$3F
+X_CBL=$C0:AllBind,T_CBL,V_CBL,C_CBL,M_CBL,O_CBL,
+X_TV, T_TV, V_TV, C_TV, M_TV, O_TV,
+X_VCR,T_VCR,V_VCR,C_VCR,M_VCR,O_VCR,
+X_DVD,T_DVD,V_DVD,C_DVD,M_DVD,O_DVD,
+X_CD, T_CD, V_CD, C_CD, M_CD, O_CD,
+X_PVR,T_PVR,V_PVR,C_PVR,M_PVR,O_PVR,
+X_AUD,T_AUD,V_AUD,C_AUD,M_AUD,O_AUD,
+X_AUX,T_AUX,V_AUX,C_AUX,M_AUX,O_AUX,
+X_Cancel
+
+[ButtonMaps]
+0 = ($1F, $15, $16, $17, $19, $1A, $1B, $1C, $1D, $1E), ($04, $05, $08), ($06, $07),
+    $03, $33, $14, $29, $2A, $2C, $2B, $24, $31, $27, $32, $34, $0B, $37, $0C, $38,
+    $0D, $3A, $39, $25
+1 = ($1F, $15, $16, $17, $19, $1A, $1B, $1C, $1D, $1E), ($04, $05, $08), ($06, $07),
+    $03, $0C, $0E, $0B, $0D, $0F, $10, $14, $29, $2A, $2C, $2B, $39, $27, $32, $25,
+    $31, $24, $33, $37, $38, $34, $3A
+2 = ($1F, $15, $16, $17, $19, $1A, $1B, $1C, $1D, $1E), ($04, $05, $08), ($06, $07),
+    $03, $0C, $0F, $0B, $0D, $0E, $10, $14, $29, $2A, $2C, $2B, $27, $39, $37, $38,
+    $25, $32, $31, $24, $33, $36, $35, $3A
+3 = ($1F, $15, $16, $17, $19, $1A, $1B, $1C, $1D, $1E), ($04, $05, $08), ($06, $07),
+    $03, $14, $29, $2A, $2C, $2B, $32, $31, $25, $24, $27, $35, $36, $33, $39, $0C,
+    $0F, $0B, $0D, $0E, $10, $37, $34, $38, $3A, $54
+4 = ($1F, $15, $16, $17, $19, $1A, $1B, $1C, $1D, $1E), ($04, $05, $08), ($06, $07),
+    $03, $0C, $0E, $0B, $0D, $10, $0F, $24, $32, $31, $14, $29, $2A, $2C, $2B, $33,
+    $25, $27, $39, $38, $37
+5 = ($1F, $15, $16, $17, $19, $1A, $1B, $1C, $1D, $1E), ($04, $05, $08), ($06, $07),
+    $03, $0C, $0F, $0B, $0D, $0E, $10, $33, $25, $27, $24, $67, $29, $2A, $2C, $2B,
+    $69, $6A, $6C, $6B, $32, $31, $14, $39, $38, $37, $36, $5F, $55, $56, $57, $59,
+    $5A, $5B, $5C, $5D, $5E
+
+[DigitMaps]
+072 048 053 094 092 003 302 303 090 044 046 086 087 010 187 188
+058 083 147 011 126 023 081 016 001 127 034 032 021 075 033 030
+029 295 301 064 013 091 270 271 199 200 209 210 145 170 131 093
+141 208 212 278 279
+
+[Protocols]
+0000, 0002:5, 0006, 0014, 0015, 001C, 001F:8, 0022, 0027:new, 0029, 
+002D, 002F, 0034, 003F, 0045, 0046, 0058:2, 005A, 005C, 005D, 
+005E:2, 0060, 0065:2, 006A, 0073, 007E:3, 0092:3, 0098:2, 009C, 009E, 
+00A4, 00AF, 00B6, 00C4, 00C9, 00CA, 00CD:2, 00DE, 00E2, 00E3, 
+00E8, 00F8:3, 010F, 0111, 0114:2, 0117, 011A:2, 011B, 016D, 0184
+
+
+[SetupCodes]
+0 = 0000,0003,0008,0009,0014,0107,0113,0143,0144,0216,0237,0247,0273,0276,0279,0295,
+    0305,0317,0392,0476,0477,0525,0533,0566,0639,0701,0722,0724,0749,0772,0775,0790,
+    0819,0855,0856,0869,0877,0899,1005,1006,1010,1076,1109,1120,1126,1142,1276,1392,
+    1442,1639,1749,1856,1877
+1 = 0000,0016,0017,0021,0030,0047,0051,0053,0054,0056,0060,0090,0092,0093,0145,0150,
+    0154,0156,0166,0171,0178,0179,0180,0236,0250,0451,0463,0466,0491,0497,0603,0623,
+    0650,0672,0679,0683,0688,0689,0690,0701,0702,0704,0706,0707,0720,0748,0751,0761,
+    0765,0766,0767,0769,0774,0799,0809,0810,0812,0814,0818,0824,0832,0833,0834,0836,
+    0840,0842,0843,0845,0849,0851,0853,0856,0866,1047,1060,1100,1145,1147,1247,1254,
+    1256,1347,1356,1447,1454,1950
+2 = 0000,0002,0032,0033,0035,0037,0039,0042,0043,0045,0047,0048,0060,0067,0081,0104,
+    0121,0162,0184,0209,0225,0240,0278,0432,0479,0845,0848,0880,1035,1060,1081,1162,
+    1181,1232,1237,1278,1479,1781
+3 = 0490,0503,0521,0522,0525,0533,0534,0539,0545,0558,0571,0573,0582,0591,0623,0627,
+    0630,0632,0633,0634,0641,0646,0651,0664,0670,0672,0675,0682,0695,0698,0702,0715,
+    0717,0744,0752,0755,0783,0784,0794,0795,0796,0797,0798,0799,0815,0817,0820,0821,
+    0822,0830,0854,0864,0867,0868,0869,0872,0873,0876,1045,1100,1112,1117,1362,1462,
+    1490,1521,1762,1995
+4 = 0000,0028,0029,0032,0036,0072,0100,0157,0167,0240,0420,0490,0626,0681,0846,0861,
+    0868,0873,0888,1062,1063,1208,1292,1318
+5 = 0614,0616,0618,0636,0739
+6 = 0014,0039,0074,0078,0110,0121,0135,0150,0158,0176,0186,0189,0331,0354,0395,0531,
+    0630,0670,0797,0842,1023,1027,1058,1089,1158,1176,1189,1229,1254,1257,1258,1263,
+    1269,1295,1298,1306,1308,1313,1360,1366,1374,1375,1380,1384,1385,1388,1389,1390,
+    1409,1410,1411,1416,1518,1545,1546,1549,1556,1558,1569,1570,1609,1658,1723,1758
+
