@@ -124,6 +124,59 @@ public class DeviceUpgrade extends Highlight
   }
 
   /**
+   * Instantiates a new device upgrade.
+   * 
+   * @param base
+   *          the base
+   */
+  public DeviceUpgrade( LearnedSignal[] signals, RemoteConfiguration remoteConfig )
+  {
+    LearnedSignalDecode d = signals[0].getDecodes().get(0);
+    String protocolName = d.protocolName;
+    if ( protocolName.startsWith( "48-NEC" ) )
+      protocolName = protocolName.substring( 3 );
+    int device = d.device;
+    int subDevice = d.subDevice;
+    
+    description = "Learned Signal Upgrade";
+    notes =  "Device Upgrade automatically created by RemoteMaster from " + signals.length + " Learned Signals all with protocol " + protocolName + ", device " + device + ", subdevice " + subDevice + ".";
+    setupCode = 2000;
+    devTypeAliasName = "TV";
+    
+    protocol = ProtocolManager.getProtocolManager().findByName( protocolName ).get( 0 );
+    this.remote = remoteConfig.getRemote();
+    this.remoteConfig = remoteConfig;
+
+    sizeCmdBytes = protocol.getDefaultCmd().length();
+    sizeDevBytes = protocol.getFixedDataLength();
+    
+    // copy the device parameter values
+    parmValues = protocol.getDeviceParmValues();
+
+    // Copy the functions and their assignments
+    for ( LearnedSignal s : signals )
+    {
+      d = s.getDecodes().get( 0 );
+      String name = s.getNotes();
+      if ( name.isEmpty() )
+        name = remote.getButtonName( s.getKeyCode() );
+      
+      short[] hex = new short[d.hex.length];
+      for ( int i=0; i < d.hex.length; i++ )
+        hex[i] = (short)d.hex[i];
+      
+      Function f = new Function( name, new Hex( hex ), s.getNotes() );
+      
+      functions.add( f );
+      
+      //for ( Function.User user : f.getUsers() )
+      //{
+      //  assignments.assign( user.button, f2, user.state );
+      //}
+    }
+  }
+  
+  /**
    * Reset.
    */
   public void reset()
