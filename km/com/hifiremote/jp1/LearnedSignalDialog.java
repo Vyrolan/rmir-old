@@ -1,6 +1,7 @@
 package com.hifiremote.jp1;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -21,6 +22,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -82,10 +84,8 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
    *          the data
    * @return the string
    */
-  private static String toString( int[] data )
+  private static String toString( int[] data, int r )
   {
-    int[] charPos = new int[ data.length ];
-
     StringBuilder str = new StringBuilder();
     if ( data != null && data.length != 0 )
     {
@@ -93,23 +93,18 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       {
         // Format changed to allow pasting to IRScope as timing list
         if ( i > 0 /* && ( i & 1 ) == 0 */ )
-        {
-          str.append( " " );
-        }
-        charPos[ i ] = str.length();
-        // str.append( ( ( i & 1 ) == 0 ? +1 : -1 ) * data[ i ] ); 
+          str.append( ' ' );
+
         str.append( ( i & 1 ) == 0 ? "+" : "-" );
-        str.append( data[ i ] );
+        if (r > 1)
+          str.append( Math.round( (double)data[i] / (double)r ) * r );
+        else
+          str.append( data[i] );
       }
-      /*
-       * for (int i = 0; i < positions.size(); i++) { int[] pos = positions.get(i); System.out.println("pos[] = " +
-       * pos[0] + ", " + pos[1] ); pos[2] = charPos[ 2 pos[0] ]; pos[3] = charPos[ 2 pos[1] - 1 ] - 1; }
-       */
     }
     if ( str.length() == 0 )
-    {
       return "** No signal **";
-    }
+
     return str.toString();
   }
 
@@ -177,6 +172,26 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     advancedArea = Box.createVerticalBox();
     advancedArea.setBorder( BorderFactory.createTitledBorder( "Advanced Details" ) );
 
+    panel = new JPanel( new FlowLayout( FlowLayout.LEFT, 1, 1 ) );
+    panel.add( new JLabel( " Round To: " ) );
+    panel.add( burstRoundBox );
+    panel.add( new JLabel( "   (Rounding is for display only. Signal data is not changed.)") );
+    advancedArea.add( panel );
+    burstRoundBox.setColumns( 8 );
+    burstRoundBox.getDocument().addDocumentListener(new DocumentListener() {
+      public void changedUpdate(DocumentEvent e) {
+        setAdvancedAreaTextFields();
+      }
+      public void removeUpdate(DocumentEvent e) {
+        setAdvancedAreaTextFields();
+      }
+      public void insertUpdate(DocumentEvent e) {
+        setAdvancedAreaTextFields();
+      }
+    });
+
+    burstRoundBox.addActionListener( this );
+    
     burstTextArea.setEditable( false );
     burstTextArea.setLineWrap( true );
     burstTextArea.setWrapStyleWord( true );
@@ -245,14 +260,33 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     setButton( learnedSignal.getKeyCode(), boundKey, shift, xShift );
     model.set( learnedSignal );
     signalTextArea.setText( learnedSignal.getSignalHex( config.getRemote() ).toString() );
-    UnpackLearned ul = learnedSignal.getUnpackLearned();
+    setAdvancedAreaTextFields();
+  }
+  
+  private void setAdvancedAreaTextFields()
+  {
+    int r = 1;
+    String roundText = burstRoundBox.getText();
+    if ( roundText != null && !roundText.isEmpty() )
+    {
+      try
+      {
+        r = Integer.parseInt( roundText );
+      }
+      catch (NumberFormatException e)
+      {
+        r = 1;
+      }
+    }
+    
+    UnpackLearned ul = this.learnedSignal.getUnpackLearned();
     if ( ul.ok )
     {
-      burstTextArea.setText( toString( ul.bursts ) );
-      durationTextArea.setText( toString( ul.durations ) );
+      burstTextArea.setText( toString( ul.bursts, r ) );
+      durationTextArea.setText( toString( ul.durations, r ) );
     }
   }
-
+  
   private void setRemoteConfiguration( RemoteConfiguration config )
   {
     this.config = config;
@@ -356,8 +390,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     
     if ( source == applyButton && ul.ok )
     {
-      burstTextArea.setText( toString( ul.bursts ) );
-      durationTextArea.setText( toString( ul.durations ) );
+      setAdvancedAreaTextFields();
       model.set( learnedSignal );
       applyButton.setEnabled( false );
     }
@@ -404,7 +437,11 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       {
         b.setShiftBoxes( Button.LEARN_BIND, shift, xShift );
       }
-    } 
+    }
+    else if ( source == burstRoundBox )
+    {
+      setAdvancedAreaTextFields();
+    }
   }
   
   private void setAdvancedButtonText( boolean hide )
@@ -458,6 +495,8 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
   private JButton advancedButton = new JButton();
   
   private Box advancedArea = null;
+  
+  private JTextField burstRoundBox = new JTextField();
 
   /** The burst text area. */
   private JTextArea burstTextArea = new JTextArea( 4, 70 );
