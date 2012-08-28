@@ -82,8 +82,35 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
       super.actionPerformed( e );
   }
   
+  private boolean validateLearnedSignalsForUpgradeConversion( LearnedSignal[] signals )
+  {
+    LearnedSignalDecode d = signals[0].getDecodes().get( 0 );
+    String protocolName = d.protocolName;
+    if ( protocolName.startsWith("48-NEC") )
+      protocolName = protocolName.substring(3);
+    int device = d.device;
+    int subDevice = d.subDevice;
+    
+    for ( LearnedSignal s: signals )
+    {
+      d = s.getDecodes().get( 0 );
+      String p = d.protocolName;
+      if ( p.startsWith("48-NEC") )
+        p = p.substring(3);
+      if ( !p.equals(protocolName) || device != d.device || subDevice != d.subDevice )
+        return false;         
+    }
+    
+    return true;
+  }
   private void convertToDeviceUpgrade( LearnedSignal[] signals )
   {
+    if ( !validateLearnedSignalsForUpgradeConversion( signals ) )
+    {
+      JOptionPane.showMessageDialog( RemoteMaster.getFrame(), "The Learned Signals you have selected do not all have the\nsame protocol, device, and subdevice so they cannot\nbe automatically converted to a Device Upgrade.", "Unable to convert Learned Signals to Device Upgrade", JOptionPane.ERROR_MESSAGE );
+      return;
+    }
+    
     LearnedSignalDecode d = signals[0].getDecodes().get( 0 );
     String protocolName = d.protocolName;
     if ( protocolName.startsWith("48-NEC") )
@@ -131,6 +158,7 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
     else
     {
       // Append the Learned Signals to the existing upgrade
+      ArrayList<String> existingFunctions = new ArrayList<String>();
       ArrayList<String> renamedFunctions = new ArrayList<String>();
       ArrayList<String> shiftedFunctions = new ArrayList<String>();
       ArrayList<String> unassignedFunctions = new ArrayList<String>();
@@ -145,20 +173,29 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
         short[] hex = new short[d.hex.length];
         for ( int i=0; i < d.hex.length; i++ )
           hex[i] = (short)d.hex[i];
+        Hex funcHex = new Hex( hex );
         
-        int i = 1;
-        String name = origName;
-        while ( appendUpgrade.getFunction( name ) != null )
+        Function f = appendUpgrade.getFunction( funcHex );
+        if ( f != null )
         {
-          i++;
-          name = name + "_" + i;
+          existingFunctions.add( origName );
         }
-        if (i > 1)
-          renamedFunctions.add( origName );
-        Function f = new Function( name, new Hex( hex ), s.getNotes() );
+        else
+        {
+          int i = 1;
+          String name = origName;
+          while ( appendUpgrade.getFunction( name ) != null )
+          {
+            i++;
+            name = name + "_" + i;
+          }
+          if (i > 1)
+            renamedFunctions.add( origName );
+          f = new Function( name, funcHex, s.getNotes() );
+          
+          appendUpgrade.getFunctions().add( f );
+        }
         
-        appendUpgrade.getFunctions().add( f );
-
         if ( appendUpgrade.getFunction( b, Button.NORMAL_STATE ) == null )
           appendUpgrade.setFunction( b, f, Button.NORMAL_STATE );
         else if ( b.allowsKeyMove( Button.SHIFTED_STATE ) && appendUpgrade.getFunction( b, Button.SHIFTED_STATE ) == null )
@@ -174,9 +211,23 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
           + "device " + device + ", and subDevice " + subDevice + ".\n";
       
       boolean comma;
+      if ( !existingFunctions.isEmpty() )
+      {
+        msg = msg + "\nThe following functions were already present in the upgrade:\n   ";
+        comma = false;
+        for (String n: existingFunctions)
+          if (comma)
+            msg = msg + ", " + n;
+          else
+          {
+            msg = msg + n;
+            comma = true;
+          }
+        msg = msg + "\n";
+      }
       if ( !renamedFunctions.isEmpty() )
       {
-        msg = msg + "The following Functions were renamed to prevent duplicates:\n";
+        msg = msg + "The following Functions were renamed to prevent duplicates:\n   ";
         comma = false;
         for (String n: renamedFunctions)
           if (comma)
@@ -188,9 +239,9 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
           }
         msg = msg + "\n";
       }
-        if ( !shiftedFunctions.isEmpty() )
-        {
-        msg = msg + "\nThe following were assigned to shifted keys to prevent duplicates:\n";
+      if ( !shiftedFunctions.isEmpty() )
+      {
+        msg = msg + "\nThe following were assigned to shifted keys to prevent duplicates:\n   ";
         comma = false;
         for (String n: shiftedFunctions)
           if (comma)
@@ -204,7 +255,7 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
       }
       if ( !unassignedFunctions.isEmpty() )
       {
-        msg = msg + "\nThe following could not be assinged to a key due to duplicates:\n";
+        msg = msg + "\nThe following could not be assinged to a key due to duplicates:\n   ";
         comma = false;
         for (String n: unassignedFunctions)
           if (comma)
