@@ -2,12 +2,11 @@ package com.hifiremote.jp1;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.ListIterator;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.JButton;
-import javax.swing.JMenuItem;
 import javax.swing.event.ListSelectionEvent;
 
 // TODO: Auto-generated Javadoc
@@ -73,12 +72,9 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
       for ( int i =0; i < rows.length; i++ )
       {
         LearnedSignal s = getRowObject(rows[i]);
-        if ( s.getDecodes().isEmpty() )
-          System.err.println("Skipping Learned Signal '" + s.getNotes() + "' since it has no decodes.");
-        else
+        if ( !s.getDecodes().isEmpty() )
           signals.add(s);
       }
-      System.err.println( "Found " + signals.size() + " learned signals to conver to device upgrade." );
       if ( !signals.isEmpty() )
         convertToDeviceUpgrade( signals.toArray(new LearnedSignal[signals.size()]) );
     }
@@ -88,10 +84,140 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
   
   private void convertToDeviceUpgrade( LearnedSignal[] signals )
   {
-    System.err.println( "Converting Learned Signals to upgrade..." );
-    DeviceUpgrade upgrade = new DeviceUpgrade( signals, remoteConfig );
-    remoteConfig.getDeviceUpgrades().add( upgrade );
-    remoteConfig.getOwner().getDeviceUpgradePanel().model.fireTableDataChanged();
+    LearnedSignalDecode d = signals[0].getDecodes().get( 0 );
+    String protocolName = d.protocolName;
+    if ( protocolName.startsWith("48-NEC") )
+      protocolName = protocolName.substring(3);
+    int device = d.device;
+    int subDevice = d.subDevice;
+    //System.err.println("Checking if can append for protocol " + protocolName + ", device " + device + ", subDevice " + subDevice + "...");
+    
+    DeviceUpgrade appendUpgrade = null;
+    List<DeviceUpgrade> upgrades = remoteConfig.getDeviceUpgrades();
+    for ( DeviceUpgrade u: upgrades )
+    {
+      if ( (
+          (u.getDescription() != null && u.getDescription().contains( "Learned Signal" )) || (u.getNotes() != null && u.getNotes().contains( "Learned Signal" ))
+          ) && u.protocol.getName().equals( protocolName ) )
+      {
+        int uDevice = -1;
+        int uSubDevice = -1;
+        DeviceParameter[] protocolDevParms = u.protocol.getDeviceParameters();
+        for ( int i = 0; i < protocolDevParms.length; i++ )
+        {
+          if ( protocolDevParms[i].getName().startsWith( "Device" ) )
+            uDevice = ((Integer)u.getParmValues()[i].getValue()).intValue();
+          if ( protocolDevParms[i].getName().startsWith( "Sub Device" ) )
+            uSubDevice = ((Integer)u.getParmValues()[i].getValue()).intValue();
+        }
+        //System.err.println("Device Upgrade (" + u.getDescription() + ") has protocol " + protocolName + ", device " + uDevice + ", subDevice " + uSubDevice + "...");
+        if ( uDevice == device && uSubDevice == subDevice )
+        {
+          //System.err.println( "Device Upgrade (" + u.getDescription() + ") is a match." );
+          appendUpgrade = u;
+          break;
+        }
+      }
+    }
+    
+    if (appendUpgrade == null)
+    {
+      DeviceUpgrade upgrade = new DeviceUpgrade( signals, remoteConfig );
+      remoteConfig.getDeviceUpgrades().add( upgrade );
+      remoteConfig.getOwner().getDeviceUpgradePanel().model.fireTableDataChanged();
+      String msg = "The " + signals.length + " selected Learned Signals have been converted\ninto a new Device Upgrade of type CBL\nwith the Setup Code " + upgrade.getSetupCode() + ".\n\nSwitch to the Devices tab to view/edit/etc this new Upgrade.";
+      JOptionPane.showMessageDialog( RemoteMaster.getFrame(), msg, "Learned Signals converted to New Device Upgrade", JOptionPane.PLAIN_MESSAGE );
+    }
+    else
+    {
+      // Append the Learned Signals to the existing upgrade
+      ArrayList<String> renamedFunctions = new ArrayList<String>();
+      ArrayList<String> shiftedFunctions = new ArrayList<String>();
+      ArrayList<String> unassignedFunctions = new ArrayList<String>();
+      for ( LearnedSignal s : signals )
+      {
+        d = s.getDecodes().get( 0 );
+        String origName = s.getNotes();
+        Button b = remoteConfig.getRemote().getButton( s.getKeyCode() );
+        if ( origName == null || origName.isEmpty() )
+          origName = b.getName();
+        
+        short[] hex = new short[d.hex.length];
+        for ( int i=0; i < d.hex.length; i++ )
+          hex[i] = (short)d.hex[i];
+        
+        int i = 1;
+        String name = origName;
+        while ( appendUpgrade.getFunction( name ) != null )
+        {
+          i++;
+          name = name + "_" + i;
+        }
+        if (i > 1)
+          renamedFunctions.add( origName );
+        Function f = new Function( name, new Hex( hex ), s.getNotes() );
+        
+        appendUpgrade.getFunctions().add( f );
+
+        if ( appendUpgrade.getFunction( b, Button.NORMAL_STATE ) == null )
+          appendUpgrade.setFunction( b, f, Button.NORMAL_STATE );
+        else if ( b.allowsKeyMove( Button.SHIFTED_STATE ) && appendUpgrade.getFunction( b, Button.SHIFTED_STATE ) == null )
+        {
+          appendUpgrade.setFunction( b, f, Button.SHIFTED_STATE );
+          shiftedFunctions.add( origName );
+        }
+        else
+          unassignedFunctions.add( origName );
+      }      
+      String msg = "The " + signals.length + " selected Learned Signals were append to existing\n"
+          + "Device Upgrade (" + appendUpgrade.getDescription() + " with protocol " + appendUpgrade.getProtocol().getName() + ",\n" 
+          + "device " + device + ", and subDevice " + subDevice + ".\n";
+      
+      boolean comma;
+      if ( !renamedFunctions.isEmpty() )
+      {
+        msg = msg + "The following Functions were renamed to prevent duplicates:\n";
+        comma = false;
+        for (String n: renamedFunctions)
+          if (comma)
+            msg = msg + ", " + n;
+          else
+          {
+            msg = msg + n;
+            comma = true;
+          }
+        msg = msg + "\n";
+      }
+        if ( !shiftedFunctions.isEmpty() )
+        {
+        msg = msg + "\nThe following were assigned to shifted keys to prevent duplicates:\n";
+        comma = false;
+        for (String n: shiftedFunctions)
+          if (comma)
+            msg = msg + ", " + n;
+          else
+          {
+            msg = msg + n;
+            comma = true;
+          }
+        msg = msg + "\n";
+      }
+      if ( !unassignedFunctions.isEmpty() )
+      {
+        msg = msg + "\nThe following could not be assinged to a key due to duplicates:\n";
+        comma = false;
+        for (String n: unassignedFunctions)
+          if (comma)
+            msg = msg + ", " + n;
+          else
+          {
+            msg = msg + n;
+            comma = true;
+          }
+      }
+      //String msg = "The " + signals.length + " selected Learned Signals have been converted<br>into a new Device Upgrade of type CBL<br>with the Setup Code " + upgrade.getSetupCode() + ".<br><br>Switch to the Devices tab to view/edit/etc this new Upgrade.";      
+      JOptionPane.showMessageDialog( RemoteMaster.getFrame(), msg, "Learned Signals appended to Existing Device Upgrade", JOptionPane.PLAIN_MESSAGE );
+    }
 
     /*
     for ( LearnedSignal s: signals )

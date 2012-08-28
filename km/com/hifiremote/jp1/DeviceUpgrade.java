@@ -141,7 +141,22 @@ public class DeviceUpgrade extends Highlight
     description = "Learned Signal Upgrade";
     notes =  "Device Upgrade automatically created by RemoteMaster from " + signals.length + " Learned Signals all with protocol " + protocolName + ", device " + device + ", subdevice " + subDevice + ".";
     setupCode = 2000;
-    devTypeAliasName = "TV";
+    List<DeviceUpgrade> upgrades = remoteConfig.getDeviceUpgrades();
+    boolean setupCodeNotAvail = true;
+    while ( setupCodeNotAvail )
+    {
+      setupCodeNotAvail = false;
+      for ( DeviceUpgrade u: upgrades )
+      {
+        if ( u.getDeviceTypeAliasName().equals( "Cable" ) && u.getSetupCode() == setupCode )
+        {
+          setupCode++;
+          setupCodeNotAvail = true;
+          break;
+        }
+      }
+    }
+    devTypeAliasName = "Cable";
     
     protocol = ProtocolManager.getProtocolManager().findByName( protocolName ).get( 0 );
     this.remote = remoteConfig.getRemote();
@@ -151,15 +166,32 @@ public class DeviceUpgrade extends Highlight
     sizeDevBytes = protocol.getFixedDataLength();
     
     // copy the device parameter values
-    parmValues = protocol.getDeviceParmValues();
-
+    DeviceParameter[] protocolDevParms = protocol.getDeviceParameters();
+    parmValues = new Value[protocolDevParms.length];
+    for ( int i = 0; i < parmValues.length; i++ )
+    {
+      if ( protocolDevParms.length > i )
+      {
+        if ( protocolDevParms[i].getName().startsWith("Device") )
+          parmValues[i] = new Value( d.device );
+        else if ( protocolDevParms[i].getName().startsWith("Sub Device") )
+        {
+          System.err.println("New upgrade's subdevice is " + d.subDevice);
+          parmValues[i] = new Value( d.subDevice );
+        }
+        else
+          parmValues[i] = new Value( protocolDevParms[i].getValueOrDefault() );
+      }
+    }
+    
     // Copy the functions and their assignments
     for ( LearnedSignal s : signals )
     {
       d = s.getDecodes().get( 0 );
       String name = s.getNotes();
-      if ( name.isEmpty() )
-        name = remote.getButtonName( s.getKeyCode() );
+      Button b = remote.getButton( s.getKeyCode() );
+      if ( name == null || name.isEmpty() )
+        name = b.getName();
       
       short[] hex = new short[d.hex.length];
       for ( int i=0; i < d.hex.length; i++ )
@@ -169,10 +201,7 @@ public class DeviceUpgrade extends Highlight
       
       functions.add( f );
       
-      //for ( Function.User user : f.getUsers() )
-      //{
-      //  assignments.assign( user.button, f2, user.state );
-      //}
+      assignments.assign( b, f );
     }
   }
   
