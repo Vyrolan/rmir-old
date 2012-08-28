@@ -161,7 +161,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     table.setRowSelectionAllowed( true );
     Dimension d = table.getPreferredScrollableViewportSize();
     d.width = table.getPreferredSize().width;
-    d.height = 8 * table.getRowHeight();
+    d.height = 3 * table.getRowHeight();
     table.setPreferredScrollableViewportSize( d );
     table.initColumns( model );
     scrollPane = new JScrollPane( table );
@@ -196,17 +196,36 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     burstTextArea.setLineWrap( true );
     burstTextArea.setWrapStyleWord( true );
     scrollPane = new JScrollPane( burstTextArea );
-    scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Bursts" ), scrollPane
-        .getBorder() ) );
+    scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Bursts" ), scrollPane.getBorder() ) );
     advancedArea.add( scrollPane );
 
-    durationTextArea.setEditable( false );
-    durationTextArea.setLineWrap( true );
-    durationTextArea.setWrapStyleWord( true );
-    scrollPane = new JScrollPane( durationTextArea );
-    scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Durations" ),
-        scrollPane.getBorder() ) );
+    onceDurationTextArea.setEditable( false );
+    onceDurationTextArea.setLineWrap( true );
+    onceDurationTextArea.setWrapStyleWord( true );
+    scrollPane = new JScrollPane( onceDurationTextArea );
+    scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Sent Once" ), scrollPane.getBorder() ) );
     advancedArea.add( scrollPane );  
+
+    repeatDurationTextArea.setEditable( false );
+    repeatDurationTextArea.setLineWrap( true );
+    repeatDurationTextArea.setWrapStyleWord( true );
+    scrollPane = new JScrollPane( repeatDurationTextArea );
+    scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Sent Repeatedly" ), scrollPane.getBorder() ) );
+    advancedArea.add( scrollPane );  
+
+    extraDurationTextArea.setEditable( false );
+    extraDurationTextArea.setLineWrap( true );
+    extraDurationTextArea.setWrapStyleWord( true );
+    scrollPane = new JScrollPane( extraDurationTextArea );
+    scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Sent on Release" ), scrollPane.getBorder() ) );
+    advancedArea.add( scrollPane );  
+
+    //durationTextArea.setEditable( false );
+    //durationTextArea.setLineWrap( true );
+    //durationTextArea.setWrapStyleWord( true );
+    //scrollPane = new JScrollPane( durationTextArea );
+    //scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Raw Durations" ), scrollPane.getBorder() ) );
+    //advancedArea.add( scrollPane );  
     
     Box bottomBox = Box.createVerticalBox();
     contentPane.add( bottomBox, BorderLayout.PAGE_END );
@@ -250,8 +269,12 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       xShift.setSelected( false );
       model.set( this.learnedSignal );
       signalTextArea.setText( null );
+      burstRoundBox.setText( null );
       burstTextArea.setText( null );
-      durationTextArea.setText( null );     
+      //durationTextArea.setText( null ); 
+      onceDurationTextArea.setText( null );
+      repeatDurationTextArea.setText( null );
+      extraDurationTextArea.setText( null );
       return;
     }
     this.learnedSignal = learnedSignal;
@@ -260,6 +283,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     setButton( learnedSignal.getKeyCode(), boundKey, shift, xShift );
     model.set( learnedSignal );
     signalTextArea.setText( learnedSignal.getSignalHex( config.getRemote() ).toString() );
+    burstRoundBox.setText( null );
     setAdvancedAreaTextFields();
   }
   
@@ -282,8 +306,36 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     UnpackLearned ul = this.learnedSignal.getUnpackLearned();
     if ( ul.ok )
     {
-      burstTextArea.setText( toString( ul.bursts, r ) );
-      durationTextArea.setText( toString( ul.durations, r ) );
+      /*
+      String msg = toString( ul.bursts, r ) + "\n---\noneTime = " + ul.oneTime + ", repeat = " + ul.repeat + ", extra = " + ul.extra + "\n---\nParts: ";
+      for ( int p: ul.parts )
+        msg += p + " ";
+      msg += "\n---\nPartTypes: ";
+      for ( boolean pt: ul.partTypes )
+        msg += pt + " ";
+      burstTextArea.setText( msg );
+      */
+      String temp = toString( ul.bursts, r ).replace( " +", "; +" );
+      burstTextArea.setText( temp );
+      burstTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+      burstTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+
+      //temp = toString( ul.durations, r );
+      //durationTextArea.setText( temp );
+      //durationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+      
+      temp = toString( ul.getOneTimeDurations(), r );
+      onceDurationTextArea.setText( temp );
+      onceDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+      onceDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
+      temp = toString( ul.getRepeatDurations(), r );
+      repeatDurationTextArea.setText( temp );
+      repeatDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+      repeatDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
+      temp = toString( ul.getExtraDurations(), r );
+      extraDurationTextArea.setText( temp );
+      extraDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+      extraDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
     }
   }
   
@@ -502,9 +554,18 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
   private JTextArea burstTextArea = new JTextArea( 4, 70 );
 
   /** The duration text area. */
-  private JTextArea durationTextArea = new JTextArea( 8, 70 );
+  private JTextArea onceDurationTextArea = new JTextArea( 8, 70 );
+
+  /** The duration text area. */
+  private JTextArea repeatDurationTextArea = new JTextArea( 8, 70 );
+
+  /** The duration text area. */
+  private JTextArea extraDurationTextArea = new JTextArea( 8, 70 );
+
+  /** The duration text area. */
+  //private JTextArea durationTextArea = new JTextArea( 8, 70 );
   
-  private JTextArea signalTextArea = new JTextArea( 4, 70 );
+  private JTextArea signalTextArea = new JTextArea( 3, 70 );
 
   /** The learned signal. */
   private LearnedSignal learnedSignal = null;

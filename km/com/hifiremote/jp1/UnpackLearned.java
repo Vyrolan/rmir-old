@@ -222,6 +222,32 @@ public class UnpackLearned
     oneTime = total - repeat - extra;
   }
 
+  public int[] getOneTimeDurations()
+  {
+    int[] temp = new int[oneTime];
+    for ( int i = 0; i < oneTime; i++ )
+      temp[i] = durations[i];
+    return temp;
+  }
+  
+  public int[] getRepeatDurations()
+  {
+    int[] temp = new int[repeat];
+    int t = 0;
+    for ( int i = oneTime; i < oneTime + repeat; i++ )
+      temp[t++] = durations[i];
+    return temp;
+  }
+  
+  public int[] getExtraDurations()
+  {
+    int[] temp = new int[extra];
+    int t = 0;
+    for ( int i = oneTime + repeat; i < oneTime + repeat + extra; i++ )
+      temp[t++] = durations[i];
+    return temp;
+  }
+  
   /** The rom bursts. */
   private final int[] romBursts =
   {
