@@ -1,7 +1,6 @@
 package com.hifiremote.jp1;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -189,8 +188,6 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
         setAdvancedAreaTextFields();
       }
     });
-
-    burstRoundBox.addActionListener( this );
     
     burstTextArea.setEditable( false );
     burstTextArea.setLineWrap( true );
@@ -489,10 +486,6 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       {
         b.setShiftBoxes( Button.LEARN_BIND, shift, xShift );
       }
-    }
-    else if ( source == burstRoundBox )
-    {
-      setAdvancedAreaTextFields();
     }
   }
   
