@@ -304,17 +304,16 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     if ( ul.ok )
     {
       /*
-      String msg = toString( ul.bursts, r ) + "\n---\noneTime = " + ul.oneTime + ", repeat = " + ul.repeat + ", extra = " + ul.extra + "\n---\nParts: ";
+      String msg = toString( ul.bursts, r ) + "\noneTime = " + ul.oneTime + ", repeat = " + ul.repeat + ", extra = " + ul.extra + "\nParts: ";
       for ( int p: ul.parts )
         msg += p + " ";
-      msg += "\n---\nPartTypes: ";
+      msg += " ::  PartTypes: ";
       for ( boolean pt: ul.partTypes )
         msg += pt + " ";
-      burstTextArea.setText( msg );
+      String temp = msg;
       */
       String temp = toString( ul.bursts, r ).replace( " +", "; +" );
       burstTextArea.setText( temp );
-      burstTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       burstTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
 
       //temp = toString( ul.durations, r );
