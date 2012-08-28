@@ -229,7 +229,7 @@ public class UnpackLearned
       temp[i] = durations[i];
     return temp;
   }
-  
+
   public int[] getRepeatDurations()
   {
     int[] temp = new int[repeat];
@@ -238,7 +238,7 @@ public class UnpackLearned
       temp[t++] = durations[i];
     return temp;
   }
-  
+
   public int[] getExtraDurations()
   {
     int[] temp = new int[extra];
@@ -247,7 +247,7 @@ public class UnpackLearned
       temp[t++] = durations[i];
     return temp;
   }
-  
+
   /** The rom bursts. */
   private final int[] romBursts =
   {

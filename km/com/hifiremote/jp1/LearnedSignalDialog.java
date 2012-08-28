@@ -204,21 +204,21 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     onceDurationTextArea.setWrapStyleWord( true );
     scrollPane = new JScrollPane( onceDurationTextArea );
     scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Sent Once" ), scrollPane.getBorder() ) );
-    advancedArea.add( scrollPane );  
+    advancedArea.add( scrollPane );
 
     repeatDurationTextArea.setEditable( false );
     repeatDurationTextArea.setLineWrap( true );
     repeatDurationTextArea.setWrapStyleWord( true );
     scrollPane = new JScrollPane( repeatDurationTextArea );
     scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Sent Repeatedly" ), scrollPane.getBorder() ) );
-    advancedArea.add( scrollPane );  
+    advancedArea.add( scrollPane );
 
     extraDurationTextArea.setEditable( false );
     extraDurationTextArea.setLineWrap( true );
     extraDurationTextArea.setWrapStyleWord( true );
     scrollPane = new JScrollPane( extraDurationTextArea );
     scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Sent on Release" ), scrollPane.getBorder() ) );
-    advancedArea.add( scrollPane );  
+    advancedArea.add( scrollPane );
 
     //durationTextArea.setEditable( false );
     //durationTextArea.setLineWrap( true );
@@ -271,7 +271,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       signalTextArea.setText( null );
       burstRoundBox.setText( null );
       burstTextArea.setText( null );
-      //durationTextArea.setText( null ); 
+      //durationTextArea.setText( null );
       onceDurationTextArea.setText( null );
       repeatDurationTextArea.setText( null );
       extraDurationTextArea.setText( null );
@@ -323,7 +323,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       //temp = toString( ul.durations, r );
       //durationTextArea.setText( temp );
       //durationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
-      
+
       temp = toString( ul.getOneTimeDurations(), r );
       onceDurationTextArea.setText( temp );
       onceDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
