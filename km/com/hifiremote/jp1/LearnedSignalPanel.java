@@ -28,6 +28,12 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
     convertToUpgradeButton.setToolTipText( "Convert the selected item to a Device Upgrade." );
     convertToUpgradeButton.setEnabled( false );
     buttonPanel.add( convertToUpgradeButton );
+
+    timingSummaryButton = new JButton( "Timing Summary" );
+    timingSummaryButton.addActionListener( this );
+    timingSummaryButton.setToolTipText( "View the Timing Summary for all of the Learned Signals." );
+    timingSummaryButton.setEnabled( true );
+    buttonPanel.add( timingSummaryButton );
   }
 
   /**
@@ -78,6 +84,8 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
       if ( !signals.isEmpty() )
         convertToDeviceUpgrade( signals.toArray(new LearnedSignal[signals.size()]) );
     }
+    else if ( source == timingSummaryButton )
+      LearnedSignalTimingSummaryDialog.showDialog( SwingUtilities.getRoot( this ), remoteConfig );
     else
       super.actionPerformed( e );
   }
@@ -298,4 +306,5 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
   private RemoteConfiguration remoteConfig = null;
   
   private JButton convertToUpgradeButton = null;
+  private JButton timingSummaryButton = null;
 }
