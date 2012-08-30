@@ -165,8 +165,9 @@ public class BiPhaseAnalyzer
     leadIn[1] = durations[1];
     System.err.println( "BiPhaseAnalyze: LeadIn = " + leadIn[0] + " " + leadIn[1]);
     
-    int[] leadOut = new int[1];
+    int[] leadOut = new int[2];
     leadOut[0] = durations[durations.length -1];
+    leadOut[1] = 0;
     System.err.println( "BiPhaseAnalyze: LeadOut = " + leadOut[0]);
 
     // first we try straight data not bothering the lead in    
@@ -212,6 +213,8 @@ public class BiPhaseAnalyzer
         data[i++] = r[1];
       }
       data[i++] = leadOut[0];
+      if ( leadOut[1] != 0 )
+        data[i++] = leadOut[1];
       return data;
     }
   
@@ -267,7 +270,9 @@ public class BiPhaseAnalyzer
       System.err.println( "Final pair is ( " + p[0] + " " + ( p[1] != 0 ? p[1] : " " ) + " )" );
     
     // try to finish last pair from the lead out
-    if ( p != null && p[0] > 0 && p[0] < -leadOut[0] )
+    // we only do this if we ended with a positive pulse
+    // and we have an odd number of pairs already
+    if ( p != null && p[0] > 0 && p[0] < -leadOut[0] && results.size()%2 == 1 )
     {
       System.err.println("Using leadout to finish final pair...");
       p[1] = -p[0];
@@ -276,7 +281,15 @@ public class BiPhaseAnalyzer
       System.err.println( "...Adding pair " + p[0] + " " + p[1] );
       p = null;
     }
-    // failed...so error condition
+    // if we had an even number of pairs or leadout was not big enough to finish a pair, 
+    // we assume our final positive is part of leadout
+    else if ( p!= null && p[0] > 0 )
+    {
+      leadOut[1] = leadOut[0];
+      leadOut[0] = p[0];
+      p = null;
+    }
+    // otherwise error condition
     else if ( p != null )
       return null;
 
