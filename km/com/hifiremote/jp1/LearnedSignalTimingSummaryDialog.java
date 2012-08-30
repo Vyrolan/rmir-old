@@ -91,27 +91,6 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
     buttonPanel.add( okButton );
   }
   
-  private static String durationsToString( int[] data )
-  {
-    StringBuilder str = new StringBuilder();
-    if ( data != null && data.length != 0 )
-    {
-      for ( int i = 0; i < data.length; i++ )
-      {
-        // Format changed to allow pasting to IRScope as timing list
-        if ( i > 0 /* && ( i & 1 ) == 0 */ )
-          str.append( ' ' );
-
-        str.append( ( i & 1 ) == 0 ? "+" : "-" );
-        str.append( data[i] );
-      }
-    }
-    if ( str.length() == 0 )
-      return "** No signal **";
-
-    return str.toString();
-  }
-
   private boolean appendDurations( StringBuilder summary, String durations, int leadOutTime, boolean indent )
   {
     String leadOut = "-" + leadOutTime + " ";
@@ -177,9 +156,9 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         boolean indent = false;
         if ( ul.oneTime > 0 && ul.extra > 0 && ul.repeat == 0 )
         {
-          String temp = durationsToString( ul.getOneTimeDurations( r ) );
+          String temp = UnpackLearned.durationsToString( ul.getOneTimeDurations( r, true ), "" );
           temp += " ";
-          temp += durationsToString( ul.getExtraDurations( r ) );
+          temp += UnpackLearned.durationsToString( ul.getExtraDurations( r, true ), "" );
           summary.append( "Once:\t" );
           appendDurations( summary, temp, leadOutTime, indent );
         }
@@ -189,7 +168,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
           {
             indent = true;
             summary.append( "Once:\t" );
-            appendDurations( summary, durationsToString( ul.getOneTimeDurations( r ) ), leadOutTime, indent );
+            appendDurations( summary, UnpackLearned.durationsToString( ul.getOneTimeDurations( r, true ), "" ), leadOutTime, indent );
           }
           if ( ul.repeat > 0 )
           {
@@ -198,7 +177,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
             else
               indent = true;
             summary.append( "Repeat:\t" );
-            appendDurations( summary, durationsToString( ul.getRepeatDurations( r ) ), leadOutTime, indent );
+            appendDurations( summary, UnpackLearned.durationsToString( ul.getRepeatDurations( r, true ), "" ), leadOutTime, indent );
           }
           if ( ul.extra > 0 )
           {
@@ -207,7 +186,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
             else
               indent = true;
             summary.append( "Extra:\t" );
-            appendDurations( summary, durationsToString( ul.getExtraDurations( r ) ), leadOutTime, indent );
+            appendDurations( summary, UnpackLearned.durationsToString( ul.getExtraDurations( r, true ), "" ), leadOutTime, indent );
           }
         }
       }

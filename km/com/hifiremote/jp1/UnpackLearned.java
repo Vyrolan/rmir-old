@@ -60,29 +60,41 @@ public class UnpackLearned
       loadDurations( hex, offset );
     }
   }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see java.lang.Object#toString()
-   */
+  
   public String toString()
   {
-    int[] charPos = new int[ bursts.length ];
+    return durationsToString( bursts, "" );
+  }
 
+  public static String durationsToString( int[] data, String sep )
+  {
     StringBuilder str = new StringBuilder();
-    if ( bursts != null && bursts.length != 0 )
+    if ( data != null && data.length != 0 )
     {
-      for ( int i = 0; i < bursts.length; i++ )
+      boolean isSigned = false;
+      for ( int d: data )
+        if ( d < 0 )
+        {
+          isSigned = true;
+          break;
+        }        
+      
+      for ( int i = 0; i < data.length; i++ )
       {
-        if ( ( i > 0 ) && ( ( i & 1 ) == 0 ) )
-          str.append( " " );
-        charPos[ i ] = str.length();
-        str.append( ( ( i & 1 ) == 0 ? +1 : -1 ) * bursts[ i ] );
+        if ( i > 0 )
+          str.append( ' ' );
+        if ( !isSigned )
+          str.append( ( i & 1 ) == 0 ? "+" : "-" );
+        else if ( data[i] > 0 )
+            str.append( '+' );
+        str.append( data[i] );
+        if ( i > 0 && ( i % 2 ) == 1 )
+          str.append( sep );
       }
     }
     if ( str.length() == 0 )
       return "** No signal **";
+
     return str.toString();
   }
 
@@ -241,66 +253,27 @@ public class UnpackLearned
     return temp;
   }
 
-  public int[] getDurations()
+  public int[] getDurations( int r, boolean signed )
   {
-    return getDurations(1);
-  }
-  public int[] getDurations(int r)
-  {
-    int[] temp = new int[durations.length];
-    for ( int i = 0; i < durations.length; i++ )
-      temp[i] = roundTo( durations[i], r );
-    return temp;
-  }
-
-  public int[] getOneTimeDurations()
-  {
-    return getOneTimeDurations(1, false);
-  }
-  public int[] getOneTimeDurations(int r)
-  {
-    return getOneTimeDurations(r, false);
+    return getDurations( 0, durations.length, r, signed );
   }
   public int[] getOneTimeDurations(int r, boolean signed)
   {
-    int[] temp = new int[oneTime];
-    for ( int i = 0; i < oneTime; i++ )
-      temp[i] = ( signed && i % 2 == 1 ? -1 : 1 ) * roundTo( durations[i], r );
-    return temp;
-  }
-
-  public int[] getRepeatDurations()
-  {
-    return getRepeatDurations(1, false);
-  }
-  public int[] getRepeatDurations(int r)
-  {
-    return getRepeatDurations(r, false);
+    return getDurations( 0, oneTime, r, signed );
   }
   public int[] getRepeatDurations(int r, boolean signed)
   {
-    int[] temp = new int[repeat];
-    int t = 0;
-    for ( int i = oneTime; i < oneTime + repeat; i++ )
-    {
-      temp[t++] = ( signed && i % 2 == 1 ? -1 : 1 ) * roundTo( durations[i], r );
-    }
-    return temp;
-  }
-
-  public int[] getExtraDurations()
-  {
-    return getExtraDurations(1, false);
-  }
-  public int[] getExtraDurations(int r)
-  {
-    return getExtraDurations(r, false);
+    return getDurations( oneTime, oneTime + repeat, r, signed );
   }
   public int[] getExtraDurations(int r, boolean signed)
   {
-    int[] temp = new int[extra];
+    return getDurations( oneTime + repeat, oneTime + repeat + extra, r, signed );
+  }
+  private int[] getDurations( int start, int end, int r, boolean signed )
+  {
+    int[] temp = new int[end - start];
     int t = 0;
-    for ( int i = oneTime + repeat; i < oneTime + repeat + extra; i++ )
+    for ( int i = start; i < end; i++ )
       temp[t++] = ( signed && i % 2 == 1 ? -1 : 1 ) * roundTo( durations[i], r );
     return temp;
   }

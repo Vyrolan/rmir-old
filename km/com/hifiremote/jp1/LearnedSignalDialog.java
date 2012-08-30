@@ -79,34 +79,6 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
   }
 
   /**
-   * To string.
-   * 
-   * @param data
-   *          the data
-   * @return the string
-   */
-  private static String toString( int[] data )
-  {
-    StringBuilder str = new StringBuilder();
-    if ( data != null && data.length != 0 )
-    {
-      for ( int i = 0; i < data.length; i++ )
-      {
-        // Format changed to allow pasting to IRScope as timing list
-        if ( i > 0 /* && ( i & 1 ) == 0 */ )
-          str.append( ' ' );
-
-        str.append( ( i & 1 ) == 0 ? "+" : "-" );
-        str.append( data[i] );
-      }
-    }
-    if ( str.length() == 0 )
-      return "** No signal **";
-
-    return str.toString();
-  }
-
-  /**
    * Instantiates a new learned signal dialog.
    * 
    * @param c
@@ -305,6 +277,10 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
   
   private void setAdvancedAreaTextFields( boolean newSignal )
   {
+    if ( advancedAreaUpdating )
+      return;
+    advancedAreaUpdating = true;
+
     UnpackLearned ul = this.learnedSignal.getUnpackLearned();
 
     int r = 1;
@@ -333,30 +309,22 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       else
       {
         biPhase = null;
-        //biPhaseBox.setSelectedItem( "Off (Show Raw)" );
-        //biPhaseBox.setSelectedIndex( 1 );
         biPhaseLabel.setText( "Bi-phase encoding not detected." );
       }
     }
-    else if ( biPhaseBox.getSelectedIndex() == 0 )
+    else if ( biPhaseBox.getSelectedItem().toString().equals( "Auto Detect" ) )
     {      
       biPhase = new BiPhaseAnalyzer( ul, r );
       if ( biPhase.getIsBiPhase() )
-      {
         biPhaseLabel.setText( "Bi-Phase encoding detected with unit size " + biPhase.getUnit() + "." );
-      }
       else
       {
         biPhase = null;
-        //biPhaseBox.setSelectedItem( "Off (Show Raw)" );
-        //biPhaseBox.setSelectedIndex( 1 );
         biPhaseLabel.setText( "Bi-phase encoding not detected." );
       }
     }
     else
     {
-      //biPhaseBox.setSelectedItem( "Off (Show Raw)" );
-      //biPhaseBox.setSelectedIndex( 1 );
       biPhaseLabel.setText( "" );
     }
     
@@ -365,7 +333,8 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     
     if ( ul.ok )
     {
-      String temp = toString( ul.getBursts(r) );
+      String sep = ( biPhase == null ? "" : ";" );
+      String temp = UnpackLearned.durationsToString( ul.getBursts( r ), sep );
       burstTextArea.setText( temp );
       burstTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
 
@@ -373,21 +342,23 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       //durationTextArea.setText( temp );
       //durationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
 
-      temp = ( biPhase == null ? toString( ul.getOneTimeDurations(r) ) : biPhase.getOneTimeDurationsString() );
+      temp = UnpackLearned.durationsToString( ( biPhase == null ? ul.getOneTimeDurations( r, true ) : biPhase.getOneTimeDurations() ), sep );
       onceDurationTextArea.setText( temp );
       onceDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       onceDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-      temp = ( biPhase == null ? toString( ul.getRepeatDurations(r) ) : biPhase.getRepeatDurationsString() );
+      temp = UnpackLearned.durationsToString( ( biPhase == null ? ul.getRepeatDurations( r, true ) : biPhase.getRepeatDurations() ), sep );
       repeatDurationTextArea.setText( temp );
       repeatDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       repeatDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-      temp = ( biPhase == null ? toString( ul.getExtraDurations(r) ) : biPhase.getExtraDurationsString() );
+      temp = UnpackLearned.durationsToString( ( biPhase == null ? ul.getExtraDurations( r, true ) : biPhase.getExtraDurations() ), sep );
       extraDurationTextArea.setText( temp );
       extraDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       extraDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
       
       pack();       
     }
+
+    advancedAreaUpdating = false;
   }
   
   private void setRemoteConfiguration( RemoteConfiguration config )
@@ -595,6 +566,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
   
   private Box advancedArea = null;
   
+  private boolean advancedAreaUpdating = false;
   private JTextField burstRoundBox = new JTextField();
   private JComboBox biPhaseBox = new JComboBox();
   private JLabel biPhaseLabel = new JLabel();
