@@ -76,6 +76,22 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
     JPanel buttonPanel = new JPanel( new FlowLayout( FlowLayout.RIGHT ) );
     bottomBox.add( buttonPanel );
     
+    buttonPanel.add( new JLabel( " Round To: " ) );
+    buttonPanel.add( burstRoundBox );
+    buttonPanel.add( new JLabel( "          ") );
+    burstRoundBox.setColumns( 8 );
+    burstRoundBox.getDocument().addDocumentListener(new DocumentListener() {
+      public void changedUpdate(DocumentEvent e) {
+        generateSummary();
+      }
+      public void removeUpdate(DocumentEvent e) {
+        generateSummary();
+      }
+      public void insertUpdate(DocumentEvent e) {
+        generateSummary();
+      }
+    });
+    
     okButton.addActionListener( this );
     okButton.setToolTipText( "Close the Summary" );
     buttonPanel.add( okButton );
@@ -107,6 +123,20 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
 
   private void generateSummary()
   {
+    int r = 1;
+    String roundText = burstRoundBox.getText();
+    if ( roundText != null && !roundText.isEmpty() )
+    {
+      try
+      {
+        r = Integer.parseInt( roundText );
+      }
+      catch (NumberFormatException e)
+      {
+        r = 1;
+      }
+    }
+    
     List<LearnedSignal> signals = this.config.getLearnedSignals();
     Remote remote = this.config.getRemote();
     
@@ -137,7 +167,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
           else
             indent = true;
           summary.append( "Once:\t" );
-          summary.append( durationsToString( ul.getOneTimeDurations(), 1 ) );
+          summary.append( durationsToString( ul.getOneTimeDurations(), r ) );
         }
         if ( ul.repeat > 0 )
         {
@@ -146,7 +176,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
           else
             indent = true;
           summary.append( "Repeat:\t" );
-          summary.append( durationsToString( ul.getRepeatDurations(), 1 ) );
+          summary.append( durationsToString( ul.getRepeatDurations(), r ) );
         }
         if ( ul.extra > 0 )
         {
@@ -155,7 +185,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
           else
             indent = true;
           summary.append( "Extra:\t" );
-          summary.append( durationsToString( ul.getExtraDurations(), 1 ) );
+          summary.append( durationsToString( ul.getExtraDurations(), r ) );
         }
       }
       else
@@ -183,6 +213,8 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
   
   private RemoteConfiguration config = null;
 
+  private JTextField burstRoundBox = new JTextField();
+  
   /** The ok button. */
   private JButton okButton = new JButton( "OK" );
 
@@ -190,4 +222,5 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
 
   /** The dialog. */
   private static LearnedSignalTimingSummaryDialog dialog = null;
+    
 }
