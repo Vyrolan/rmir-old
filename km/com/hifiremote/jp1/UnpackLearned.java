@@ -200,7 +200,7 @@ public class UnpackLearned
         {
           durations[ total++ ] = bursts[ x ];
           durations[ total++ ] = bursts[ x + 1 ];
-          System.err.println( "Durations[ " + (total-2) + "..." + (total-1) + " ] = " + durations[total-2] + " " + durations[total-1] );
+          //System.err.println( "Durations[ " + (total-2) + "..." + (total-1) + " ] = " + durations[total-2] + " " + durations[total-1] );
           
         }
       }
@@ -226,7 +226,7 @@ public class UnpackLearned
 
   private int roundTo(int value, int r)
   {
-    return (int) Math.round( (double)value / (double)r ) * r;
+    return ((int) Math.round( (double)value / (double)r )) * r;
   }
   
   public int[] getBursts()
@@ -255,41 +255,53 @@ public class UnpackLearned
 
   public int[] getOneTimeDurations()
   {
-    return getOneTimeDurations(1);
+    return getOneTimeDurations(1, false);
   }
   public int[] getOneTimeDurations(int r)
   {
+    return getOneTimeDurations(r, false);
+  }
+  public int[] getOneTimeDurations(int r, boolean signed)
+  {
     int[] temp = new int[oneTime];
     for ( int i = 0; i < oneTime; i++ )
-      temp[i] = roundTo( durations[i], r );
+      temp[i] = ( signed && i % 2 == 1 ? -1 : 1 ) * roundTo( durations[i], r );
     return temp;
   }
 
   public int[] getRepeatDurations()
   {
-    return getRepeatDurations(1);
+    return getRepeatDurations(1, false);
   }
   public int[] getRepeatDurations(int r)
+  {
+    return getRepeatDurations(r, false);
+  }
+  public int[] getRepeatDurations(int r, boolean signed)
   {
     int[] temp = new int[repeat];
     int t = 0;
     for ( int i = oneTime; i < oneTime + repeat; i++ )
     {
-      temp[t++] = roundTo( durations[i], r );
+      temp[t++] = ( signed && i % 2 == 1 ? -1 : 1 ) * roundTo( durations[i], r );
     }
     return temp;
   }
 
   public int[] getExtraDurations()
   {
-    return getExtraDurations(1);
+    return getExtraDurations(1, false);
   }
   public int[] getExtraDurations(int r)
+  {
+    return getExtraDurations(r, false);
+  }
+  public int[] getExtraDurations(int r, boolean signed)
   {
     int[] temp = new int[extra];
     int t = 0;
     for ( int i = oneTime + repeat; i < oneTime + repeat + extra; i++ )
-      temp[t++] = roundTo( durations[i], r );
+      temp[t++] = ( signed && i % 2 == 1 ? -1 : 1 ) * roundTo( durations[i], r );
     return temp;
   }
 

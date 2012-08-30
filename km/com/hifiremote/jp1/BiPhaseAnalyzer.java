@@ -8,11 +8,16 @@ public class BiPhaseAnalyzer
   private int RoundTo = 1;
   private UnpackLearned Data = null;
   private int Unit = 0;
+  private boolean IsBiPhase = false;
   
   private int[] oneTimeDurations;
   private int[] repeatDurations;
   private int[] extraDurations;
   
+  public int getRoundTo()
+  {
+    return RoundTo;
+  }
   public int getUnit()
   {
     return Unit;
@@ -28,6 +33,18 @@ public class BiPhaseAnalyzer
   public int[] getExtraDurations()
   {
     return extraDurations;
+  }
+  public String getOneTimeDurationsString()
+  {
+    return toString( oneTimeDurations );
+  }
+  public String getRepeatDurationsString()
+  {
+    return toString( repeatDurations );
+  }
+  public String getExtraDurationsString()
+  {
+    return toString( extraDurations );
   }
 
   public BiPhaseAnalyzer( UnpackLearned data )
@@ -75,7 +92,7 @@ public class BiPhaseAnalyzer
   
   public boolean getIsBiPhase()
   {
-    return (Unit > 0 && ( oneTimeDurations != null || repeatDurations != null || extraDurations != null ));
+    return (Unit > 0 && IsBiPhase);
   }
   
   private void AutoAnalyze()
@@ -103,15 +120,36 @@ public class BiPhaseAnalyzer
       Unit = CheckForBiPhase();
     }
 
-    if ( Unit > 0 )
-      Analyze();
+    Analyze();
   }
   
   private void Analyze()
   {
-    oneTimeDurations = AnalyzeDurations( Data.getOneTimeDurations( RoundTo ) );
-    repeatDurations = AnalyzeDurations( Data.getRepeatDurations( RoundTo ) );
-    extraDurations = AnalyzeDurations( Data.getExtraDurations( RoundTo ) );
+    
+    if ( Unit == 0 )
+      return;
+    int[] temp = Data.getOneTimeDurations( RoundTo, true );
+    oneTimeDurations = AnalyzeDurations( temp );
+    if ( temp != null && temp.length > 0 && oneTimeDurations == null )
+    {
+      IsBiPhase = false;
+      return;
+    }
+    temp = Data.getRepeatDurations( RoundTo, true );
+    repeatDurations = AnalyzeDurations( temp );
+    if ( temp != null && temp.length > 0 && repeatDurations == null )
+    {
+      IsBiPhase = false;
+      return;
+    }
+    temp = Data.getExtraDurations( RoundTo, true );
+    extraDurations = AnalyzeDurations( temp );
+    if ( temp != null && temp.length > 0 && extraDurations == null )
+    {
+      IsBiPhase = false;
+      return;
+    }
+    IsBiPhase = true;
   }
   
   private int[] AnalyzeDurations( int[] durations )
@@ -164,13 +202,16 @@ public class BiPhaseAnalyzer
     
     if ( biPhase != null )
     {
-      int[] data = new int[biPhase.size() * 2];
+      int[] data = new int[biPhase.size() * 2 + 3];
       int i = 0;
+      data[i++] = leadIn[0];
+      data[i++] = leadIn[1];
       for ( int[] r: biPhase )
       {
         data[i++] = r[0];
         data[i++] = r[1];
       }
+      data[i++] = leadOut[0];
       return data;
     }
   
@@ -179,7 +220,10 @@ public class BiPhaseAnalyzer
   
   private ArrayList<int[]> AnalyzeData(int[] durations, int[] leadOut)
   {
-    System.err.println( "BiPhaseAnalyze: Analyzing data set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )");
+    if ( durations.length > 3 )
+      System.err.println( "BiPhaseAnalyze: Analyzing data set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )");
+    else
+      System.err.println( "BiPhaseAnalyze: Analyzing data set of " + durations.length + " durations...");      
     ArrayList<int[]> results = new ArrayList<int[]>();
 
     int[] p = null;
@@ -218,13 +262,18 @@ public class BiPhaseAnalyzer
       }
     }
     
+    System.err.println("Found " + results.size() + " pairs so far...");
+    if ( p != null )
+      System.err.println( "Final pair is ( " + p[0] + " " + ( p[1] != 0 ? p[1] : " " ) + " )" );
+    
     // try to finish last pair from the lead out
-    if ( p != null && p[0] > 0 && p[0] > -leadOut[0] )
+    if ( p != null && p[0] > 0 && p[0] < -leadOut[0] )
     {
+      System.err.println("Using leadout to finish final pair...");
       p[1] = -p[0];
       leadOut[0] += p[0];
       results.add(p);
-      System.err.println( "...Adding pair with leadout " + p[0] + " " + p[1] );
+      System.err.println( "...Adding pair " + p[0] + " " + p[1] );
       p = null;
     }
     // failed...so error condition
@@ -234,4 +283,26 @@ public class BiPhaseAnalyzer
     // return the results
     return results;
   }
+  
+  public String toString( int[] bursts )
+  {
+    StringBuilder str = new StringBuilder();
+    if ( bursts != null && bursts.length != 0 )
+    {
+      for ( int i = 0; i < bursts.length; i++ )
+      {
+        if ( i > 0 )
+          str.append( " " );
+        if ( bursts[i] > 0 )
+          str.append( "+" );
+        str.append( bursts[i] );
+        if ( i > 0 && i%2 == 1 )
+          str.append(";");
+      }
+    }
+    if ( str.length() == 0 )
+      return "** No signal **";
+    return str.toString();
+  }
+  
 }

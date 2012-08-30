@@ -189,7 +189,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
         @Override
         public void itemStateChanged(ItemEvent e) {
           if ( e.getStateChange() == ItemEvent.SELECTED )
-            setAdvancedAreaTextFields( e.getItem().toString() == "Auto Detect" );
+            setAdvancedAreaTextFields( false );
         }
     });
     
@@ -299,6 +299,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     model.set( learnedSignal );
     signalTextArea.setText( learnedSignal.getSignalHex( config.getRemote() ).toString() );
     burstRoundBox.setText( null );
+    biPhaseBox.setSelectedIndex( 0 );
     setAdvancedAreaTextFields( true );
   }
   
@@ -306,45 +307,61 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
   {
     UnpackLearned ul = this.learnedSignal.getUnpackLearned();
 
+    int r = 1;
+    String roundText = burstRoundBox.getText();
+    if ( roundText != null && !roundText.isEmpty() )
+    {
+      try
+      {
+        r = Integer.parseInt( roundText );
+      }
+      catch (NumberFormatException e)
+      {
+        r = 1;
+      }
+    }
+    
     BiPhaseAnalyzer biPhase = null;
     if ( newSignal )
     {
       biPhase = new BiPhaseAnalyzer( ul );
       if ( biPhase.getIsBiPhase() )
       {
-        burstRoundBox.setText( ((Integer)biPhase.getUnit()).toString() );
-        biPhaseLabel.setText( "Bi-Phase encoding detected...rounding set automatically." );
+        burstRoundBox.setText( ((Integer)biPhase.getRoundTo()).toString() );
+        biPhaseLabel.setText( "Bi-Phase encoding detected with unit size " + biPhase.getUnit() + "...rounding set automatically." );
       }
       else
       {
+        biPhase = null;
         //biPhaseBox.setSelectedItem( "Off (Show Raw)" );
-        biPhaseBox.setSelectedIndex( 1 );
-        biPhaseLabel.setText( "" );
+        //biPhaseBox.setSelectedIndex( 1 );
+        biPhaseLabel.setText( "Bi-phase encoding not detected." );
+      }
+    }
+    else if ( biPhaseBox.getSelectedIndex() == 0 )
+    {      
+      biPhase = new BiPhaseAnalyzer( ul, r );
+      if ( biPhase.getIsBiPhase() )
+      {
+        biPhaseLabel.setText( "Bi-Phase encoding detected with unit size " + biPhase.getUnit() + "." );
+      }
+      else
+      {
+        biPhase = null;
+        //biPhaseBox.setSelectedItem( "Off (Show Raw)" );
+        //biPhaseBox.setSelectedIndex( 1 );
+        biPhaseLabel.setText( "Bi-phase encoding not detected." );
       }
     }
     else
     {
       //biPhaseBox.setSelectedItem( "Off (Show Raw)" );
-      biPhaseBox.setSelectedIndex( 1 );
+      //biPhaseBox.setSelectedIndex( 1 );
       biPhaseLabel.setText( "" );
     }
     
-    int r = ( biPhase == null ? 1 : biPhase.getUnit() );
-    if ( biPhase == null )
-    {
-      String roundText = burstRoundBox.getText();
-      if ( roundText != null && !roundText.isEmpty() )
-      {
-        try
-        {
-          r = Integer.parseInt( roundText );
-        }
-        catch (NumberFormatException e)
-        {
-          r = 1;
-        }
-      }
-    }
+    if ( biPhase != null )
+      r = biPhase.getRoundTo();
     
     if ( ul.ok )
     {
@@ -356,18 +373,20 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       //durationTextArea.setText( temp );
       //durationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
 
-      temp = toString( ( biPhase == null ? ul.getOneTimeDurations(r) : biPhase.getOneTimeDurations() ) );
+      temp = ( biPhase == null ? toString( ul.getOneTimeDurations(r) ) : biPhase.getOneTimeDurationsString() );
       onceDurationTextArea.setText( temp );
       onceDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       onceDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-      temp = toString( ( biPhase == null ? ul.getRepeatDurations(r) : biPhase.getRepeatDurations() ) );
+      temp = ( biPhase == null ? toString( ul.getRepeatDurations(r) ) : biPhase.getRepeatDurationsString() );
       repeatDurationTextArea.setText( temp );
       repeatDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       repeatDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-      temp = toString( ( biPhase == null ? ul.getExtraDurations(r) : biPhase.getExtraDurations() ) );
+      temp = ( biPhase == null ? toString( ul.getExtraDurations(r) ) : biPhase.getExtraDurationsString() );
       extraDurationTextArea.setText( temp );
       extraDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       extraDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
+      
+      pack();       
     }
   }
   
