@@ -60,7 +60,7 @@ public class UnpackLearned
       loadDurations( hex, offset );
     }
   }
-  
+
   public String toString()
   {
     return durationsToString( bursts, "" );
@@ -77,8 +77,8 @@ public class UnpackLearned
         {
           isSigned = true;
           break;
-        }        
-      
+        }
+
       for ( int i = 0; i < data.length; i++ )
       {
         if ( i > 0 )
@@ -255,7 +255,7 @@ public class UnpackLearned
 
   public int[] getDurations( int r, boolean signed )
   {
-    return getDurations( 0, durations.length, r, signed );
+    return ( durations == null ? new int[0] : getDurations( 0, durations.length, r, signed ) );
   }
   public int[] getOneTimeDurations(int r, boolean signed)
   {
