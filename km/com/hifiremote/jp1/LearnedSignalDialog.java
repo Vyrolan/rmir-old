@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -83,7 +85,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
    *          the data
    * @return the string
    */
-  private static String toString( int[] data, int r )
+  private static String toString( int[] data )
   {
     StringBuilder str = new StringBuilder();
     if ( data != null && data.length != 0 )
@@ -95,10 +97,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
           str.append( ' ' );
 
         str.append( ( i & 1 ) == 0 ? "+" : "-" );
-        if (r > 1)
-          str.append( Math.round( (double)data[i] / (double)r ) * r );
-        else
-          str.append( data[i] );
+        str.append( data[i] );
       }
     }
     if ( str.length() == 0 )
@@ -171,21 +170,40 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     advancedArea = Box.createVerticalBox();
     advancedArea.setBorder( BorderFactory.createTitledBorder( "Advanced Details" ) );
 
+    // add panel with round/biphase controls
     panel = new JPanel( new FlowLayout( FlowLayout.LEFT, 1, 1 ) );
     panel.add( new JLabel( " Round To: " ) );
     panel.add( burstRoundBox );
-    panel.add( new JLabel( "   (Rounding is for display only. Signal data is not changed.)") );
+    panel.add( new JLabel( "     Bi-Phase: ") );
+    panel.add( biPhaseBox );
+    panel.add( new JLabel( "  ") );
+    panel.add( biPhaseLabel );
     advancedArea.add( panel );
+    
+    // setup bi-phase combo box and label
+    biPhaseLabel.setText( "..." );
+    //biPhaseBox.setModel( new DefaultComboBoxModel( "Auto Detect,Off (Show Raw),Force Even,Force Odd".split( "," ) ) );
+    biPhaseBox.setModel( new DefaultComboBoxModel( "Auto Detect,Off (Show Raw)".split( "," ) ) );
+    biPhaseBox.addActionListener( this );
+    biPhaseBox.addItemListener(new ItemListener() {
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          if ( e.getStateChange() == ItemEvent.SELECTED )
+            setAdvancedAreaTextFields( e.getItem().toString() == "Auto Detect" );
+        }
+    });
+    
+    // setup round to box
     burstRoundBox.setColumns( 8 );
     burstRoundBox.getDocument().addDocumentListener(new DocumentListener() {
       public void changedUpdate(DocumentEvent e) {
-        setAdvancedAreaTextFields();
+        setAdvancedAreaTextFields( false );
       }
       public void removeUpdate(DocumentEvent e) {
-        setAdvancedAreaTextFields();
+        setAdvancedAreaTextFields( false );
       }
       public void insertUpdate(DocumentEvent e) {
-        setAdvancedAreaTextFields();
+        setAdvancedAreaTextFields( false );
       }
     });
     
@@ -281,38 +299,56 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     model.set( learnedSignal );
     signalTextArea.setText( learnedSignal.getSignalHex( config.getRemote() ).toString() );
     burstRoundBox.setText( null );
-    setAdvancedAreaTextFields();
+    setAdvancedAreaTextFields( true );
   }
   
-  private void setAdvancedAreaTextFields()
+  private void setAdvancedAreaTextFields( boolean newSignal )
   {
-    int r = 1;
-    String roundText = burstRoundBox.getText();
-    if ( roundText != null && !roundText.isEmpty() )
+    UnpackLearned ul = this.learnedSignal.getUnpackLearned();
+
+    BiPhaseAnalyzer biPhase = null;
+    if ( newSignal )
     {
-      try
+      biPhase = new BiPhaseAnalyzer( ul );
+      if ( biPhase.getIsBiPhase() )
       {
-        r = Integer.parseInt( roundText );
+        burstRoundBox.setText( ((Integer)biPhase.getUnit()).toString() );
+        biPhaseLabel.setText( "Bi-Phase encoding detected...rounding set automatically." );
       }
-      catch (NumberFormatException e)
+      else
       {
-        r = 1;
+        //biPhaseBox.setSelectedItem( "Off (Show Raw)" );
+        biPhaseBox.setSelectedIndex( 1 );
+        biPhaseLabel.setText( "" );
+      }
+    }
+    else
+    {
+      //biPhaseBox.setSelectedItem( "Off (Show Raw)" );
+      biPhaseBox.setSelectedIndex( 1 );
+      biPhaseLabel.setText( "" );
+    }
+    
+    int r = ( biPhase == null ? 1 : biPhase.getUnit() );
+    if ( biPhase == null )
+    {
+      String roundText = burstRoundBox.getText();
+      if ( roundText != null && !roundText.isEmpty() )
+      {
+        try
+        {
+          r = Integer.parseInt( roundText );
+        }
+        catch (NumberFormatException e)
+        {
+          r = 1;
+        }
       }
     }
     
-    UnpackLearned ul = this.learnedSignal.getUnpackLearned();
     if ( ul.ok )
     {
-      /*
-      String msg = toString( ul.bursts, r ) + "\noneTime = " + ul.oneTime + ", repeat = " + ul.repeat + ", extra = " + ul.extra + "\nParts: ";
-      for ( int p: ul.parts )
-        msg += p + " ";
-      msg += " ::  PartTypes: ";
-      for ( boolean pt: ul.partTypes )
-        msg += pt + " ";
-      String temp = msg;
-      */
-      String temp = toString( ul.bursts, r ).replace( " +", "; +" );
+      String temp = toString( ul.getBursts(r) );
       burstTextArea.setText( temp );
       burstTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
 
@@ -320,15 +356,15 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       //durationTextArea.setText( temp );
       //durationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
 
-      temp = toString( ul.getOneTimeDurations(), r );
+      temp = toString( ( biPhase == null ? ul.getOneTimeDurations(r) : biPhase.getOneTimeDurations() ) );
       onceDurationTextArea.setText( temp );
       onceDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       onceDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-      temp = toString( ul.getRepeatDurations(), r );
+      temp = toString( ( biPhase == null ? ul.getRepeatDurations(r) : biPhase.getRepeatDurations() ) );
       repeatDurationTextArea.setText( temp );
       repeatDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       repeatDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-      temp = toString( ul.getExtraDurations(), r );
+      temp = toString( ( biPhase == null ? ul.getExtraDurations(r) : biPhase.getExtraDurations() ) );
       extraDurationTextArea.setText( temp );
       extraDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
       extraDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
@@ -438,7 +474,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     
     if ( source == applyButton && ul.ok )
     {
-      setAdvancedAreaTextFields();
+      setAdvancedAreaTextFields( true );
       model.set( learnedSignal );
       applyButton.setEnabled( false );
     }
@@ -541,6 +577,8 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
   private Box advancedArea = null;
   
   private JTextField burstRoundBox = new JTextField();
+  private JComboBox biPhaseBox = new JComboBox();
+  private JLabel biPhaseLabel = new JLabel();
 
   /** The burst text area. */
   private JTextArea burstTextArea = new JTextArea( 4, 70 );

@@ -200,6 +200,8 @@ public class UnpackLearned
         {
           durations[ total++ ] = bursts[ x ];
           durations[ total++ ] = bursts[ x + 1 ];
+          System.err.println( "Durations[ " + (total-2) + "..." + (total-1) + " ] = " + durations[total-2] + " " + durations[total-1] );
+          
         }
       }
       ndx += ( count + 1 ) >> 1;
@@ -222,29 +224,72 @@ public class UnpackLearned
     oneTime = total - repeat - extra;
   }
 
+  private int roundTo(int value, int r)
+  {
+    return (int) Math.round( (double)value / (double)r ) * r;
+  }
+  
+  public int[] getBursts()
+  {
+    return getBursts(1);
+  }
+  public int[] getBursts(int r)
+  {
+    int[] temp = new int[bursts.length];
+    for ( int i = 0; i < bursts.length; i++ )
+      temp[i] = roundTo( bursts[i], r );
+    return temp;
+  }
+
+  public int[] getDurations()
+  {
+    return getDurations(1);
+  }
+  public int[] getDurations(int r)
+  {
+    int[] temp = new int[durations.length];
+    for ( int i = 0; i < durations.length; i++ )
+      temp[i] = roundTo( durations[i], r );
+    return temp;
+  }
+
   public int[] getOneTimeDurations()
+  {
+    return getOneTimeDurations(1);
+  }
+  public int[] getOneTimeDurations(int r)
   {
     int[] temp = new int[oneTime];
     for ( int i = 0; i < oneTime; i++ )
-      temp[i] = durations[i];
+      temp[i] = roundTo( durations[i], r );
     return temp;
   }
 
   public int[] getRepeatDurations()
   {
+    return getRepeatDurations(1);
+  }
+  public int[] getRepeatDurations(int r)
+  {
     int[] temp = new int[repeat];
     int t = 0;
     for ( int i = oneTime; i < oneTime + repeat; i++ )
-      temp[t++] = durations[i];
+    {
+      temp[t++] = roundTo( durations[i], r );
+    }
     return temp;
   }
 
   public int[] getExtraDurations()
   {
+    return getExtraDurations(1);
+  }
+  public int[] getExtraDurations(int r)
+  {
     int[] temp = new int[extra];
     int t = 0;
     for ( int i = oneTime + repeat; i < oneTime + repeat + extra; i++ )
-      temp[t++] = durations[i];
+      temp[t++] = roundTo( durations[i], r );
     return temp;
   }
 
