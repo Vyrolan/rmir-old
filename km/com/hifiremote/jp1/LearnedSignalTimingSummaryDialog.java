@@ -97,7 +97,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
     buttonPanel.add( okButton );
   }
   
-  private static String durationsToString( int[] data, int r )
+  private static String durationsToString( int[] data )
   {
     StringBuilder str = new StringBuilder();
     if ( data != null && data.length != 0 )
@@ -109,10 +109,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
           str.append( ' ' );
 
         str.append( ( i & 1 ) == 0 ? "+" : "-" );
-        if (r > 1)
-          str.append( Math.round( (double)data[i] / (double)r ) * r );
-        else
-          str.append( data[i] );
+        str.append( data[i] );
       }
     }
     if ( str.length() == 0 )
@@ -121,6 +118,25 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
     return str.toString();
   }
 
+  private boolean appendDurations( StringBuilder summary, String durations, int leadOutTime, boolean indent )
+  {
+    String leadOut = "-" + leadOutTime + " ";
+    String temp = durations.replaceAll( leadOut, leadOut+"\n" );          
+    String[] lines = temp.split( "\n" );
+    for ( int l = 0; l < lines.length; l++ )
+    {
+      if ( l > 0 )
+      {
+        if ( indent )
+          summary.append( "\n\t\t\t\t\t" );
+        else
+          indent = true;
+        summary.append( "More:\t" );
+      }
+      summary.append(lines[l]);
+    }
+    return indent;
+  }
   private void generateSummary()
   {
     int r = 1;
@@ -159,33 +175,46 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         summary.append( '\t' );
         summary.append( ul.frequency );
         summary.append( '\t' );
+
+        //System.err.println( remote.getDeviceButton( s.getDeviceButtonIndex() ).getName() + " " + remote.getButtonName( s.getKeyCode() ) + ": " + ul.oneTime + ", " + ul.repeat + ", " + ul.extra );
+        int leadOutTime = ul.durations[ul.durations.length - 1];
+        leadOutTime = ((int) Math.round( (double)leadOutTime / (double)r )) * r;
+        
         boolean indent = false;
-        if ( ul.oneTime > 0 )
+        if ( ul.oneTime > 0 && ul.extra > 0 && ul.repeat == 0 )
         {
-          if ( indent )
-            summary.append( "\n\t\t\t\t\t" );
-          else
-            indent = true;
+          String temp = durationsToString( ul.getOneTimeDurations( r ) );
+          temp += " ";
+          temp += durationsToString( ul.getExtraDurations( r ) );
           summary.append( "Once:\t" );
-          summary.append( durationsToString( ul.getOneTimeDurations(), r ) );
+          appendDurations( summary, temp, leadOutTime, indent );
         }
-        if ( ul.repeat > 0 )
+        else
         {
-          if ( indent )
-            summary.append( "\n\t\t\t\t\t" );
-          else
+          if ( ul.oneTime > 0 )
+          {
             indent = true;
-          summary.append( "Repeat:\t" );
-          summary.append( durationsToString( ul.getRepeatDurations(), r ) );
-        }
-        if ( ul.extra > 0 )
-        {
-          if ( indent )
-            summary.append( "\n\t\t\t\t\t" );
-          else
-            indent = true;
-          summary.append( "Extra:\t" );
-          summary.append( durationsToString( ul.getExtraDurations(), r ) );
+            summary.append( "Once:\t" );
+            appendDurations( summary, durationsToString( ul.getOneTimeDurations( r ) ), leadOutTime, indent );
+          }
+          if ( ul.repeat > 0 )
+          {
+            if ( indent )
+              summary.append( "\n\t\t\t\t\t" );
+            else
+              indent = true;
+            summary.append( "Repeat:\t" );
+            appendDurations( summary, durationsToString( ul.getRepeatDurations( r ) ), leadOutTime, indent );
+          }
+          if ( ul.extra > 0 )
+          {
+            if ( indent )
+              summary.append( "\n\t\t\t\t\t" );
+            else
+              indent = true;
+            summary.append( "Extra:\t" );
+            appendDurations( summary, durationsToString( ul.getExtraDurations( r ) ), leadOutTime, indent );
+          }
         }
       }
       else
