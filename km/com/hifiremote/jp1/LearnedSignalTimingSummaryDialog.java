@@ -1,9 +1,7 @@
 package com.hifiremote.jp1;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,15 +9,11 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -121,7 +115,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
   private boolean appendDurations( StringBuilder summary, String durations, int leadOutTime, boolean indent )
   {
     String leadOut = "-" + leadOutTime + " ";
-    String temp = durations.replaceAll( leadOut, leadOut+"\n" );          
+    String temp = durations.replaceAll( leadOut, leadOut+"\n" );
     String[] lines = temp.split( "\n" );
     for ( int l = 0; l < lines.length; l++ )
     {
@@ -179,7 +173,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         //System.err.println( remote.getDeviceButton( s.getDeviceButtonIndex() ).getName() + " " + remote.getButtonName( s.getKeyCode() ) + ": " + ul.oneTime + ", " + ul.repeat + ", " + ul.extra );
         int leadOutTime = ul.durations[ul.durations.length - 1];
         leadOutTime = ((int) Math.round( (double)leadOutTime / (double)r )) * r;
-        
+
         boolean indent = false;
         if ( ul.oneTime > 0 && ul.extra > 0 && ul.repeat == 0 )
         {
