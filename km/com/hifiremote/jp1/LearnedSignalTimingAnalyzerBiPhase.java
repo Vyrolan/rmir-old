@@ -121,7 +121,40 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     
     // codes.keySet() is all the unique analysis codes
     for ( String code: codes.keySet() )
-        ;
+    {
+      boolean valid = ( oneTime == null || oneTime.containsKey( code ) );
+      valid = valid && ( repeat == null || repeat.containsKey( code ) );
+      valid = valid && ( extra == null || extra.containsKey( code ) );
+      
+      if ( valid )
+      {
+        int[][] tempOneTime = ( oneTime == null ? null : oneTime.get( code ) );
+        int[][] tempRepeat = ( oneTime == null ? null : repeat.get( code ) );
+        int[][] tempExtra = ( oneTime == null ? null : extra.get( code ) );
+        
+        int c = 0;
+        for ( int[] temp: tempOneTime )
+          c += temp.length;
+        for ( int[] temp: tempRepeat )
+          c += temp.length;
+        for ( int[] temp: tempExtra )
+          c += temp.length;
+        
+        int[] total = new int[c];
+        c = 0;
+        for ( int[] temp: tempOneTime )
+          for ( int t: temp )
+            total[c++] = t;
+        for ( int[] temp: tempRepeat )
+          for ( int t: temp )
+            total[c++] = t;
+        for ( int[] temp: tempExtra )
+          for ( int t: temp )
+            total[c++] = t;
+            
+        //this.addAnalyzedSignal( new LearnedSignalTimingAnalysis( code, getUnpacked().getBursts(), getUnpacked ) )
+      }
+    }
     
     /*
     int[] temp = Data
@@ -159,16 +192,16 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
   //    2 = final on time was used as part of lead out
   private HashMap<String,int[][]> AnalyzeDurationSet( int[] durations )
   {
-    HashMap<String,int[][]> results = new HashMap<String,int[][]>();
-
     if ( durations == null || durations.length == 0 )
-      return results;
+      return null;
     
     int[][] seps = new int[1][];
     seps[0] = new int[2];
     seps[0][0] = durations[0];
     seps[0][1] = durations[1];    
     int[][] temp = splitDurations( durations, seps, false );
+    
+    HashMap<String,int[][]> results = new HashMap<String,int[][]>();
     
     int i = 0;
     HashMap<String,int[]> tempResults = null;
