@@ -281,7 +281,7 @@ public class BiPhaseAnalyzer
         for ( int i = 2; i < durations.length - 1; i++ )
           newTemp[i-1] = durations[i];
         
-        biPhase = AnalyzeData(temp, leadOut);
+        biPhase = AnalyzeData(newTemp, leadOut);
         if ( biPhase != null )
         {
           // we analyzed successfully, so subtract from lead in
