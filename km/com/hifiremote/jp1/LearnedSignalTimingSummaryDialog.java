@@ -70,7 +70,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
     JPanel buttonPanel = new JPanel( new FlowLayout( FlowLayout.RIGHT ) );
     bottomBox.add( buttonPanel );
     
-    buttonPanel.add( new JLabel( " Round To: " ) );
+    buttonPanel.add( new JLabel( "(Note: Rounding has no effect on Bi-Phase signals unless it still yields a legal Bi-Phase signal.)  Round To: " ) );
     buttonPanel.add( burstRoundBox );
     buttonPanel.add( new JLabel( "          ") );
     burstRoundBox.setColumns( 8 );
@@ -91,10 +91,12 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
     buttonPanel.add( okButton );
   }
   
-  private boolean appendDurations( StringBuilder summary, String durations, int leadOutTime, boolean indent )
+  private boolean appendDurations( StringBuilder summary, String durations, int leadInTime1, int leadInTime2, boolean indent )
   {
-    String leadOut = "-" + leadOutTime + " ";
-    String temp = durations.replaceAll( leadOut, leadOut+"\n" );
+    String leadIn = " \\+" + leadInTime1 + " -" + leadInTime2;
+    System.err.println( "Replacing for newlines with: " + leadIn );
+    System.err.println( "Durations: " + durations );
+    String temp = durations.replaceAll( leadIn, "\n"+leadIn );
     String[] lines = temp.split( "\n" );
     for ( int l = 0; l < lines.length; l++ )
     {
@@ -110,15 +112,18 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
     }
     return indent;
   }
+  
   private void generateSummary()
   {
     int r = 1;
     String roundText = burstRoundBox.getText();
+    boolean roundingSet = false; 
     if ( roundText != null && !roundText.isEmpty() )
     {
       try
       {
         r = Integer.parseInt( roundText );
+        roundingSet = true;
       }
       catch (NumberFormatException e)
       {
@@ -148,19 +153,38 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         summary.append( '\t' );
         summary.append( ul.frequency );
         summary.append( '\t' );
+        
+        BiPhaseAnalyzer biPhase = new BiPhaseAnalyzer( ul );
+        if ( roundingSet )
+        {
+          BiPhaseAnalyzer tempBiPhase = new BiPhaseAnalyzer( ul, r );
+          if ( tempBiPhase.getIsBiPhase() )
+            biPhase = tempBiPhase;
+        }
+        
+        if ( biPhase.getIsBiPhase() )
+          r = biPhase.getRoundTo();
 
         //System.err.println( remote.getDeviceButton( s.getDeviceButtonIndex() ).getName() + " " + remote.getButtonName( s.getKeyCode() ) + ": " + ul.oneTime + ", " + ul.repeat + ", " + ul.extra );
-        int leadOutTime = ul.durations[ul.durations.length - 1];
-        leadOutTime = ((int) Math.round( (double)leadOutTime / (double)r )) * r;
+        int leadInTime1 = ul.durations[0];
+        int leadInTime2 = ul.durations[1];
+        leadInTime1 = ((int) Math.round( (double)leadInTime1 / (double)r )) * r;
+        leadInTime2 = ((int) Math.round( (double)leadInTime2 / (double)r )) * r;
 
         boolean indent = false;
+        String temp;
         if ( ul.oneTime > 0 && ul.extra > 0 && ul.repeat == 0 )
         {
-          String temp = UnpackLearned.durationsToString( ul.getOneTimeDurations( r, true ), "" );
-          temp += " ";
-          temp += UnpackLearned.durationsToString( ul.getExtraDurations( r, true ), "" );
+          if ( biPhase.getIsBiPhase() )
+            temp = UnpackLearned.durationsToString( biPhase.getOneTimeDurations() , ";" );
+          else
+            temp = UnpackLearned.durationsToString( ul.getOneTimeDurations( r, true ), "" );
+          if ( biPhase.getIsBiPhase() )
+            temp += "; " + UnpackLearned.durationsToString( biPhase.getExtraDurations() , ";" );
+          else
+            temp += " " + UnpackLearned.durationsToString( ul.getExtraDurations( r, true ), "" );
           summary.append( "Once:\t" );
-          appendDurations( summary, temp, leadOutTime, indent );
+          appendDurations( summary, temp, leadInTime1, leadInTime2, indent );
         }
         else
         {
@@ -168,7 +192,11 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
           {
             indent = true;
             summary.append( "Once:\t" );
-            appendDurations( summary, UnpackLearned.durationsToString( ul.getOneTimeDurations( r, true ), "" ), leadOutTime, indent );
+            if ( biPhase.getIsBiPhase() )
+              temp = UnpackLearned.durationsToString( biPhase.getOneTimeDurations() , ";" );
+            else
+              temp = UnpackLearned.durationsToString( ul.getOneTimeDurations( r, true ), "" );            
+            appendDurations( summary, temp, leadInTime1, leadInTime2, indent );
           }
           if ( ul.repeat > 0 )
           {
@@ -177,7 +205,11 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
             else
               indent = true;
             summary.append( "Repeat:\t" );
-            appendDurations( summary, UnpackLearned.durationsToString( ul.getRepeatDurations( r, true ), "" ), leadOutTime, indent );
+            if ( biPhase.getIsBiPhase() )
+              temp = UnpackLearned.durationsToString( biPhase.getRepeatDurations() , ";" );
+            else
+              temp = UnpackLearned.durationsToString( ul.getRepeatDurations( r, true ), "" );
+            appendDurations( summary, temp, leadInTime1, leadInTime2, indent );
           }
           if ( ul.extra > 0 )
           {
@@ -186,7 +218,11 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
             else
               indent = true;
             summary.append( "Extra:\t" );
-            appendDurations( summary, UnpackLearned.durationsToString( ul.getExtraDurations( r, true ), "" ), leadOutTime, indent );
+            if ( biPhase.getIsBiPhase() )
+              temp = UnpackLearned.durationsToString( biPhase.getExtraDurations() , ";" );
+            else
+              temp = UnpackLearned.durationsToString( ul.getExtraDurations( r, true ), "" );
+            appendDurations( summary, temp, leadInTime1, leadInTime2, indent );
           }
         }
       }
