@@ -5,7 +5,6 @@ public class LearnedSignalTimingAnalysis
   private String _Name;
   private String _Message;
   private int[] _Bursts;
-  private int[][] _Durations;
   private int[][] _OneTimeDurations;
   private int[][] _RepeatDurations;
   private int[][] _ExtraDurations;
@@ -15,16 +14,14 @@ public class LearnedSignalTimingAnalysis
   public String getName() { return _Name; }
   public String getMessage() { return _Message; }
   public int[] getBursts() { return _Bursts; }
-  public int[][] getDurations() { return _Durations; }
   public int[][] getOneTimeDurations() { return _OneTimeDurations; }
   public int[][] getRepeatDurations() { return _RepeatDurations; }
   public int[][] getExtraDurations() { return _ExtraDurations; }
   
-  public LearnedSignalTimingAnalysis( String name, int[] bursts, int[][] durations, int[][] oneTime, int[][] repeat, int[][] extra, String sep, boolean sepOdd, String message )
+  public LearnedSignalTimingAnalysis( String name, int[] bursts, int[][] oneTime, int[][] repeat, int[][] extra, String sep, boolean sepOdd, String message )
   {
     _Name = name;
     _Bursts = bursts;
-    _Durations = durations;
     _OneTimeDurations = oneTime;
     _RepeatDurations = repeat;
     _ExtraDurations = extra;
@@ -40,10 +37,6 @@ public class LearnedSignalTimingAnalysis
     for ( int[] d: durations )
       results[r++] = durationsToString( d, _Separator, _SeparateOdd );
     return results;
-  }
-  public String[] getDurationStringList()
-  {
-    return makeDurationStringList( getDurations() );
   }
   public String[] getOneTimeDurationStringList()
   {
@@ -62,10 +55,6 @@ public class LearnedSignalTimingAnalysis
   {
     return durationsToString( getBursts(), _Separator, _SeparateOdd );
   }
-  public String getDurationString()
-  {
-    return durationsToString( joinDurations( getDurations() ), _Separator, _SeparateOdd );
-  }
   public String getOneTimeDurationString()
   {
     return durationsToString( joinDurations( getOneTimeDurations() ), _Separator, _SeparateOdd );
@@ -81,6 +70,9 @@ public class LearnedSignalTimingAnalysis
 
   public static int[] joinDurations( int[][] durations )
   {
+    if ( durations == null || durations.length == 0 )
+      return null;
+    
     int num = 0;
     for ( int[] d: durations )
       num += d.length;

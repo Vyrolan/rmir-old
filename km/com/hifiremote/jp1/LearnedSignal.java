@@ -297,6 +297,14 @@ public class LearnedSignal extends Highlight
     }
     return decodes;
   }
+  
+  private LearnedSignalTimingAnalyzer timingAnalyzer = null;
+  public LearnedSignalTimingAnalyzer getTimingAnalyzer()
+  {
+    if ( timingAnalyzer == null )
+      timingAnalyzer = new LearnedSignalTimingAnalyzer( getUnpackLearned() );
+    return timingAnalyzer;
+  }
 
   /**
    * Gets the decode ir.

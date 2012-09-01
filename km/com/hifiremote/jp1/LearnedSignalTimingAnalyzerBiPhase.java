@@ -6,11 +6,17 @@ import java.util.HashMap;
 public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnalyzerBase
 {
   private int _Unit;
+  private String _PreferredName;
   
   public LearnedSignalTimingAnalyzerBiPhase( UnpackLearned u )
   {
     super( u );
-    // TODO Auto-generated constructor stub
+  }
+  
+  @Override
+  public String getName()
+  {
+    return "Bi-Phase";
   }
 
   @Override
@@ -27,7 +33,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
       int absValue = Math.abs( value );
       if ( !hist.containsKey( absValue ) )
       {
-        // check for a leadout
+        // check for a lead out
         if ( value < 0 && durations[i+1] == leadIn1 && durations[i+2] == leadIn2 )
         {
           i += 2;
@@ -48,7 +54,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     while ( roundTo < max + 100 )
     {
       roundTo += 10;
-      if ( checkCandidacy() )
+      if ( checkCandidacy( roundTo ) )
         return roundTo;
     }
     
@@ -56,11 +62,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
   }
 
   @Override
-  public boolean checkCandidacy()
-  {
-    return checkCandidacy( getRoundTo() );
-  }
-  private boolean checkCandidacy( int roundTo )
+  public boolean checkCandidacy( int roundTo )
   {  
     int[] durations = getUnpacked().getDurations( roundTo, true );
     HashMap<Integer,Integer> hist = new HashMap<Integer,Integer>();
@@ -73,7 +75,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
       int absValue = Math.abs( value );
       if ( !hist.containsKey( absValue ) )
       {
-        // check for a leadout
+        // check for a lead out
         if ( value < 0 && durations[i+1] == leadIn1 && durations[i+2] == leadIn2 )
         {
           i += 2;
@@ -104,21 +106,32 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
   @Override
   protected void analyzeImpl()
   {
+    System.err.println( "BiPhaseAnalyzer: (" + this.hashCode() +") Analyze beginning..." );
+    
     if ( _Unit == 0 )
       return;
     
+    System.err.println( "BiPhaseAnalyzer: Analyzing one time durations..." );
     HashMap<String,int[][]> oneTime = AnalyzeDurationSet( getUnpacked().getOneTimeDurations( getRoundTo(), true ) );
+    System.err.println( "BiPhaseAnalyzer: Analyzing repeat durations..." );
     HashMap<String,int[][]> repeat = AnalyzeDurationSet( getUnpacked().getRepeatDurations( getRoundTo(), true ) );
+    System.err.println( "BiPhaseAnalyzer: Analyzing extra durations..." );
     HashMap<String,int[][]> extra = AnalyzeDurationSet( getUnpacked().getExtraDurations( getRoundTo(), true ) );
 
     HashMap<String,Integer> codes = new HashMap<String,Integer>();
-    for ( String k: oneTime.keySet() )
-      codes.put( k, 0 );
-    for ( String k: repeat.keySet() )
-      codes.put( k, 0 );
-    for ( String k: extra.keySet() )
-      codes.put( k, 0 );
-    
+    if ( oneTime != null )
+      for ( String k: oneTime.keySet() )
+        codes.put( k, 0 );
+    if ( repeat != null )
+      for ( String k: repeat.keySet() )
+        codes.put( k, 0 );
+    if ( extra != null )
+      for ( String k: extra.keySet() )
+        codes.put( k, 0 );
+
+    String preferredCode = null;
+    String preferredName = null;
+
     // codes.keySet() is all the unique analysis codes
     for ( String code: codes.keySet() )
     {
@@ -129,85 +142,63 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
       if ( valid )
       {
         int[][] tempOneTime = ( oneTime == null ? null : oneTime.get( code ) );
-        int[][] tempRepeat = ( oneTime == null ? null : repeat.get( code ) );
-        int[][] tempExtra = ( oneTime == null ? null : extra.get( code ) );
+        int[][] tempRepeat = ( repeat == null ? null : repeat.get( code ) );
+        int[][] tempExtra = ( extra == null ? null : extra.get( code ) );
         
-        int c = 0;
-        for ( int[] temp: tempOneTime )
-          c += temp.length;
-        for ( int[] temp: tempRepeat )
-          c += temp.length;
-        for ( int[] temp: tempExtra )
-          c += temp.length;
+        String[] codeSplit = code.split( "," );
         
-        int[] total = new int[c];
-        c = 0;
-        for ( int[] temp: tempOneTime )
-          for ( int t: temp )
-            total[c++] = t;
-        for ( int[] temp: tempRepeat )
-          for ( int t: temp )
-            total[c++] = t;
-        for ( int[] temp: tempExtra )
-          for ( int t: temp )
-            total[c++] = t;
-            
-        //this.addAnalyzedSignal( new LearnedSignalTimingAnalysis( code, getUnpacked().getBursts(), getUnpacked ) )
+        String msg = "Bi-Phase encoding detected with unit size of " + _Unit + ".";
+        String name = "LI " + codeSplit[0] + " LO " + codeSplit[2] + " " + ( codeSplit[1] == "1" ? "ODD" : "EVEN" );
+        
+        addAnalyzedSignal( new LearnedSignalTimingAnalysis( name, getUnpacked().getBursts(), tempOneTime, tempRepeat, tempExtra, ";", codeSplit[1].equals("1"), msg ) );
+        
+        if ( preferredCode == null || code.compareTo( preferredCode ) < 0 )
+        {
+          preferredCode = code;
+          preferredName = name; 
+        }
       }
     }
     
-    /*
-    int[] temp = Data
-    oneTimeDurations = AnalyzeDurationSet( temp );        
-    if ( temp != null && temp.length > 0 && oneTimeDurations == null )
-    {
-      IsBiPhase = false;
-      return;
-    }
-    temp = Data.getRepeatDurations( RoundTo, true );
-    repeatDurations = AnalyzeDurationSet( temp );
-    if ( temp != null && temp.length > 0 && repeatDurations == null )
-    {
-      IsBiPhase = false;
-      return;
-    }
-    temp = Data.getExtraDurations( RoundTo, true );
-    extraDurations = AnalyzeDurationSet( temp );
-    if ( temp != null && temp.length > 0 && extraDurations == null )
-    {
-      IsBiPhase = false;
-      return;
-    }
-    
-    IsBiPhase = true;
-    */
+    _PreferredName = preferredName;
+    System.err.println( "BiPhaseAnalyzer: analyzeImpl complete yielding " + getAnalyses().size() + " analyses preferring '" + _PreferredName + "'." );    
   }
   
   // return is dictionary of analysis codes to a set of analyzed durations from the split signal
-  // analysis codes are of form "x,y":
-  //  x = number of units taken from lead out off time to produce first pair
-  //  y has following meaning:
+  // analysis codes are of form "i,s,o":
+  //  i = number of units taken from lead in off time to produce first pair
+  //  s = ( separateOdd ? 1 : 0 )
+  //  o has following meaning:
   //    0 = analysis ended in complete pairs, lead out unchanged
   //    1 = off time for final pair was taken from lead out
   //    2 = final on time was used as part of lead out
   private HashMap<String,int[][]> AnalyzeDurationSet( int[] durations )
   {
     if ( durations == null || durations.length == 0 )
+      System.err.println( "BiPhaseAnalyzer: AnalyzeDurationSet with " + ( durations == null ? "null" : "empty" ) + " set." );
+    else if ( durations.length > 3 )
+      System.err.println( "BiPhaseAnalyzer: AnalyzeDurationSet with set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )" );
+    else
+      System.err.println( "BiPhaseAnalyzer: AnalyzeDurationSet with set of " + durations.length + " durations..." );
+    
+    if ( durations == null || durations.length == 0 )
       return null;
     
-    int[][] seps = new int[1][];
-    seps[0] = new int[2];
-    seps[0][0] = durations[0];
-    seps[0][1] = durations[1];    
-    int[][] temp = splitDurations( durations, seps, false );
-    
+    int[][] temp = splitDurationsBeforeLeadIn( durations );
+    System.err.println( "BiPhaseAnalyzer: AnalyzeDurationSet split into " + temp.length + " components." );
     HashMap<String,int[][]> results = new HashMap<String,int[][]>();
     
     int i = 0;
     HashMap<String,int[]> tempResults = null;
     for ( int[] t: temp )
     {
-      tempResults = AnalyzeDurations( t );      
+      tempResults = AnalyzeDurations( t );
+      // if we got no results for this split component, why bother with the rest
+      if ( tempResults.size() == 0 )
+      {
+        results.clear();
+        return results;
+      }
       for ( String k: tempResults.keySet() )
       {
         if ( !results.containsKey( k ) )
@@ -221,21 +212,24 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
   }
 
   // return is dictionary of analysis codes to durations for a single split component of the signal  
-  // analysis codes are of form "x,y":
-  //  x = number of units taken from lead out off time to produce first pair
-  //  y has following meaning:
+  // analysis codes are of form "i,s,o":
+  //  i = number of units taken from lead in off time to produce first pair
+  //  s = ( separateOdd ? 1 : 0 )
+  //  o has following meaning:
   //    0 = analysis ended in complete pairs, lead out unchanged
   //    1 = off time for final pair was taken from lead out
   //    2 = final on time was used as part of lead out
   private HashMap<String,int[]> AnalyzeDurations( int[] durations )
   {
     if ( durations == null || durations.length == 0 )
-      return null;
-    
-    if ( durations.length > 3 )
-      System.err.println( "BiPhaseAnalyzer: Analyzing set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )");
+      System.err.println( "BiPhaseAnalyzer: AnalyzeDurations with " + ( durations == null ? "null" : "empty" ) + " set." );
+    else if ( durations.length > 3 )
+      System.err.println( "BiPhaseAnalyzer: AnalyzeDurations with set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )");
     else
-      System.err.println( "BiPhaseAnalyzer: Analyzing set of " + durations.length + " durations...");
+      System.err.println( "BiPhaseAnalyzer: AnalyzeDurations with set of " + durations.length + " durations...");
+    
+    if ( durations == null || durations.length == 0 )
+      return null;
     
     int[] leadIn = new int[2];
     leadIn[0] = durations[0];
@@ -270,7 +264,10 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
         int leadIn1 = leadIn[1] + ( _Unit * n );
         // we analyzed successfully with at least 1 result, so append to results
         for ( String k: tempResults.keySet() )
-          results.put( Integer.toString( n ) + "," + k, mergeAnalysisResult( leadIn[0], leadIn1, tempResults.get( k ) ) );
+        {
+          String code = Integer.toString( n ) + "," + ( leadIn1 == 0 ? 1 : 0 ) + "," + k;
+          results.put( code, mergeAnalysisResult( leadIn[0], leadIn1, tempResults.get( k ) ) );
+        }
       }
     }
     
@@ -282,7 +279,8 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     int[] data = new int[pairs.size() * 2 + 2];
     int i = 0;
     data[i++] = leadIn0;
-    data[i++] = leadIn1;
+    if ( leadIn1 != 0 )
+      data[i++] = leadIn1;
     for ( int[] r: pairs )
     {
       if ( r[0] != 0 )
@@ -293,19 +291,23 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     return data;
   }
   
-  // return is dictionary of y part of analysis codes to list of logical pairs for a single split component of the signal
-  // analysis codes are of form "x,y":
-  //  x = number of units taken from lead out off time to produce first pair
-  //  y has following meaning:
+  // return is dictionary of 'o' part of analysis codes to list of logical pairs for a single split component of the signal
+  // analysis codes are of form "i,s,o":
+  //  i = number of units taken from lead in off time to produce first pair
+  //  s = ( separateOdd ? 1 : 0 )
+  //  o has following meaning:
   //    0 = analysis ended in complete pairs, lead out unchanged
   //    1 = off time for final pair was taken from lead out
   //    2 = final on time was used as part of lead out
   private HashMap<String,ArrayList<int[]>> analyzeSignalData( int[] durations, int leadOut )
   {
-    if ( durations.length > 3 )
-      System.err.println( "BiPhaseAnalyzer: Analyzing signal data set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )" );
+    if ( durations == null || durations.length == 0 )
+      System.err.println( "BiPhaseAnalyzer: analyzeSignalData with " + ( durations == null ? "null" : "empty" ) + " set." );
+    else if ( durations.length > 3 )
+      System.err.println( "BiPhaseAnalyzer: analyzeSignalData with set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )" );
     else
-      System.err.println( "BiPhaseAnalyzer: Analyzing signal data set of " + durations.length + " durations..." );      
+      System.err.println( "BiPhaseAnalyzer: analyzeSignalData with set of " + durations.length + " durations..." );
+    
     ArrayList<int[]> result = new ArrayList<int[]>();
 
     int[] p = null;
@@ -378,18 +380,23 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     int[] lo = new int[2];
     lo[0] = leadOut + p[0];
     lo[1] = 0;
-    result.add( p );
+    result.add( lo );
     
     // result2 is last + is part of lead out
-    int[] p2 = new int[2];
-    p2[0] = p[0];
-    p2[1] = leadOut;
-    result2.add( p2 );
+    int[] lo2 = new int[2];
+    lo2[0] = p[0];
+    lo2[1] = leadOut;
+    result2.add( lo2 );
     
     HashMap<String,ArrayList<int[]>> results = new HashMap<String,ArrayList<int[]>>();
     results.put( "1", result );
     results.put( "2", result2 );
     return results;
   }
-  
+
+  @Override
+  protected String getPreferredAnalysisName()
+  {
+    return _PreferredName;
+  }  
 }

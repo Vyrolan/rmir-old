@@ -281,8 +281,6 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       return;
     advancedAreaUpdating = true;
 
-    UnpackLearned ul = this.learnedSignal.getUnpackLearned();
-
     int r = 1;
     String roundText = burstRoundBox.getText();
     if ( roundText != null && !roundText.isEmpty() )
@@ -297,67 +295,59 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       }
     }
     
-    BiPhaseAnalyzer biPhase = null;
+    LearnedSignalTimingAnalyzer timingAnalyzer = this.learnedSignal.getTimingAnalyzer();
+    
+    if ( !timingAnalyzer.getIsValid() )
+    {
+      burstRoundBox.setText( null );
+      biPhaseLabel.setText( null );
+      burstTextArea.setText( "Unable to unpack learned signal data...analysis not possible." );
+      onceDurationTextArea.setText( null );
+      repeatDurationTextArea.setText( null );
+      extraDurationTextArea.setText( null );
+      burstTextArea.setRows( 1 );
+      onceDurationTextArea.setRows( 1 );
+      repeatDurationTextArea.setRows( 1 );
+      extraDurationTextArea.setRows( 1 );
+      onceDurationTextArea.getParent().getParent().setVisible( false );
+      repeatDurationTextArea.getParent().getParent().setVisible( false );
+      extraDurationTextArea.getParent().getParent().setVisible( false );      
+      pack();       
+      advancedAreaUpdating = false;
+      return;
+    }
+    
     if ( newSignal )
     {
-      biPhase = new BiPhaseAnalyzer( ul );
-      if ( biPhase.getIsBiPhase() )
-      {
-        burstRoundBox.setText( ((Integer)biPhase.getRoundTo()).toString() );
-        biPhaseLabel.setText( "Bi-Phase encoding detected with unit size " + biPhase.getUnit() + "...rounding set automatically." );
-      }
-      else
-      {
-        biPhase = null;
-        biPhaseLabel.setText( "Bi-phase encoding not detected." );
-      }
-    }
-    else if ( biPhaseBox.getSelectedItem().toString().equals( "Auto Detect" ) )
-    {      
-      biPhase = new BiPhaseAnalyzer( ul, r );
-      if ( biPhase.getIsBiPhase() )
-        biPhaseLabel.setText( "Bi-Phase encoding detected with unit size " + biPhase.getUnit() + "." );
-      else
-      {
-        biPhase = null;
-        biPhaseLabel.setText( "Bi-phase encoding not detected." );
-      }
+      burstRoundBox.setText( Integer.toString( timingAnalyzer.getPreferredAnalyzer().getRoundTo() ) );
+      biPhaseLabel.setText( timingAnalyzer.getPreferredAnalyzer().getPreferredAnalysis().getMessage() );
     }
     else
     {
-      biPhaseLabel.setText( "" );
+      timingAnalyzer.setRoundTo( r );
+      biPhaseLabel.setText( timingAnalyzer.getPreferredAnalyzer().getPreferredAnalysis().getMessage() );
     }
     
-    if ( biPhase != null )
-      r = biPhase.getRoundTo();
+    String temp = timingAnalyzer.getPreferredAnalyzer().getPreferredAnalysis().getBurstString();
+    burstTextArea.setText( temp );
+    burstTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+
+    temp = timingAnalyzer.getPreferredAnalyzer().getPreferredAnalysis().getOneTimeDurationString();
+    onceDurationTextArea.setText( temp );
+    onceDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+    onceDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
     
-    if ( ul.ok )
-    {
-      String sep = ( biPhase == null ? "" : ";" );
-      String temp = UnpackLearned.durationsToString( ul.getBursts( r ), sep );
-      burstTextArea.setText( temp );
-      burstTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+    temp = timingAnalyzer.getPreferredAnalyzer().getPreferredAnalysis().getRepeatDurationString();
+    repeatDurationTextArea.setText( temp );
+    repeatDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+    repeatDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
 
-      //temp = toString( ul.durations, r );
-      //durationTextArea.setText( temp );
-      //durationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
-
-      temp = UnpackLearned.durationsToString( ( biPhase == null ? ul.getOneTimeDurations( r, true ) : biPhase.getOneTimeDurations() ), sep );
-      onceDurationTextArea.setText( temp );
-      onceDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
-      onceDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-      temp = UnpackLearned.durationsToString( ( biPhase == null ? ul.getRepeatDurations( r, true ) : biPhase.getRepeatDurations() ), sep );
-      repeatDurationTextArea.setText( temp );
-      repeatDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
-      repeatDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-      temp = UnpackLearned.durationsToString( ( biPhase == null ? ul.getExtraDurations( r, true ) : biPhase.getExtraDurations() ), sep );
-      extraDurationTextArea.setText( temp );
-      extraDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
-      extraDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-      
-      pack();       
-    }
-
+    temp = timingAnalyzer.getPreferredAnalyzer().getPreferredAnalysis().getExtraDurationString();
+    extraDurationTextArea.setText( temp );
+    extraDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
+    extraDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
+    
+    pack();       
     advancedAreaUpdating = false;
   }
   
