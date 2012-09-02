@@ -110,6 +110,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         summary.append( "\n\t\t\t\t\tMore:\t" );
       summary.append(d);
     }
+    summary.append( '\n' );
   }
   
   private void generateSummary()
@@ -160,7 +161,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         if ( ul.oneTime > 0 && ul.extra > 0 && ul.repeat == 0 )
         {
           appendDurations( summary, analysis.getOneTimeDurationStringList(), "Once:\t" );
-          appendDurations( summary, analysis.getExtraDurationStringList(), "\n\t\t\t\t\tMore:\t" );
+          appendDurations( summary, analysis.getExtraDurationStringList(), "\t\t\t\t\tMore:\t" );
         }
         else
         {
@@ -175,8 +176,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         }
       }
       else
-        summary.append( "** No signal **" );
-      summary.append( '\n' );
+        summary.append( "** No signal **\n" );
     }
     
     summaryTextArea.setText( summary.toString() );
