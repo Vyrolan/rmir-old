@@ -147,7 +147,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
         
         String[] codeSplit = code.split( "," );
         
-        String msg = "Bi-Phase encoding detected with unit size of " + _Unit + ".";
+        String msg = "Bi-Phase unit size is " + _Unit + ".";
         String name = "LI " + codeSplit[0] + " LO " + codeSplit[2] + " " + ( codeSplit[1] == "1" ? "ODD" : "EVEN" );
         
         addAnalysis( new LearnedSignalTimingAnalysis( name, getUnpacked().getBursts( getRoundTo() ), tempOneTime, tempRepeat, tempExtra, ";", codeSplit[1].equals("1"), msg ) );
@@ -266,7 +266,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
         for ( String k: tempResults.keySet() )
         {
           String code = Integer.toString( n ) + "," + ( leadIn1 == 0 ? 1 : 0 ) + "," + k;
-          results.put( code, mergeAnalysisResult( leadIn[0], leadIn1, tempResults.get( k ) ) );
+          results.put( code, mergeAnalysisResult( leadIn[0], leadIn1, tempResults.get( k ), k ) );
         }
       }
     }
@@ -274,9 +274,9 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     return results;
   }
     
-  private int[] mergeAnalysisResult( int leadIn0, int leadIn1, ArrayList<int[]> pairs )
+  private int[] mergeAnalysisResult( int leadIn0, int leadIn1, ArrayList<int[]> pairs, String code )
   {
-    int[] data = new int[pairs.size() * 2 + 2];
+    int[] data = new int[pairs.size() * 2 + ( code == "2" ? 2 : 1 )];
     int i = 0;
     data[i++] = leadIn0;
     if ( leadIn1 != 0 )

@@ -154,7 +154,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     panel = new JPanel( new FlowLayout( FlowLayout.LEFT, 1, 1 ) );
     panel.add( new JLabel( " Round To: " ) );
     panel.add( burstRoundBox );
-    panel.add( new JLabel( "   Anaylzer: ") );
+    panel.add( new JLabel( "  Anaylzer: ") );
     panel.add( analyzerBox );
     panel.add( new JLabel( "  Analysis: ") );
     panel.add( analysisBox );
@@ -175,7 +175,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     analysisBox.addItemListener( i );
     
     // setup round to box
-    burstRoundBox.setColumns( 8 );
+    burstRoundBox.setColumns( 4 );
     burstRoundBox.getDocument().addDocumentListener(new DocumentListener() {
       public void changedUpdate(DocumentEvent e) {
         setAdvancedAreaTextFields();
@@ -194,6 +194,8 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     scrollPane = new JScrollPane( burstTextArea );
     scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Bursts" ), scrollPane.getBorder() ) );
     advancedArea.add( scrollPane );
+    // temporarily hiding bursts...may remove entirely
+    burstTextArea.getParent().getParent().setVisible( false );
 
     onceDurationTextArea.setEditable( false );
     onceDurationTextArea.setLineWrap( true );
