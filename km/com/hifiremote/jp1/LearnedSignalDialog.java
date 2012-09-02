@@ -353,7 +353,13 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       try { r = Integer.parseInt( roundText ); }
       catch (NumberFormatException e) { r = 1; }
     
-    this.learnedSignal.getTimingAnalyzer().getSelectedAnalyzer().setRoundTo( r );
+    LearnedSignalTimingAnalyzerBase analyzer = this.learnedSignal.getTimingAnalyzer().getSelectedAnalyzer();
+    if ( r != analyzer.getRoundTo() )
+    {
+      analyzer.unlockRounding();
+      analyzer.setRoundTo( r );
+      analyzer.lockRounding();
+    }
 
     LearnedSignalTimingAnalysis analysis = this.learnedSignal.getTimingAnalyzer().getSelectedAnalysis();
     analysisMessageLabel.setText( analysis.getMessage() );

@@ -22,15 +22,19 @@ public abstract class LearnedSignalTimingAnalyzerBase
   }
   public void setRoundTo( int roundTo ) 
   { 
-    if ( roundTo > 0 && _RoundTo != roundTo && checkCandidacy( roundTo ) )
+    if ( !_IsRoundingLocked && roundTo > 0 && _RoundTo != roundTo && checkCandidacy( roundTo ) )
     {
       _RoundTo = roundTo;
       _Analyses = null; // force reanalyze on next access
     }
   }
-  private boolean _IsAutoRounding = false;
-  public boolean getIsAutoRounding() { return _IsAutoRounding; }
-  public boolean autoSetRounding()
+
+  private boolean _IsRoundingLocked = false;
+  public boolean getIsRoundingLocked() { return _IsRoundingLocked; }
+  public void lockRounding() { _IsRoundingLocked = true; }
+  public void unlockRounding() { _IsRoundingLocked = false; }
+
+  private void autoSetRounding()
   {
     int r = calcAutoRoundTo();
     if ( r > 0 && _RoundTo != r )
@@ -38,8 +42,6 @@ public abstract class LearnedSignalTimingAnalyzerBase
       _RoundTo = r;
       _Analyses = null; // force reanalyze on next access
     }
-    _IsAutoRounding = ( r > 0 );
-    return _IsAutoRounding;
   }
 
   // simple constructor

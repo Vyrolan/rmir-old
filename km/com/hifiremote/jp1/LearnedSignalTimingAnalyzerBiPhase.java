@@ -181,7 +181,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     else
       System.err.println( "BiPhaseAnalyzer: AnalyzeDurationSet with set of " + durations.length + " durations..." );
     
-    if ( durations == null || durations.length == 0 )
+    if ( durations == null || durations.length < 4 )
       return null;
     
     int[][] temp = splitDurationsBeforeLeadIn( durations );
@@ -194,7 +194,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     {
       tempResults = AnalyzeDurations( t );
       // if we got no results for this split component, why bother with the rest
-      if ( tempResults.size() == 0 )
+      if ( tempResults == null || tempResults.size() == 0 )
       {
         results.clear();
         return results;
@@ -228,7 +228,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     else
       System.err.println( "BiPhaseAnalyzer: AnalyzeDurations with set of " + durations.length + " durations...");
     
-    if ( durations == null || durations.length == 0 )
+    if ( durations == null || durations.length < 4 )
       return null;
     
     int[] leadIn = new int[2];
