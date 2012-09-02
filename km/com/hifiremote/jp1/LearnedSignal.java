@@ -51,6 +51,8 @@ public class LearnedSignal extends Highlight
         decodes.add( new LearnedSignalDecode( decode ) );
       }
     }
+
+    timingAnalyzer = signal.getTimingAnalyzer();
   }
 
   public static LearnedSignal read( HexReader reader, Remote remote )
@@ -304,6 +306,10 @@ public class LearnedSignal extends Highlight
     if ( timingAnalyzer == null )
       timingAnalyzer = new LearnedSignalTimingAnalyzer( getUnpackLearned() );
     return timingAnalyzer;
+  }
+  public void clearTimingAnalyzer()
+  {
+    timingAnalyzer = null;
   }
 
   /**

@@ -8,18 +8,6 @@ public class LearnedSignalTimingAnalyzer
   private String[] _AnalyzerNames;
   private UnpackLearned _Data;
 
-  protected int _RoundTo;
-  public int getRoundTo() { return _RoundTo; }
-  public void setRoundTo( int roundTo ) 
-  { 
-    if ( _RoundTo != roundTo )
-    {
-      _RoundTo = roundTo;
-      for ( LearnedSignalTimingAnalyzerBase a: _Analyzers )
-        a.setRoundTo( roundTo );
-    }
-  }
-  
   public LearnedSignalTimingAnalyzer( UnpackLearned u )
   {
     _Data = u;
@@ -45,9 +33,9 @@ public class LearnedSignalTimingAnalyzer
   
   public LearnedSignalTimingAnalyzerBase getAnalyzer( String name )
   {
-    for ( LearnedSignalTimingAnalyzerBase a: _Analyzers )
-      if ( a.getName().equals(  name  ) )
-        return a;
+    for ( int i = 0; i < _AnalyzerNames.length; i++ )
+      if ( _AnalyzerNames[i].equals( name ) )
+        return getAnalyzer( i );
     // no match
     return null;
   }
@@ -83,5 +71,50 @@ public class LearnedSignalTimingAnalyzer
       @Override
       public void remove() { }
     };
+  }
+
+  // all of this is purely for UI persistence
+  private int _SelectedAnalyzer = -1;
+  private String _SelectedAnalysisName = null;
+  public void setSelectedAnalyzer( String name )
+  {
+    for ( int i = 0; i < _AnalyzerNames.length; i++ )
+      if ( _AnalyzerNames[i].equals( name ) )
+      {
+        _SelectedAnalyzer = i;
+        setSelectedAnalysisName( getSelectedAnalyzer().getPreferredAnalysis().getName() );
+        return;
+      }
+  }
+  public void setSelectedAnalysisName( String name )
+  {
+    for ( String n: getSelectedAnalyzer().getAnalysisNames() )
+      if ( n.equals( name ) )
+      {
+        _SelectedAnalysisName = name;
+        return;
+      }
+  }
+  public LearnedSignalTimingAnalyzerBase getSelectedAnalyzer()
+  {
+    initSelectedToPreferred();
+    return getAnalyzer( _SelectedAnalyzer );
+  }
+  public String getSelectedAnalysisName()
+  {
+    initSelectedToPreferred();
+    return _SelectedAnalysisName;
+  }
+  public LearnedSignalTimingAnalysis getSelectedAnalysis()
+  {
+    initSelectedToPreferred();
+    return getSelectedAnalyzer().getAnalysis( getSelectedAnalysisName() );
+  }
+  private void initSelectedToPreferred()
+  {
+    if ( _SelectedAnalyzer > -1 )
+      return;
+    setSelectedAnalyzer( getPreferredAnalyzer().getName() );
+    setSelectedAnalysisName( getSelectedAnalyzer().getPreferredAnalysis().getName() );
   }
 }

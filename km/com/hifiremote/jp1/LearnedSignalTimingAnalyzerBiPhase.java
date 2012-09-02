@@ -150,7 +150,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
         String msg = "Bi-Phase encoding detected with unit size of " + _Unit + ".";
         String name = "LI " + codeSplit[0] + " LO " + codeSplit[2] + " " + ( codeSplit[1] == "1" ? "ODD" : "EVEN" );
         
-        addAnalyzedSignal( new LearnedSignalTimingAnalysis( name, getUnpacked().getBursts(), tempOneTime, tempRepeat, tempExtra, ";", codeSplit[1].equals("1"), msg ) );
+        addAnalysis( new LearnedSignalTimingAnalysis( name, getUnpacked().getBursts( getRoundTo() ), tempOneTime, tempRepeat, tempExtra, ";", codeSplit[1].equals("1"), msg ) );
         
         if ( preferredCode == null || code.compareTo( preferredCode ) < 0 )
         {

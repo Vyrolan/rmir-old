@@ -83,13 +83,18 @@ public abstract class LearnedSignalTimingAnalyzerBase
   {
     return getAnalyses().get( name );
   }
+  public String[] getAnalysisNames()
+  {
+    String[] names = new String[getAnalyses().size()];
+    return getAnalyses().keySet().toArray( names );
+  }
   public HashMap<String,LearnedSignalTimingAnalysis> getAnalyses()
   {
     if ( _Analyses == null )
       analyze();
     return _Analyses;
   }
-  protected void addAnalyzedSignal( LearnedSignalTimingAnalysis analysis )
+  protected void addAnalysis( LearnedSignalTimingAnalysis analysis )
   {
     if ( _Analyses == null ) return; // how did this even happen?  should only be called from within analyze()
     _Analyses.put( analysis.getName(), analysis );
