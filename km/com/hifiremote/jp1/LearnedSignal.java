@@ -312,16 +312,36 @@ public class LearnedSignal extends Highlight
     timingAnalyzer = null;
   }
 
+  public static boolean hasDecodeIR()
+  {
+    if ( hasDecodeIR == 0 )
+      getDecodeIR();
+    return ( hasDecodeIR == 2 );
+  }
+  public static String getDecodeIRVersion()
+  {
+    return ( hasDecodeIR() ? getDecodeIR().getVersion() : null );
+  }
+
   /**
    * Gets the decode ir.
    * 
    * @return the decode ir
    */
-  public static DecodeIRCaller getDecodeIR()
+  private static DecodeIRCaller getDecodeIR()
   {
     if ( decodeIR == null )
     {
-      decodeIR = new DecodeIRCaller( new File( System.getProperty( "user.dir" ) ) );
+      try
+      {
+        decodeIR = new DecodeIRCaller( new File( System.getProperty( "user.dir" ) ) );
+        hasDecodeIR = 2; // yes
+      }
+      catch ( UnsatisfiedLinkError ule )
+      {
+        System.err.println( "Failed to load DecodeIR JNI interface!" );
+        hasDecodeIR = 1; // no
+      }
     }
 
     return decodeIR;
@@ -329,4 +349,5 @@ public class LearnedSignal extends Highlight
 
   /** The decode ir. */
   private static DecodeIRCaller decodeIR = null;
+  private static int hasDecodeIR = 0;
 }

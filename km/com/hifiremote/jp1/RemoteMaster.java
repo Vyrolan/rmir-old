@@ -1129,25 +1129,9 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     activityPanel = new ActivityPanel();
     activityPanel.addPropertyChangeListener( this );
 
-    try
-    {
-      LearnedSignal.getDecodeIR();
-      learnedPanel = new LearnedSignalPanel();
-//      tabbedPane.addTab( "Learned Signals", learnedPanel );
+    learnedPanel = new LearnedSignalPanel();
+    if ( LearnedSignal.hasDecodeIR() )
       learnedPanel.addPropertyChangeListener( this );
-    }
-    catch ( NoClassDefFoundError ncdfe )
-    {
-      System.err.println( "DecodeIR class not found!" );
-    }
-    catch ( NoSuchMethodError nsme )
-    {
-      System.err.println( "DecodeIR class is wrong version!" );
-    }
-    catch ( UnsatisfiedLinkError ule )
-    {
-      System.err.println( "DecodeIR JNI interface not found!" );
-    }
 
     rawDataPanel = new RawDataPanel();
     tabbedPane.addTab( "Raw Data", rawDataPanel );
@@ -2650,14 +2634,13 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
         sb.append( "</p><p>Images and Maps loaded from <b>" );
         sb.append( properties.getProperty( "ImagePath" ) );
         sb.append( "</b></p>" );
-        try
+        if ( LearnedSignal.hasDecodeIR() )
         {
-          String v = LearnedSignal.getDecodeIR().getVersion();
           sb.append( "<p>DecodeIR version " );
-          sb.append( v );
+          sb.append( LearnedSignal.getDecodeIRVersion() );
           sb.append( "</p>" );
         }
-        catch ( LinkageError le )
+        else
         {
           sb.append( "<p><b>DecodeIR is not available!</b></p>" );
         }
@@ -2782,7 +2765,10 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     index = checkTabbedPane( "Devices", devicePanel, true, index );
     index = checkTabbedPane( "Protocols", protocolPanel, remote.hasFreeProtocols(), index );
     index = checkTabbedPane( "Activities", activityPanel, remote.hasActivitySupport(), index );
-    index = checkTabbedPane( "Learned Signals", learnedPanel, remote.hasLearnedSupport() && learnedPanel != null, index );
+    if ( LearnedSignal.hasDecodeIR() )
+      index = checkTabbedPane( "Learned Signals", learnedPanel, remote.hasLearnedSupport() && learnedPanel != null, index );
+    else
+      index = checkTabbedPane( "Learned Signals", learnedPanel, remote.hasLearnedSupport() && learnedPanel != null, index, "Learned Signals tab disabled due to DecodeIR not being found.", false );
     
     generalPanel.set( remoteConfig );
     keyMovePanel.set( remoteConfig );
@@ -2795,7 +2781,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     protocolPanel.set( remoteConfig );
     activityPanel.set( remoteConfig );
 
-    if ( learnedPanel != null )
+    if ( LearnedSignal.hasDecodeIR() )
     {
       learnedPanel.set( remoteConfig );
     }
@@ -2826,6 +2812,10 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
   
   private int checkTabbedPane( String name, Component c, boolean test, int index )
   {
+    return checkTabbedPane( name, c, test, index, null, true );
+  }
+  private int checkTabbedPane( String name, Component c, boolean test, int index, String tooltip, boolean enabled )
+  {
     if ( c == null )
     {
       return index;
@@ -2835,7 +2825,8 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     {
       if ( tabIndex < 0 )
       {
-        tabbedPane.insertTab( name, null, c, null, index );
+        tabbedPane.insertTab( name, null, c, tooltip, index );
+        tabbedPane.setEnabledAt( index, enabled );
       }
       index++;
     }

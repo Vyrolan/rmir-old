@@ -33,9 +33,9 @@ public class LibraryLoader
     {
       String mappedName = System.mapLibraryName( libraryName );
       File libraryFile = new File( libraryFolder, mappedName );
-      System.err.println( "Loading " + libraryFile.getAbsolutePath() );
+      System.err.println( "LibraryLoader: Attempting to load '" + libraryName + "' from '" + libraryFile.getAbsolutePath() + "'..." );
       System.load( libraryFile.getAbsolutePath() );
-      System.err.println( "Loaded " + libraryFile.getAbsolutePath() );
+      System.err.println( "LibraryLoader: Loaded '" + libraryName + "' successfully from '" + libraryFile.getAbsolutePath() + "'" );
       libraries.put( libraryName, mappedName );
     }
   }
@@ -44,9 +44,9 @@ public class LibraryLoader
   {
     if ( libraries.get( libraryName ) == null )
     {
-      System.err.println( "Loading " + libraryName );
+      System.err.println( "LibraryLoader: Attempting to load '" + libraryName + "' from standard locations..." );
       System.loadLibrary( libraryName );
-      System.err.println( "Loaded " + libraryName );
+      System.err.println( "LibraryLoader: Loaded '" + libraryName + "' successfully.");
       libraries.put( libraryName, libraryName );
     }
   }
