@@ -20,9 +20,10 @@ public class LearnedSignalTimingAnalyzerRaw extends LearnedSignalTimingAnalyzerB
   }
 
   @Override
-  public boolean checkCandidacy( int roundTo )
+  public int checkCandidacyImpl( int roundTo )
   {
-    return true;
+    // 2 means rounding is for sure acceptable
+    return 2;
   }
 
   @Override
@@ -31,21 +32,35 @@ public class LearnedSignalTimingAnalyzerRaw extends LearnedSignalTimingAnalyzerB
     System.err.println( "RawAnalyzer: (" + this.hashCode() +") Analyze" );
     addAnalysis( 
         new LearnedSignalTimingAnalysis( 
-            "Raw", 
+            "Even",
             getUnpacked().getBursts(), 
             new int[][] { getUnpacked().getOneTimeDurations( getRoundTo(), true ) }, 
-            new int[][] { getUnpacked().getRepeatDurations( getRoundTo(), true ) }, 
-            new int[][] { getUnpacked().getExtraDurations( getRoundTo(), true ) }, 
-            "", 
-            false, 
+            new int[][] { getUnpacked().getRepeatDurations( getRoundTo(), true ) },
+            new int[][] { getUnpacked().getExtraDurations( getRoundTo(), true ) },
+            ";",
+            2,
+            2,
             ""
-        ) 
+        )
+    );
+    addAnalysis(
+        new LearnedSignalTimingAnalysis(
+            "Odd",
+            getUnpacked().getBursts(),
+            new int[][] { getUnpacked().getOneTimeDurations( getRoundTo(), true ) },
+            new int[][] { getUnpacked().getRepeatDurations( getRoundTo(), true ) },
+            new int[][] { getUnpacked().getExtraDurations( getRoundTo(), true ) },
+            ";",
+            1,
+            2,
+            ""
+        )
     );
   }
 
   @Override
   protected String getPreferredAnalysisName()
   {
-    return "Raw";
+    return "Even";
   }
 }

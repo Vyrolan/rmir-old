@@ -154,9 +154,17 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         summary.append( ul.frequency );
         summary.append( '\t' );
         
+        LearnedSignalTimingAnalysis analysis = null;
         if ( roundingSet && !s.getTimingAnalyzer().getSelectedAnalyzer().getIsRoundingLocked() )
-          s.getTimingAnalyzer().getSelectedAnalyzer().setRoundTo( r );
-        LearnedSignalTimingAnalysis analysis = s.getTimingAnalyzer().getSelectedAnalysis();
+        {
+          LearnedSignalTimingAnalyzerBase analyzer = s.getTimingAnalyzer().getSelectedAnalyzer();
+          analyzer.saveState();
+          analyzer.setRoundTo( r );
+          analysis = s.getTimingAnalyzer().getSelectedAnalysis();
+          analyzer.restoreState();
+        }
+        else
+          analysis = s.getTimingAnalyzer().getSelectedAnalysis();
         
         if ( ul.oneTime > 0 && ul.extra > 0 && ul.repeat == 0 )
         {

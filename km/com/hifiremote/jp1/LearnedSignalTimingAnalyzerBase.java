@@ -17,15 +17,18 @@ public abstract class LearnedSignalTimingAnalyzerBase
   public int getRoundTo() 
   {
     if ( _RoundTo == -1 )
-      autoSetRounding();
+    {
+      _RoundTo = calcAutoRoundTo(); // blind acceptance
+      _Analyses = null; // force reanalyze on next access
+    }
     return _RoundTo; 
   }
   public void setRoundTo( int roundTo ) 
   { 
     if ( !_IsRoundingLocked && roundTo > 0 && _RoundTo != roundTo && checkCandidacy( roundTo ) )
     {
-      _RoundTo = roundTo;
-      _Analyses = null; // force reanalyze on next access
+        _RoundTo = roundTo;
+        _Analyses = null; // force reanalyze on next access
     }
   }
 
@@ -34,13 +37,19 @@ public abstract class LearnedSignalTimingAnalyzerBase
   public void lockRounding() { _IsRoundingLocked = true; }
   public void unlockRounding() { _IsRoundingLocked = false; }
 
-  private void autoSetRounding()
+  private int _SavedRoundTo = -1;
+  private HashMap<String,LearnedSignalTimingAnalysis> _SavedAnalyses;
+  public void saveState()
   {
-    int r = calcAutoRoundTo();
-    if ( r > 0 && _RoundTo != r )
+    _SavedRoundTo = _RoundTo;
+    _SavedAnalyses = _Analyses;
+  }
+  public void restoreState()
+  {
+    if (_RoundTo != _SavedRoundTo)
     {
-      _RoundTo = r;
-      _Analyses = null; // force reanalyze on next access
+      _Analyses = _SavedAnalyses; // must reanalyze if restore changes rounding
+      _RoundTo = _SavedRoundTo;
     }
   }
 
@@ -55,21 +64,61 @@ public abstract class LearnedSignalTimingAnalyzerBase
   // calculate a preferred optimal rounding
   protected abstract int calcAutoRoundTo();
   // do a quick check if the signal can be analyzed with the given rounding
-  public abstract boolean checkCandidacy( int roundTo );
+  //  0 = fails check, 1 = must try to analyze to know for sure, 2 = passes check
+  protected abstract int checkCandidacyImpl( int roundTo );
   // analyze the symbol
   protected abstract void analyzeImpl();
   // get the preferred analysis that is the "best match"
   protected abstract String getPreferredAnalysisName();  
-  
+
+  protected boolean checkCandidacy( int roundTo )
+  {
+    int c = checkCandidacyImpl( roundTo );
+
+    // check if for sure fail
+    if ( c == 0 ) return false;
+    // check if for sure success
+    if ( c == 2 ) return true;
+    // check for insanity
+    if ( c != 1 )
+    {
+      System.err.println( "The checkCandidacyImpl method for analyzer " + this.getClass().getName() + " returned invalid value " + c + ".");
+      return false;
+    }
+
+    // handle "must analyze" case
+    //  we need to save state to "try" to analyze, but we can't use saveState/restoreState because they're being used by the UI
+    //  we also have no clue what additional state the analyzer may have which could get destroyed in this...so we just make a new instance
+    try
+    {
+      // getting crazy now...
+      LearnedSignalTimingAnalyzerBase a = this.getClass().getConstructor( UnpackLearned.class ).newInstance( _Unpacked );
+      // can't use setRoundTo lest we spiral quickly towards a stack overflow
+      a._RoundTo = roundTo;
+      a.analyze();
+      return a.hasAnalyses();
+      // It'd be nice if we could steal the analyses here if it was successful, but again we have no idea what 
+      // state the subclass has... Maybe there could be a "copyInternalState" abstract that they would implement?
+      // That seems overkill since most (hopefully?) won't have to use this "analyze to be sure" methodology.
+      // If most end up using it, then that should be done so subclasses can maintain their internal state
+      // while doing this but don't cause an extra re-analyze.
+    }
+    // swallowing exceptions...they should never happen, right?   Sorry in advance.
+    catch ( Exception e ) { }
+
+    // should never get here... famous last words
+    return false;
+  }
+
   private void analyze()
   {
     synchronized (this)
     {
       if ( _Analyses != null ) return; // another thread did it
-      int r = getRoundTo();
+      int r = getRoundTo(); // force rounding calculation since it may set _Analyses to null
       _Analyses = new HashMap<String,LearnedSignalTimingAnalysis>();
-      if ( checkCandidacy( r ) )
-        analyzeImpl();
+      if ( r == 0 ) return; // no way we can analyze with a 0 rounding
+      analyzeImpl();
     }
   }
   
@@ -92,9 +141,12 @@ public abstract class LearnedSignalTimingAnalyzerBase
   }
   public HashMap<String,LearnedSignalTimingAnalysis> getAnalyses()
   {
-    if ( _Analyses == null )
-      analyze();
-    return _Analyses;
+    synchronized (this)
+    {
+      if ( _Analyses == null )
+        analyze();
+      return _Analyses;
+    }
   }
   protected void addAnalysis( LearnedSignalTimingAnalysis analysis )
   {

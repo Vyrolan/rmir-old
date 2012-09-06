@@ -178,12 +178,15 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     burstRoundBox.setColumns( 4 );
     burstRoundBox.getDocument().addDocumentListener(new DocumentListener() {
       public void changedUpdate(DocumentEvent e) {
+        applyButton.setEnabled( true );
         setAdvancedAreaTextFields();
       }
       public void removeUpdate(DocumentEvent e) {
+        applyButton.setEnabled( true );
         setAdvancedAreaTextFields();
       }
       public void insertUpdate(DocumentEvent e) {
+        applyButton.setEnabled( true );
         setAdvancedAreaTextFields();
       }
     });
@@ -310,6 +313,10 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       analysisMessageLabel.setText( timingAnalyzer.getSelectedAnalysis().getMessage() );
       burstRoundBox.setText( Integer.toString( timingAnalyzer.getSelectedAnalyzer().getRoundTo() ) );
 
+      // the accesses above will have initialized the timing analyzer to last selcted or preferred analyzer/analysis, so we save the state
+      timingAnalyzer.saveState();
+      // we'll back out any changes with restoreState if the user clicks cancel
+
       advancedAreaUpdating = false;
       analysisUpdating = false;
 
@@ -322,7 +329,9 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     if ( analysisUpdating )
       return;
     analysisUpdating = true;
-    
+
+    applyButton.setEnabled( true );
+
     LearnedSignalTimingAnalyzer timingAnalyzer = this.learnedSignal.getTimingAnalyzer();
     if ( !timingAnalyzer.getSelectedAnalyzer().getName().equals( analyzerBox.getSelectedItem().toString() ) )
     {
@@ -494,6 +503,12 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
           JOptionPane.showMessageDialog( this, message, title, JOptionPane.ERROR_MESSAGE );
         }
       }
+      else
+      {
+        // re-save any changes on apply or ok...in this else
+        // since signal data changes clears out the analyzer anyway
+        learnedSignal.getTimingAnalyzer().saveState();
+      }
     }
     
     if ( source == applyButton && ok )
@@ -508,6 +523,8 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     }
     else if ( source == cancelButton )
     {
+      // back out any timing analysis changes
+      learnedSignal.getTimingAnalyzer().restoreState();
       learnedSignal = null;
       setVisible( false );
     }

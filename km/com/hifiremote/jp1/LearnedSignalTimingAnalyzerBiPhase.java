@@ -19,51 +19,8 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     return "Bi-Phase";
   }
 
-  @Override
-  protected int calcAutoRoundTo()
+  private HashMap<Integer,Integer> getDurationHistogram( int roundTo )
   {
-    int[] durations = getUnpacked().getDurations( 1, true );
-    HashMap<Integer,Integer> hist = new HashMap<Integer,Integer>();
-    
-    int leadIn1 = durations[0];
-    int leadIn2 = durations[1];
-    for ( int i = 2; i < durations.length - 2; i++ )
-    {
-      int value = durations[i];
-      int absValue = Math.abs( value );
-      if ( !hist.containsKey( absValue ) )
-      {
-        // check for a lead out
-        if ( value < 0 && durations[i+1] == leadIn1 && durations[i+2] == leadIn2 )
-        {
-          i += 2;
-          continue;
-        }
-        hist.put( absValue, 1 );
-      }
-      else
-        hist.put( absValue, hist.get( absValue ) + 1 );
-    }
-
-    int max = Integer.MIN_VALUE;
-    for ( int k: hist.keySet() )
-      if ( k > max )
-        max = k;
-    
-    int roundTo = 0;
-    while ( roundTo < max + 100 )
-    {
-      roundTo += 10;
-      if ( checkCandidacy( roundTo ) )
-        return roundTo;
-    }
-    
-    return 0;
-  }
-
-  @Override
-  public boolean checkCandidacy( int roundTo )
-  {  
     int[] durations = getUnpacked().getDurations( roundTo, true );
     HashMap<Integer,Integer> hist = new HashMap<Integer,Integer>();
     
@@ -85,37 +42,83 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
       }
       else
         hist.put( absValue, hist.get( absValue ) + 1 );
-    }   
+    }
+
+    return hist;
+  }
+
+  @Override
+  protected int calcAutoRoundTo()
+  {
+    HashMap<Integer,Integer> hist = getDurationHistogram( 1 );
+
+    int min = Integer.MAX_VALUE;
+    for ( int k: hist.keySet() )
+      if ( k < min )
+        min = k;
+
+    int limit = min + (int) ( Math.pow( 10, Math.floor( Math.log10( min ) ) ) / 2 );
+    
+    int roundTo = 0;
+    while ( roundTo < limit )
+    {
+      roundTo += 10;
+      if ( checkCandidacy( roundTo ) ) // this will trigger an analyze for biphase
+        // found a working one, return it
+        return roundTo;
+    }
+    
+    return 0;
+  }
+
+  @Override
+  protected int checkCandidacyImpl( int roundTo )
+  {  
+    HashMap<Integer,Integer> hist = getDurationHistogram( roundTo );
     
     int min = Integer.MAX_VALUE;
     for ( int d: hist.keySet() )
       if ( d < min )
         min = d;
 
+    if ( min <= 0 )
+      return 0; // obviously no good
+
     for ( int d: hist.keySet() )
       if ( d % min != 0 )
-      {
-        _Unit = 0;
-        return false;
-      }
+        return 0;
     
-    _Unit = min;
-    return true;
+    // so we might good...but we dunno until we try...
+    return 1;
+  }
+
+  private int _SavedUnit;
+  @Override
+  public void saveState()
+  {
+    _SavedUnit = _Unit;
+    super.saveState();
+  }
+  @Override
+  public void restoreState()
+  {
+    super.restoreState();
+    _Unit = _SavedUnit;
   }
 
   @Override
   protected void analyzeImpl()
   {
-    System.err.println( "BiPhaseAnalyzer: (" + this.hashCode() +") Analyze beginning..." );
+    HashMap<Integer,Integer> hist = getDurationHistogram( getRoundTo() );
+    _Unit = Integer.MAX_VALUE;
+    for ( int d: hist.keySet() )
+      if ( d < _Unit )
+        _Unit = d;
     
-    if ( _Unit == 0 )
-      return;
+    System.err.println( "BiPhaseAnalyzer: (" + this.hashCode() +") Analyze beginning with rounding of " + getRoundTo() + " yielding unit size of " + _Unit + "..." );
     
-    System.err.println( "BiPhaseAnalyzer: Analyzing one time durations..." );
     HashMap<String,int[][]> oneTime = AnalyzeDurationSet( getUnpacked().getOneTimeDurations( getRoundTo(), true ) );
-    System.err.println( "BiPhaseAnalyzer: Analyzing repeat durations..." );
     HashMap<String,int[][]> repeat = AnalyzeDurationSet( getUnpacked().getRepeatDurations( getRoundTo(), true ) );
-    System.err.println( "BiPhaseAnalyzer: Analyzing extra durations..." );
     HashMap<String,int[][]> extra = AnalyzeDurationSet( getUnpacked().getExtraDurations( getRoundTo(), true ) );
 
     HashMap<String,Integer> codes = new HashMap<String,Integer>();
@@ -148,9 +151,9 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
         String[] codeSplit = code.split( "," );
         
         String msg = "Bi-Phase unit size is " + _Unit + ".";
-        String name = "LI " + codeSplit[0] + " LO " + codeSplit[2] + " " + ( codeSplit[1] == "1" ? "ODD" : "EVEN" );
+        String name = "LI " + codeSplit[0] + " LO " + codeSplit[2] + " " + ( codeSplit[1].equals("1") ? "ODD" : "EVEN" );
         
-        addAnalysis( new LearnedSignalTimingAnalysis( name, getUnpacked().getBursts( getRoundTo() ), tempOneTime, tempRepeat, tempExtra, ";", codeSplit[1].equals("1"), msg ) );
+        addAnalysis( new LearnedSignalTimingAnalysis( name, getUnpacked().getBursts( getRoundTo() ), tempOneTime, tempRepeat, tempExtra, ";", ( codeSplit[1].equals("1") ? 1 : 2 ), 2, msg ) );
         
         if ( preferredCode == null || code.compareTo( preferredCode ) < 0 )
         {
@@ -174,18 +177,19 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
   //    2 = final on time was used as part of lead out
   private HashMap<String,int[][]> AnalyzeDurationSet( int[] durations )
   {
+    /*
     if ( durations == null || durations.length == 0 )
       System.err.println( "BiPhaseAnalyzer: AnalyzeDurationSet with " + ( durations == null ? "null" : "empty" ) + " set." );
     else if ( durations.length > 3 )
       System.err.println( "BiPhaseAnalyzer: AnalyzeDurationSet with set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )" );
     else
       System.err.println( "BiPhaseAnalyzer: AnalyzeDurationSet with set of " + durations.length + " durations..." );
+    */
     
     if ( durations == null || durations.length < 4 )
       return null;
     
     int[][] temp = splitDurationsBeforeLeadIn( durations );
-    System.err.println( "BiPhaseAnalyzer: AnalyzeDurationSet split into " + temp.length + " components." );
     HashMap<String,int[][]> results = new HashMap<String,int[][]>();
     
     int i = 0;
@@ -221,12 +225,14 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
   //    2 = final on time was used as part of lead out
   private HashMap<String,int[]> AnalyzeDurations( int[] durations )
   {
+    /*
     if ( durations == null || durations.length == 0 )
       System.err.println( "BiPhaseAnalyzer: AnalyzeDurations with " + ( durations == null ? "null" : "empty" ) + " set." );
     else if ( durations.length > 3 )
       System.err.println( "BiPhaseAnalyzer: AnalyzeDurations with set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )");
     else
       System.err.println( "BiPhaseAnalyzer: AnalyzeDurations with set of " + durations.length + " durations...");
+    */
     
     if ( durations == null || durations.length < 4 )
       return null;
@@ -234,10 +240,8 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
     int[] leadIn = new int[2];
     leadIn[0] = durations[0];
     leadIn[1] = durations[1];
-    System.err.println( "BiPhaseAnalyzer: LeadIn = " + leadIn[0] + " " + leadIn[1]);
     
     int leadOut = durations[durations.length -1];
-    System.err.println( "BiPhaseAnalyzer: LeadOut = " + leadOut);
 
     // setup temp array used for analysis
     // we leave 0th spot blank to hold partial lead in off time later
@@ -301,12 +305,14 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
   //    2 = final on time was used as part of lead out
   private HashMap<String,ArrayList<int[]>> analyzeSignalData( int[] durations, int leadOut )
   {
+    /*
     if ( durations == null || durations.length == 0 )
       System.err.println( "BiPhaseAnalyzer: analyzeSignalData with " + ( durations == null ? "null" : "empty" ) + " set." );
     else if ( durations.length > 3 )
       System.err.println( "BiPhaseAnalyzer: analyzeSignalData with set of " + durations.length + " durations... ( " + durations[0] + " " + durations[1] + " " + durations[2] + " " + durations[3] + " ... )" );
     else
       System.err.println( "BiPhaseAnalyzer: analyzeSignalData with set of " + durations.length + " durations..." );
+    */
     
     ArrayList<int[]> result = new ArrayList<int[]>();
 
@@ -351,7 +357,7 @@ public class LearnedSignalTimingAnalyzerBiPhase extends LearnedSignalTimingAnaly
       }
     }
     
-    System.err.println( "BiPhaseAnalyzer: Found " + result.size() + " result pairs..." );
+    //System.err.println( "BiPhaseAnalyzer: Found " + result.size() + " result pairs..." );
     
     // if we ended on a complete pair, just tack on lead out and we're done  
     if ( p == null )

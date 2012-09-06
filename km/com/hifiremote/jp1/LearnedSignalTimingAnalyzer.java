@@ -117,4 +117,21 @@ public class LearnedSignalTimingAnalyzer
     setSelectedAnalyzer( getPreferredAnalyzer().getName() );
     setSelectedAnalysisName( getSelectedAnalyzer().getPreferredAnalysis().getName() );
   }
+
+  private int _SavedAnalyzer = -1;
+  private String _SavedAnalysisName = null;
+  public void saveState()
+  {
+    _SavedAnalyzer = _SelectedAnalyzer;
+    _SavedAnalysisName = _SelectedAnalysisName;
+    for ( LearnedSignalTimingAnalyzerBase a: _Analyzers )
+      a.saveState();
+  }
+  public void restoreState()
+  {
+    _SelectedAnalyzer = _SavedAnalyzer;
+    _SelectedAnalysisName = _SavedAnalysisName;
+    for ( LearnedSignalTimingAnalyzerBase a: _Analyzers )
+      a.restoreState();
+  }
 }

@@ -9,7 +9,8 @@ public class LearnedSignalTimingAnalysis
   private int[][] _RepeatDurations;
   private int[][] _ExtraDurations;
   private String _Separator;
-  private boolean _SeparateOdd;
+  private int _SeparatorFirst;
+  private int _SeparatorInterval;
   
   public String getName() { return _Name; }
   public String getMessage() { return _Message; }
@@ -18,7 +19,7 @@ public class LearnedSignalTimingAnalysis
   public int[][] getRepeatDurations() { return _RepeatDurations; }
   public int[][] getExtraDurations() { return _ExtraDurations; }
   
-  public LearnedSignalTimingAnalysis( String name, int[] bursts, int[][] oneTime, int[][] repeat, int[][] extra, String sep, boolean sepOdd, String message )
+  public LearnedSignalTimingAnalysis( String name, int[] bursts, int[][] oneTime, int[][] repeat, int[][] extra, String sep, int sepFirst, int sepInterval, String message )
   {
     _Name = name;
     _Bursts = bursts;
@@ -26,7 +27,8 @@ public class LearnedSignalTimingAnalysis
     _RepeatDurations = repeat;
     _ExtraDurations = extra;
     _Separator = sep;
-    _SeparateOdd = sepOdd;
+    _SeparatorFirst = sepFirst;
+    _SeparatorInterval = sepInterval;
     _Message = message;
   }
   
@@ -35,7 +37,7 @@ public class LearnedSignalTimingAnalysis
     int r = 0;
     String[] results = new String[durations.length];
     for ( int[] d: durations )
-      results[r++] = durationsToString( d, _Separator, _SeparateOdd );
+      results[r++] = durationsToString( d, _Separator, _SeparatorFirst, _SeparatorInterval );
     return results;
   }
   public String[] getOneTimeDurationStringList()
@@ -53,19 +55,19 @@ public class LearnedSignalTimingAnalysis
   
   public String getBurstString()
   {
-    return durationsToString( getBursts(), _Separator, _SeparateOdd );
+    return durationsToString( getBursts(), _Separator, _SeparatorFirst, _SeparatorInterval );
   }
   public String getOneTimeDurationString()
   {
-    return durationsToString( joinDurations( getOneTimeDurations() ), _Separator, _SeparateOdd );
+    return durationsToString( joinDurations( getOneTimeDurations() ), _Separator, _SeparatorFirst, _SeparatorInterval );
   }
   public String getRepeatDurationString()
   {
-    return durationsToString( joinDurations( getRepeatDurations() ), _Separator, _SeparateOdd );
+    return durationsToString( joinDurations( getRepeatDurations() ), _Separator, _SeparatorFirst, _SeparatorInterval );
   }
   public String getExtraDurationString()
   {
-    return durationsToString( joinDurations( getExtraDurations() ), _Separator, _SeparateOdd );
+    return durationsToString( joinDurations( getExtraDurations() ), _Separator, _SeparatorFirst, _SeparatorInterval );
   }
 
   public static int[] joinDurations( int[][] durations )
@@ -86,7 +88,7 @@ public class LearnedSignalTimingAnalysis
     return result;
   }
   
-  public static String durationsToString( int[] data, String sep, boolean sepOdd )
+  public static String durationsToString( int[] data, String sep, int sepFirst, int sepInterval )
   {
     StringBuilder str = new StringBuilder();
     if ( data != null && data.length != 0 )
@@ -108,7 +110,7 @@ public class LearnedSignalTimingAnalysis
         else if ( data[i] > 0 )
             str.append( '+' );
         str.append( data[i] );
-        if ( ( i % 2 ) == ( sepOdd ? 0 : 1 ) )
+        if ( (i+1) == sepFirst || ( (i+1-sepFirst) % sepInterval ) == 0 )
           str.append( sep );
       }
     }
