@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="EclipseModuleManager">
+    <libelement value="jar://$MODULE_DIR$/../rmir/km/jlfgr-1_0.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/../rmir/km/lib/RMGraphics.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/../rmir/km/lib/TableLayout.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/../rmir/km/lib/l2fprod-common-directorychooser.jar!/" />
+    <libelement value="jar://$MODULE_DIR$/../rmir/km/lib/ExtInstall.jar!/" />
+    <src_description expected_position="0">
+      <src_folder value="file://$MODULE_DIR$/../rmir/km/" expected_position="0" />
+    </src_description>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/../rmir/km/classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../km/com/hifiremote">
+      <sourceFolder url="file://$MODULE_DIR$/../km/com/hifiremote" isTestSource="false" packagePrefix="com.hifiremote" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="module-library">
+      <library name="jlfgr-1_0.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../rmir/km/jlfgr-1_0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="RMGraphics.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../rmir/km/lib/RMGraphics.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="TableLayout.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../rmir/km/lib/TableLayout.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="l2fprod-common-directorychooser.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../rmir/km/lib/l2fprod-common-directorychooser.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ExtInstall.jar">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../rmir/km/lib/ExtInstall.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+  </component>
+</module>
+

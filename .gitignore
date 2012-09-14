@@ -5,5 +5,8 @@
 *.war
 *.ear
 
+# IntelliJ user-specific file
+*.iws
+
 .svn
 .externalToolBuilders
