@@ -1045,6 +1045,10 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
           {
             generalPanel.getDeviceUpgradeEditor().dispose();
           }
+          if ( keyMovePanel.getDeviceUpgradeEditor() != null )
+          {
+            keyMovePanel.getDeviceUpgradeEditor().dispose();
+          }
           if ( devicePanel.getDeviceUpgradeEditor() != null )
           {
             devicePanel.getDeviceUpgradeEditor().dispose();

@@ -98,6 +98,30 @@ public class KeyMovePanel extends RMTablePanel< KeyMove >
           }
         }
         detach.setEnabled( enableDetach );
+
+        // if detach enabled, then check if all from a single upgrade
+        if ( enableDetach )
+        {
+          editUpgrade.setEnabled( true );
+
+          int type = -1;
+          int code = -1;
+          for ( int tableRow : rows )
+          {
+            KeyMove km = getRowObject( tableRow );
+            if ( type == -1 )
+            {
+              type = km.getDeviceType();
+              code = km.getSetupCode();
+            }
+            else if ( type != km.getDeviceType() || code != km.getSetupCode() )
+            {
+              // difference device upgrades...can't edit more than 1, so disable
+              editUpgrade.setEnabled( false );
+              break;
+            }
+          }
+        }
       }
     } );
 
@@ -105,6 +129,11 @@ public class KeyMovePanel extends RMTablePanel< KeyMove >
     buttonPanel.add( new JButton( detach ) );
     detach.setEnabled( false );
     popup.add( detach );
+
+    editUpgrade = new EditUpgradeAction();
+    buttonPanel.add( new JButton( editUpgrade ) );
+    editUpgrade.setEnabled( false );
+    popup.add( editUpgrade );
   }
 
   @Override
@@ -293,9 +322,57 @@ public class KeyMovePanel extends RMTablePanel< KeyMove >
     }
   }
 
+  public void endEditUpgrade()
+  {
+    ( ( KeyMoveTableModel )model ).refresh();
+    model.fireTableDataChanged();
+    remoteConfig.getOwner().getDeviceUpgradePanel().model.fireTableDataChanged();
+  }
+
+  protected class EditUpgradeAction extends AbstractAction
+  {
+    public EditUpgradeAction()
+    {
+      super( "Edit Upgrade" );
+      putValue( SHORT_DESCRIPTION, "Edit attached upgrade" );
+    }
+
+    public void actionPerformed( ActionEvent event )
+    {
+      AbstractButton source = ( AbstractButton )event.getSource();
+      int[] rows = { popupRow };
+      if ( source instanceof JButton )
+        rows = table.getSelectedRows();
+      else if ( source instanceof JMenuItem )
+        if ( table.isRowSelected( popupRow ) )
+          rows = table.getSelectedRows();
+
+      if ( rows.length == 0 ) return;
+
+      KeyMove km = getRowObject( rows[0] );
+      for ( DeviceUpgrade du : remoteConfig.getDeviceUpgrades() )
+      {
+        if ( du.getDeviceType().getType() == km.getDeviceType() && du.getSetupCode() == km.getSetupCode() )
+        {
+          List< Remote > remotes = new ArrayList< Remote >( 1 );
+          remotes.add( remoteConfig.getRemote() );
+          thisPanel.upgradeEditor = new DeviceUpgradeEditor( remoteConfig.getOwner(), du, remotes, 0, thisPanel );
+          break;
+        }
+      }
+    }
+  }
+
   private KeyMovePanel thisPanel = null;
 
   private RemoteConfiguration remoteConfig = null;
 
   protected Action detach = null;
+  protected Action editUpgrade = null;
+
+  private DeviceUpgradeEditor upgradeEditor = null;
+  public DeviceUpgradeEditor getDeviceUpgradeEditor()
+  {
+    return upgradeEditor;
+  }
 }
