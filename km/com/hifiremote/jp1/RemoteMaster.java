@@ -1546,12 +1546,12 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
 
     enablePreserveSelection = new JCheckBoxMenuItem( "Allow Preserve Control" );
     enablePreserveSelection.setMnemonic( KeyEvent.VK_A );
-    enablePreserveSelection.setSelected( Boolean.parseBoolean( properties.getProperty( "enablePreserveSelection",
-        "false" ) ) );
+    enablePreserveSelection.setSelected( Boolean.parseBoolean( properties.getProperty( "enablePreserveSelection", "false" ) ) );
     enablePreserveSelection.addActionListener( this );
-    enablePreserveSelection
-        .setToolTipText( "<html>Allow control of which function data is preserved when changing the protocol used in a device upgrade.<br>Do not use this unless you know what you are doing and why.</html>" );
+    enablePreserveSelection.setToolTipText( "<html>Allow control of which function data is preserved when changing the protocol used in a device upgrade.<br>Do not use this unless you know what you are doing and why.</html>" );
     menu.add( enablePreserveSelection );
+
+    appendAdvancedOptions( menu );
 
     ActionListener al = new ActionListener()
     {
@@ -1659,6 +1659,44 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     aboutItem = new JMenuItem( "About...", KeyEvent.VK_A );
     aboutItem.addActionListener( this );
     menu.add( aboutItem );
+  }
+
+  private void appendAdvancedOptions( JMenu menu )
+  {
+    ActionListener advancedActionListener = new ActionListener()
+    {
+      public void actionPerformed( ActionEvent e )
+      {
+        try
+        {
+          JCheckBoxMenuItem item = (JCheckBoxMenuItem)e.getSource();
+          properties.setProperty( item.getActionCommand(), Boolean.toString( item.isSelected() ) );
+          refreshTabbedPanes();
+        }
+        catch ( Exception x )
+        {
+          x.printStackTrace( System.err );
+        }
+      }
+    };
+
+    JMenu advancedSubMenu = new JMenu( "Advanced" );
+    advancedSubMenu.setMnemonic( KeyEvent.VK_D );
+    menu.addSeparator();
+    menu.add( advancedSubMenu );
+    JCheckBoxMenuItem advancedItem;
+
+    advancedItem = new JCheckBoxMenuItem( "Learned Signal Timing Analysis" );
+    advancedItem.setActionCommand( "LearnedSignalTimingAnalysis" );
+    advancedItem.setSelected( Boolean.parseBoolean( properties.getProperty( advancedItem.getActionCommand(), "false" ) ) );
+    advancedItem.addActionListener( advancedActionListener );
+    advancedSubMenu.add( advancedItem );
+
+    advancedItem = new JCheckBoxMenuItem( "Learn to Upgrade Conversion" );
+    advancedItem.setActionCommand( "LearnUpgradeConversion" );
+    advancedItem.setSelected( Boolean.parseBoolean( properties.getProperty( advancedItem.getActionCommand(), "false" ) ) );
+    advancedItem.addActionListener( advancedActionListener );
+    advancedSubMenu.add( advancedItem );
   }
 
   private void createToolbar()
@@ -2810,6 +2848,11 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     rawDataPanel.set( remoteConfig );
   }
   
+  protected void refreshTabbedPanes()
+  {
+    for ( int i = 0; i < tabbedPane.getTabCount(); i++ )
+      ((RMPanel) tabbedPane.getComponentAt( i )).refresh();
+  }
   private int checkTabbedPane( String name, Component c, boolean test, int index )
   {
     return checkTabbedPane( name, c, test, index, null, true );

@@ -27,13 +27,22 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
     convertToUpgradeButton.addActionListener( this );
     convertToUpgradeButton.setToolTipText( "Convert the selected item to a Device Upgrade." );
     convertToUpgradeButton.setEnabled( false );
+    convertToUpgradeButton.setVisible( Boolean.parseBoolean( RemoteMaster.getProperties().getProperty( "LearnUpgradeConversion", "false" ) ) );    
     buttonPanel.add( convertToUpgradeButton );
 
     timingSummaryButton = new JButton( "Timing Summary" );
     timingSummaryButton.addActionListener( this );
     timingSummaryButton.setToolTipText( "View the Timing Summary for all of the Learned Signals." );
     timingSummaryButton.setEnabled( true );
+    timingSummaryButton.setVisible( Boolean.parseBoolean( RemoteMaster.getProperties().getProperty( "LearnedSignalTimingAnalysis", "false" ) ) );
     buttonPanel.add( timingSummaryButton );
+  }
+
+  @Override
+  protected void refresh()
+  {
+    convertToUpgradeButton.setVisible( Boolean.parseBoolean( RemoteMaster.getProperties().getProperty( "LearnUpgradeConversion", "false" ) ) );    
+    timingSummaryButton.setVisible( Boolean.parseBoolean( RemoteMaster.getProperties().getProperty( "LearnedSignalTimingAnalysis", "false" ) ) );
   }
 
   /**

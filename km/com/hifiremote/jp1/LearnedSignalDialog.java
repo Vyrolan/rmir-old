@@ -63,7 +63,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     dialog.setAdvancedButtonText( dialog.advancedArea.isVisible() );
     dialog.applyButton.setEnabled( false );
     dialog.pack();
-    
+
     dialog.setLocationRelativeTo( locationComp );
     dialog.setVisible( true );
     return dialog.learnedSignal;
@@ -151,16 +151,16 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     advancedArea.setBorder( BorderFactory.createTitledBorder( "Advanced Details" ) );
 
     // add panel with rounding/analysis controls
-    panel = new JPanel( new FlowLayout( FlowLayout.LEFT, 1, 1 ) );
-    panel.add( new JLabel( " Round To: " ) );
-    panel.add( burstRoundBox );
-    panel.add( new JLabel( "  Anaylzer: ") );
-    panel.add( analyzerBox );
-    panel.add( new JLabel( "  Analysis: ") );
-    panel.add( analysisBox );
-    panel.add( new JLabel( "  ") );
-    panel.add( analysisMessageLabel );
-    advancedArea.add( panel );
+    advancedAreaControls = new JPanel( new FlowLayout( FlowLayout.LEFT, 1, 1 ) );
+    advancedAreaControls.add( new JLabel( " Round To: " ) );
+    advancedAreaControls.add( burstRoundBox );
+    advancedAreaControls.add( new JLabel( "  Anaylzer: ") );
+    advancedAreaControls.add( analyzerBox );
+    advancedAreaControls.add( new JLabel( "  Analysis: ") );
+    advancedAreaControls.add( analysisBox );
+    advancedAreaControls.add( new JLabel( "  ") );
+    advancedAreaControls.add( analysisMessageLabel );
+    advancedArea.add( advancedAreaControls );
     
     // setup analyzer/analysis boxes and message label
     analysisMessageLabel.setText( null );
@@ -356,22 +356,34 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       return;
     advancedAreaUpdating = true;
 
-    int r = 1;
-    String roundText = burstRoundBox.getText();
-    if ( roundText != null && !roundText.isEmpty() )
-      try { r = Integer.parseInt( roundText ); }
-      catch (NumberFormatException e) { r = 1; }
+    LearnedSignalTimingAnalysis analysis;
     
-    LearnedSignalTimingAnalyzerBase analyzer = this.learnedSignal.getTimingAnalyzer().getSelectedAnalyzer();
-    if ( r != analyzer.getRoundTo() )
+    if ( Boolean.parseBoolean( RemoteMaster.getProperties().getProperty( "LearnedSignalTimingAnalysis", "false" ) ) )
     {
-      analyzer.unlockRounding();
-      analyzer.setRoundTo( r );
-      analyzer.lockRounding();
-    }
+      advancedAreaControls.setVisible( true );
 
-    LearnedSignalTimingAnalysis analysis = this.learnedSignal.getTimingAnalyzer().getSelectedAnalysis();
-    analysisMessageLabel.setText( analysis.getMessage() );
+      int r = 1;
+      String roundText = burstRoundBox.getText();
+      if ( roundText != null && !roundText.isEmpty() )
+        try { r = Integer.parseInt( roundText ); }
+        catch (NumberFormatException e) { r = 1; }
+
+      LearnedSignalTimingAnalyzerBase analyzer = this.learnedSignal.getTimingAnalyzer().getSelectedAnalyzer();
+      if ( r != analyzer.getRoundTo() )
+      {
+        analyzer.unlockRounding();
+        analyzer.setRoundTo( r );
+        analyzer.lockRounding();
+      }
+
+      analysis = this.learnedSignal.getTimingAnalyzer().getSelectedAnalysis();
+      analysisMessageLabel.setText( analysis.getMessage() );
+    }
+    else
+    {
+      advancedAreaControls.setVisible( false );
+      analysis = this.learnedSignal.getTimingAnalyzer().getAnalyzer( "Raw Data" ).getAnalysis( "Even" );
+    }
 
     String temp = analysis.getBurstString();
     burstTextArea.setText( temp );
@@ -629,6 +641,9 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
   
   private boolean advancedAreaUpdating = false;
   private boolean analysisUpdating = false;
+
+  // panel holding advanced area controls
+  private JPanel advancedAreaControls = new JPanel();
   // text box to enter rounding of times
   private JTextField burstRoundBox = new JTextField();
   // drop down to pick timing analyzer
