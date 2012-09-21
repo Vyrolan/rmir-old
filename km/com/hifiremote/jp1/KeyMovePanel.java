@@ -286,12 +286,7 @@ public class KeyMovePanel extends RMTablePanel< KeyMove >
     {
       KeyMove keyMove = model.getRow( sorter.modelIndex( row ) );
 
-      if ( JOptionPane.showConfirmDialog( null,
-        "The key move you are attempting to delete is attached to a device upgrade.\n"
-        + "If you delete it, it will first be detached and this can potentially leave\n"
-        + "the function not bound to any key. Are you sure that you want to proceed?",
-        "Delete Key Move from Device Upgrade",
-        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE ) == JOptionPane.YES_OPTION )
+      if ( RMConfirmationDialog.show( "Delete Key Move from Device Upgrade", DELETE_ATTACHED_CONFIRM, JOptionPane.YES_OPTION, "SuppressKeyMovePrompts" ) )
       {
         if ( !DetachKeyMoves( new int[] { row } ) )
           return;
@@ -361,13 +356,7 @@ public class KeyMovePanel extends RMTablePanel< KeyMove >
       }
     }
 
-    if ( !alsoDetach.isEmpty() && JOptionPane.showConfirmDialog( null,
-        "At least one of the device upgrades of the attached key moves selected for\n"
-        + "detachment is assigned to more than one device button.  The corresponding\n"
-        + "key moves of the other device buttons will also be detached.  Are you sure\n"
-        + "that you want to proceed?",
-        "Detach Key Moves from Device Upgrades",
-        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE ) == JOptionPane.NO_OPTION )
+    if ( !alsoDetach.isEmpty() && RMConfirmationDialog.show( "Detach Key Moves from Device Upgrades", MULTI_DEVICE_DETACH_CONFIRM, JOptionPane.NO_OPTION, "SuppressKeyMovePrompts" ) )
     {
       return false;
     }
@@ -470,4 +459,14 @@ public class KeyMovePanel extends RMTablePanel< KeyMove >
   {
     return upgradeEditor;
   }
+  
+  private final String MULTI_DEVICE_DETACH_CONFIRM = "At least one of the device upgrades of the attached key moves selected for\n"
+  + "detachment is assigned to more than one device button.  The corresponding\n"
+  + "key moves of the other device buttons will also be detached.  Are you sure\n"
+  + "that you want to proceed?";
+
+  private final String DELETE_ATTACHED_CONFIRM = "The key move you are attempting to delete is attached to a device upgrade.\n"
+      + "If you delete it, it will first be detached and this can potentially leave\n"
+      + "the function not bound to any key. Are you sure that you want to proceed?";
+
 }

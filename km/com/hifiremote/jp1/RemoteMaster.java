@@ -1667,7 +1667,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
 
   private void appendAdvancedOptions( JMenu menu )
   {
-    ActionListener advancedActionListener = new ActionListener()
+    ActionListener listener = new ActionListener()
     {
       public void actionPerformed( ActionEvent e )
       {
@@ -1684,23 +1684,35 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
       }
     };
 
+    // Advanced sub menu
     JMenu advancedSubMenu = new JMenu( "Advanced" );
     advancedSubMenu.setMnemonic( KeyEvent.VK_D );
     menu.addSeparator();
     menu.add( advancedSubMenu );
-    JCheckBoxMenuItem advancedItem;
+    JCheckBoxMenuItem item;
 
-    advancedItem = new JCheckBoxMenuItem( "Learned Signal Timing Analysis" );
-    advancedItem.setActionCommand( "LearnedSignalTimingAnalysis" );
-    advancedItem.setSelected( Boolean.parseBoolean( properties.getProperty( advancedItem.getActionCommand(), "false" ) ) );
-    advancedItem.addActionListener( advancedActionListener );
-    advancedSubMenu.add( advancedItem );
+    item = new JCheckBoxMenuItem( "Learned Signal Timing Analysis" );
+    item.setActionCommand( "LearnedSignalTimingAnalysis" );
+    item.setSelected( Boolean.parseBoolean( properties.getProperty( item.getActionCommand(), "false" ) ) );
+    item.addActionListener( listener );
+    advancedSubMenu.add( item );
 
-    advancedItem = new JCheckBoxMenuItem( "Learn to Upgrade Conversion" );
-    advancedItem.setActionCommand( "LearnUpgradeConversion" );
-    advancedItem.setSelected( Boolean.parseBoolean( properties.getProperty( advancedItem.getActionCommand(), "false" ) ) );
-    advancedItem.addActionListener( advancedActionListener );
-    advancedSubMenu.add( advancedItem );
+    item = new JCheckBoxMenuItem( "Learn to Upgrade Conversion" );
+    item.setActionCommand( "LearnUpgradeConversion" );
+    item.setSelected( Boolean.parseBoolean( properties.getProperty( item.getActionCommand(), "false" ) ) );
+    item.addActionListener( listener );
+    advancedSubMenu.add( item );
+    
+    // Suppress Messages sub menu
+    JMenu suppressSubMenu = new JMenu( "Suppress Messages" );
+    suppressSubMenu.setMnemonic( KeyEvent.VK_S );
+    menu.add( suppressSubMenu );
+    
+    item = new JCheckBoxMenuItem( "Key Move Detach/Delete" );
+    item.setActionCommand( "SuppressKeyMovePrompts" );
+    item.setSelected( Boolean.parseBoolean( properties.getProperty( item.getActionCommand(), "false" ) ) );
+    item.addActionListener( listener );
+    suppressSubMenu.add( item );
   }
 
   private void createToolbar()
