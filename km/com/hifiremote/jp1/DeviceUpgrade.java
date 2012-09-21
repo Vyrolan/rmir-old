@@ -2181,6 +2181,7 @@ public class DeviceUpgrade extends Highlight
       JOptionPane.showMessageDialog( RemoteMaster.getFrame(),
           "The upgrade you are trying to import is not valid!  It does not contain a value for Remote.name",
           "Import Failure", JOptionPane.ERROR_MESSAGE );
+      reset();
       return;
     }
     if ( theRemote != null )
@@ -2192,6 +2193,7 @@ public class DeviceUpgrade extends Highlight
       theRemote = RemoteManager.getRemoteManager().findRemoteByName( str );
       if ( theRemote == null )
       {
+        reset();
         return;
       }
       remote = theRemote;
@@ -2241,6 +2243,13 @@ public class DeviceUpgrade extends Highlight
       {
         pm.add( protocol );
       }
+      str = props.getProperty( "ProtocolParms" );
+      System.err.println( "ProtocolParms='" + str + "'" );
+      if ( str != null && str.length() != 0 )
+      {
+        protocol.setDeviceParms( stringToValueArray( str ) );
+        parmValues = protocol.getDeviceParmValues();
+      }
     }
     else
     {
@@ -2252,6 +2261,7 @@ public class DeviceUpgrade extends Highlight
         JOptionPane.showMessageDialog( RemoteMaster.getFrame(), "No protocol found with name=\"" + name + "\", ID="
             + pid.toString() + ", and variantName=\"" + variantName + "\"", "File Load Error",
             JOptionPane.ERROR_MESSAGE );
+        reset();
         return;
       }
 

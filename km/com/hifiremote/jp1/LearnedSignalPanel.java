@@ -316,5 +316,4 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
   
   private JButton convertToUpgradeButton = null;
   private JButton timingSummaryButton = null;
-  
 }
