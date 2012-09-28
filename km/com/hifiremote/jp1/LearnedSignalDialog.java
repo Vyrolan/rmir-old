@@ -257,7 +257,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     table.initColumns( model );
     if ( learnedSignal == null )
     {
-      this.learnedSignal = new LearnedSignal( 0, 0, new Hex(), null );
+      this.learnedSignal = new LearnedSignal( 0, 0, 0, new Hex(), null );
       boundKey.setSelectedIndex( 0 );
       shift.setSelected( false );
       xShift.setSelected( false );
