@@ -3,6 +3,7 @@ package com.hifiremote.jp1;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
@@ -11,7 +12,11 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellEditor;
+
+import com.hifiremote.jp1.RemoteConfiguration.KeySpec;
 
 public class RMSetterEditor< T, C extends JComponent & RMSetter< T > > 
 extends DefaultCellEditor implements TableCellEditor, ActionListener
@@ -49,9 +54,17 @@ extends DefaultCellEditor implements TableCellEditor, ActionListener
       return null;
     }
     this.value = ( T )value;
+    this.table = table;
     if ( panelClass == ( Class<?> )MacroDefinitionBox.class )
     {
-      button.setText( Macro.getValueString( ( Hex )value , remoteConfig ) );
+      if ( value instanceof Hex )
+      {
+        button.setText( Macro.getValueString( ( Hex )value , remoteConfig ) );
+      }
+      else
+      {
+        button.setText( Macro.getValueString( ( List< KeySpec > )value ) );
+      }
     }
     else
     {
@@ -76,13 +89,21 @@ extends DefaultCellEditor implements TableCellEditor, ActionListener
       {
         value = result;
         fireEditingStopped();
+        // Fire any list selection listeners by clearing and reselecting cell
+        int row = table.getSelectedRow();
+        int col = table.getSelectedColumn();
+        if ( row >= 0 && col >= 0 )
+        {
+          table.clearSelection();
+          table.setRowSelectionInterval( row, row );
+          table.setColumnSelectionInterval( col, col );
+        }
       }
       else
       {
         fireEditingCanceled();
       }
     }
-
   }
   
   public void setTitle( String title )
@@ -102,6 +123,7 @@ extends DefaultCellEditor implements TableCellEditor, ActionListener
   private T value = null;
   private Class< C > panelClass = null;
   private ButtonEnabler buttonEnabler = null;
+  private JTable table = null;
   
   protected static final String EDIT = "edit";
 

@@ -1,6 +1,9 @@
 package com.hifiremote.jp1;
 
+import java.util.List;
 import java.util.Properties;
+
+import com.hifiremote.jp1.RemoteConfiguration.KeySpec;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -95,7 +98,7 @@ public abstract class AdvancedCode extends Highlight
     {
       Macro macro = new Macro( keyCode, hex, null );
       macro.setSequenceNumber( sequenceNumber );
-      macro.setDeviceIndex( boundDeviceIndex );
+      macro.setDeviceButtonIndex( boundDeviceIndex );
       return macro;
     }
     else if ( isFav )
@@ -167,8 +170,6 @@ public abstract class AdvancedCode extends Highlight
     // Allow for missing "KeyCode" entry, as it is not used by Timed Macros
     String temp = props.getProperty( "KeyCode" );
     keyCode = temp == null ? 0 : Integer.parseInt( temp );
-    data = new Hex( props.getProperty( "Data" ) );
-    notes = props.getProperty( "Notes" );
   }
 
   /** The key code. */
@@ -226,43 +227,6 @@ public abstract class AdvancedCode extends Highlight
    */
   public abstract String getValueString( RemoteConfiguration remoteConfig );
 
-  /** The data. */
-  protected Hex data;
-
-  /**
-   * Gets the data.
-   * 
-   * @return the data
-   */
-  public Hex getData()
-  {
-    return data;
-  }
-
-  /**
-   * Sets the data.
-   * 
-   * @param hex
-   *          the new data
-   */
-  public void setData( Hex hex )
-  {
-    data = hex;
-  }
-
-  /** The notes. */
-  protected String notes = null;
-
-  /**
-   * Gets the notes.
-   * 
-   * @return the notes
-   */
-  public String getNotes()
-  {
-    return notes;
-  }
-
   /**
    * Sets the notes.
    * 
@@ -276,6 +240,23 @@ public abstract class AdvancedCode extends Highlight
       this.notes = notes;
     }
   }
+  
+  public void setName( String name )
+  {
+    this.name = name;
+  }
+  
+  protected List< KeySpec > items = null;
+
+  public List< KeySpec > getItems()
+  {
+    return items;
+  }
+
+  public void setItems( List< KeySpec > items )
+  {
+    this.items = items;
+  }
 
   /**
    * Store.
@@ -287,10 +268,6 @@ public abstract class AdvancedCode extends Highlight
   {
     super.store( pw );
     pw.print( "KeyCode", keyCode );
-    pw.print( "Data", data );
-    if ( notes != null && notes.length() > 0 )
-    {
-      pw.print( "Notes", notes );
-    }
   }
+
 }

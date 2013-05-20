@@ -166,7 +166,7 @@ public class TimedMacroDialog extends JDialog implements ActionListener, ButtonE
       
       DaySchedule daySchedule = dayScheduleBox.getValue();
       RMTime time = timePanel.getValue();
-      Hex data = macroBox.getValue();
+      Hex data = ( Hex )macroBox.getValue();
       String notesStr = notes.getText();
       
       if ( time != null )

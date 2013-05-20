@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.BorderFactory;
@@ -74,7 +75,9 @@ public class RawDataPanel extends RMPanel
     infoBox.add( Box.createVerticalStrut( 5 ) );
     infoBox.add( interfaceLabel );
     infoBox.add( Box.createVerticalStrut( 5 ) );
-    infoBox.add( extenderLabel );
+    infoBox.add( versionLabel1 );
+    infoBox.add( Box.createVerticalStrut( 5 ) );
+    infoBox.add( versionLabel2 );
     infoBox.add( Box.createVerticalGlue());
   }
 
@@ -90,7 +93,9 @@ public class RawDataPanel extends RMPanel
     if ( remoteConfig != null )
     {
       Remote remote = remoteConfig.getRemote();
-      model.set( remoteConfig.getData(), remote.getBaseAddress() );
+      short[] dataToShow = RemoteMaster.useSavedData() ? remoteConfig.getSavedData() : remoteConfig.getData();
+      dataToShow = Arrays.copyOf( dataToShow, remoteConfig.getDataEnd( dataToShow ) );
+      model.set( dataToShow, remote.getBaseAddress() );
       byteRenderer.setRemoteConfig( remoteConfig );
       highlight = remoteConfig.getHighlight();
       settingAddresses = remote.getSettingAddresses();
@@ -102,14 +107,22 @@ public class RawDataPanel extends RMPanel
       signatureLabel.setText( "Signature:  " + sig );
       processorLabel.setText( "Processor:  " + remote.getProcessorDescription() );
       interfaceLabel.setText( "Interface:  " + remote.getInterfaceType() );
+      int n = 1;
       if ( remote.getExtenderVersionParm() != null )
       {
-        extenderLabel.setText( "Extender version:  " + 
+        versionLabel1.setText( "Extender version:  " + 
             remote.getExtenderVersionParm().getExtenderVersion( remoteConfig ) );
+        n++;
       }
-      else
+//      else
+//      {
+//        extenderLabel.setText( "" );
+//      }
+      String text = remoteConfig.getEepromFormatVersion();
+      if ( text != null )
       {
-        extenderLabel.setText( "" );
+        JLabel lbl = ( n == 1 ) ? versionLabel1 : versionLabel2;
+        lbl.setText( "E2 format version: " + text );
       }
     }
   }
@@ -137,7 +150,8 @@ public class RawDataPanel extends RMPanel
   JLabel signatureLabel = new JLabel();  
   JLabel processorLabel = new JLabel();  
   JLabel interfaceLabel = new JLabel();  
-  JLabel extenderLabel = new JLabel();
+  JLabel versionLabel1 = new JLabel( "" );
+  JLabel versionLabel2 = new JLabel( "" );
   
   Box infoBox = null; 
   

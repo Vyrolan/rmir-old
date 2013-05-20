@@ -1,6 +1,9 @@
 package com.hifiremote.jp1;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 public class FavScan extends AdvancedCode
 {
@@ -9,24 +12,46 @@ public class FavScan extends AdvancedCode
   public FavScan( int keyCode, Hex data, String notes )
   {
     super( keyCode, data, notes );
-    // TODO Auto-generated constructor stub
   }
 
   public FavScan( Properties props )
   {
     super( props );
-    String temp = props.getProperty( "DeviceIndex" );
+    String temp = props.getProperty( "Channel" );
     if ( temp != null )
     {
-      try
+      channel = temp;
+    }
+    temp = props.getProperty( "DeviceIndex" );
+    if ( temp != null )
+    {
+      deviceIndex = Integer.parseInt( temp );
+    }
+    temp = props.getProperty( "Serial" );
+    if ( temp != null )
+    {
+      serial = Integer.parseInt( temp );
+    }
+    temp = props.getProperty( "ProfileIndices" );
+    if ( temp != null )
+    {
+      StringTokenizer st = new StringTokenizer( temp, " " );
+      profileIndices = new ArrayList< Integer >();
+      while ( st.hasMoreTokens() )
       {
-        deviceIndex = Integer.parseInt( temp );
-      }
-      catch ( NumberFormatException nfe )
-      {
-        nfe.printStackTrace( System.err );
+        String token = st.nextToken();
+        profileIndices.add( Integer.parseInt( token, 16 ) );
       }
     }
+  }
+  
+  public FavScan( FavScan favScan )
+  {
+    super( favScan.getKeyCode(), new Hex( favScan.getData() ), favScan.getNotes() );
+    deviceButton = favScan.getDeviceButton();
+    name = favScan.getName();
+    icon = favScan.icon;
+    channel = favScan.channel;
   }
 
   public static FavScan read( HexReader reader, Remote remote )
@@ -64,7 +89,7 @@ public class FavScan extends AdvancedCode
       {
         buff.append( remote.getButtonName( keys[ i ] ) );
       }
-      if ( keys[ i ] == 0 || ( ( i + 1 ) % entrySize ) == 0 )
+      if ( entrySize >= 0 && ( keys[ i ] == 0 || ( ( i + 1 ) % entrySize ) == 0 ) )
       {
         while ( ( i < keys.length ) &&  ( ( keys[ i ] == 0 ) || ( i % entrySize ) != 0 ) )
         {  
@@ -110,13 +135,39 @@ public class FavScan extends AdvancedCode
   public void store( PropertyWriter pw, RemoteConfiguration remoteConfig )
   {
     super.store( pw );
+    if ( channel != null && channel.length() > 0 )
+    {
+      pw.print( "Channel", channel );
+    }
     Remote remote = remoteConfig.getRemote();
-    DeviceButton devBtn = ( remote.getAdvCodeBindFormat() ==  AdvancedCode.BindFormat.NORMAL ) ? 
-        remoteConfig.getFavKeyDevButton() : this.getDeviceButton();
+    DeviceButton devBtn = ( remote.getAdvCodeBindFormat() ==  AdvancedCode.BindFormat.NORMAL 
+        || remoteConfig.hasSegments() ) ? remoteConfig.getFavKeyDevButton() : this.getDeviceButton();
     if ( devBtn != DeviceButton.noButton )
     {
       pw.print( "DeviceIndex", devBtn.getButtonIndex() );
     }
+    if ( serial >= 0 )
+    {
+      pw.print( "Serial", serial );
+    }
+    if ( profileIndices != null )
+    {
+      String str = "";
+      for ( int i = 0; i < profileIndices.size(); i++ )
+      {
+        if ( i > 0 )
+        {
+          str += " ";
+        }
+        str += profileIndices.get( i );
+      }
+      pw.print( "ProfileIndices", str );
+    }
+  }
+
+  public void setName( String name )
+  {
+    this.name = name;
   }
 
   public DeviceButton getDeviceButton()
@@ -141,6 +192,31 @@ public class FavScan extends AdvancedCode
     if ( deviceIndex == 0x0F )
       return DeviceButton.noButton;
     else
-      return remote.getDeviceButtons()[ deviceIndex ];
+      return remote.getDeviceButton( deviceIndex );
   }
+  
+  private List< Integer > profileIndices = null;
+
+  public List< Integer > getProfileIndices()
+  {
+    return profileIndices;
+  }
+
+  public void setProfileIndices( List< Integer > profileIndices )
+  {
+    this.profileIndices = profileIndices;
+  }
+  
+  private String channel = "";
+
+  public String getChannel()
+  {
+    return channel;
+  }
+
+  public void setChannel( String channel )
+  {
+    this.channel = channel;
+  }
+
 }

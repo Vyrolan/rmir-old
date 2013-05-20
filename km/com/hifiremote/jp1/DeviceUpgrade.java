@@ -17,7 +17,10 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Properties;
@@ -33,6 +36,8 @@ import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
 import javax.swing.event.SwingPropertyChangeSupport;
 
+import com.hifiremote.jp1.Activity.Assister;
+import com.hifiremote.jp1.RemoteConfiguration.KeySpec;
 import com.hifiremote.jp1.SetupPanel.AltPIDStatus;
 import com.hifiremote.jp1.translate.Translate;
 import com.hifiremote.jp1.translate.Translator;
@@ -77,6 +82,7 @@ public class DeviceUpgrade extends Highlight
     setupCode = base.setupCode;
     devTypeAliasName = base.devTypeAliasName;
     remote = base.remote;
+    remoteConfig = base.remoteConfig;
     notes = base.notes;
     protocol = base.protocol;
     buttonIndependent = base.buttonIndependent;
@@ -101,14 +107,21 @@ public class DeviceUpgrade extends Highlight
     parmValues = protocol.getDeviceParmValues();
 
     // Copy the functions and their assignments
+    LinkedHashMap< Function, Function > corr = new LinkedHashMap< Function, Function >();
     for ( Function f : base.functions )
     {
       Function f2 = new Function( f );
+      f2.setUpgrade( this );
+      corr.put( f, f2 );
       functions.add( f2 );
       for ( Function.User user : f.getUsers() )
       {
         assignments.assign( user.button, f2, user.state );
       }
+    }
+    for ( Function f : functions )
+    {
+      f.setAlternate( corr.get( f.getAlternate() ) );
     }
 
     // Copy the external functions and their assignments
@@ -119,6 +132,34 @@ public class DeviceUpgrade extends Highlight
       for ( Function.User user : f.getUsers() )
       {
         assignments.assign( user.button, f2, user.state );
+      }
+    }
+    if ( remote.usesEZRC() )
+    {
+      if ( base.getMacroMap() != null )
+      {
+        macroMap = new LinkedHashMap< Integer, Macro >();
+        macroMap.putAll( base.getMacroMap() );
+      }
+      if ( base.getKmMap() != null )
+      {
+        kmMap = new LinkedHashMap< Integer, KeyMove >();
+        kmMap.putAll( base.getKmMap() );
+      }
+      if ( base.getLearnedMap() != null )
+      {
+        learnedMap = new LinkedHashMap< Integer, LearnedSignal >();
+        learnedMap.putAll( base.getLearnedMap() );
+      }
+      if ( base.getFunctionMap() != null )
+      {
+        functionMap = new LinkedHashMap< Integer, Function >();
+        functionMap.putAll( base.getFunctionMap() );
+      }
+      if ( base.getSelectorMap() != null )
+      {
+        selectorMap = new LinkedHashMap< Integer, GeneralFunction >();
+        selectorMap.putAll( base.getSelectorMap() );
       }
     }
   }
@@ -287,7 +328,9 @@ public class DeviceUpgrade extends Highlight
     }
     for ( int i = 0; i < defaultNames.length; i++ )
     {
-      functions.add( new Function( defaultNames[ i ] ) );
+      Function f = new Function( defaultNames[ i ] );
+      f.setUpgrade( this );
+      functions.add( f );
     }
   }
 
@@ -571,6 +614,14 @@ public class DeviceUpgrade extends Highlight
       assignments = newAssignments;
     }
     remote = newRemote;
+    if ( remote.usesEZRC() && macroMap == null )
+    {
+      macroMap = new LinkedHashMap< Integer, Macro >();
+      kmMap = new LinkedHashMap< Integer, KeyMove >();
+      learnedMap = new LinkedHashMap< Integer, LearnedSignal >();
+      functionMap = new LinkedHashMap< Integer, Function >();
+      selectorMap = new LinkedHashMap< Integer, GeneralFunction >();
+    }
   }
 
   /**
@@ -909,16 +960,6 @@ public class DeviceUpgrade extends Highlight
   }
 
   /**
-   * Gets the notes.
-   * 
-   * @return the notes
-   */
-  public String getNotes()
-  {
-    return notes;
-  }
-
-  /**
    * Gets the functions.
    * 
    * @return the functions
@@ -962,6 +1003,18 @@ public class DeviceUpgrade extends Highlight
       if ( funcName != null && funcName.equalsIgnoreCase( name ) )
       {
         return func;
+      }
+    }
+    return null;
+  }
+  
+  private Function getFunctionByRmirIndex( int rmirIndex )
+  {
+    for ( Function f : functions )
+    {
+      if ( f.getRmirIndex() == rmirIndex )
+      {
+        return f;
       }
     }
     return null;
@@ -1037,7 +1090,7 @@ public class DeviceUpgrade extends Highlight
   private short findDigitMapIndex()
   {
     short[] digitMaps = remote.getDigitMaps();
-    if ( digitMaps == null )
+    if ( digitMaps == null || digitMaps.length == 0 || remote.usesEZRC() )
     {
       return -1;
     }
@@ -1128,9 +1181,19 @@ public class DeviceUpgrade extends Highlight
     Hex fixedDataHex = null;
     if ( pCode != null && pCode.length() > 2 )
     {
-      Processor proc = newRemote.getProcessor();
-      fixedDataLength = Protocol.getFixedDataLengthFromCode( proc.getEquivalentName(), pCode );
-      cmdLength = Protocol.getCmdLengthFromCode( proc.getEquivalentName(), pCode );
+      Processor proc = newRemote.getProcessor(); 
+      if ( remote.getSegmentTypes() != null )
+      {
+        // This allows an import even when the protocol code has a non-standard
+        // format, as with the XSight Touch
+        fixedDataLength = sizeDevBytes;
+        cmdLength = sizeCmdBytes;
+      }
+      else
+      {
+        fixedDataLength = Protocol.getFixedDataLengthFromCode( proc.getEquivalentName(), pCode );
+        cmdLength = Protocol.getCmdLengthFromCode( proc.getEquivalentName(), pCode );
+      }
       System.err.println( "fixedDataLength=" + fixedDataLength + " and cmdLength=" + cmdLength );
       fixedData = new short[ fixedDataLength ];
       System.arraycopy( code, fixedDataOffset, fixedData, 0, fixedDataLength );
@@ -1161,6 +1224,7 @@ public class DeviceUpgrade extends Highlight
       System.err.println( "Checking protocol " + p.getDiagnosticName() );
       if ( !remote.supportsVariant( pid, p.getVariantName() ) && !p.hasCode( remote ) )
       {
+        p = null;
         continue;
       }
       int tempLength = fixedDataLength;
@@ -1314,47 +1378,112 @@ public class DeviceUpgrade extends Highlight
     else if ( p != null && pCode == null )
     {
       // Found a matching PID, and there's no protocol code,
-      // but couldn't recreate the fixed data.
-      // Maybe there's some reason to use non-standard fixed data.
-
-      System.err.println( "Creating a derived protocol" );
-      Properties props = new Properties();
-      for ( Processor pr : ProcessorManager.getProcessors() )
+      // but either
+      // (a) built-in variant is not in protocols.ini or
+      // (b) couldn't recreate the fixed data. 
+      // In case (b), maybe there's some reason to use non-standard fixed data, so we
+      // create a derived protocol.
+      if ( !remote.supportsVariant( pid, p.getVariantName() ) )
       {
-        Hex hCode = p.getCode( pr );
-        if ( hCode != null )
+        // case (a)
+        System.err.println( "Built-in variant missing from protocols.ini" );
+        Properties props = new Properties();
+        String name = p.getName();
+        String variant = remote.getSupportedVariantNames( pid ).get( 0 );
+        if ( variant != null && variant.length() > 0 )
         {
-          props.put( "Code." + pr.getEquivalentName(), hCode.toString() );
+          props.put( "VariantName", variant );
         }
+        Hex tempCode = new Hex( pid, 0, 3 );
+        // See below for comments on determining fixed data and command lengths
+        if ( remote.getSegmentTypes() != null )
+        {
+          fixedDataLength = sizeDevBytes;
+          cmdLength = sizeCmdBytes;
+        }
+        else
+        {
+          System.err.println( "Protocol code missing, calculating fixed data and command lengths" );
+          int dataLength = hexCode.length() - fixedDataOffset;
+          cmdLength = ( buttons.size() > 0 ) ? ( dataLength / buttons.size() ) : 1;
+          fixedDataLength = dataLength - cmdLength * buttons.size();
+          System.err.println( "Calculated: Fixed data length = " + fixedDataLength + ", Command length = " + cmdLength );  
+        } 
+        tempCode.getData()[ 2 ] = ( short )( ( fixedDataLength << 4 ) | cmdLength );
+        props.put( "Code.MAXQ610", tempCode.toString() );
+        String notes = "This variant is missing from protocols.ini so although hex values "
+          + "for fixed data and function commands is correct, device parameters and OBC "
+          + "data are unreliable.";
+        props.put(  "Notes", notes );
+        p = ProtocolFactory.createProtocol( name, pid, "Protocol", props );
+        p.code.clear();
+        ProtocolManager.getProtocolManager().add( p );
+        fixedData = new short[ fixedDataLength ];
+        System.arraycopy( code, fixedDataOffset, fixedData, 0, fixedDataLength );
+        fixedDataHex = new Hex( fixedData );
+        parmValues = p.importFixedData( fixedDataHex );
       }
-      String variant = p.getVariantName();
-      if ( variant != null && variant.length() > 0 )
+      else
       {
-        props.put( "VariantName", variant );
+        // case (b)
+        System.err.println( "Creating a derived protocol" );
+        Properties props = new Properties();
+        for ( Processor pr : ProcessorManager.getProcessors() )
+        {
+          Hex hCode = p.getCode( pr );
+          if ( hCode != null )
+          {
+            props.put( "Code." + pr.getEquivalentName(), hCode.toString() );
+          }
+        }
+        String variant = p.getVariantName();
+        if ( variant != null && variant.length() > 0 )
+        {
+          props.put( "VariantName", variant );
+        }
+        p = ProtocolFactory.createProtocol( "pid: " + pid.toString(), pid, "Protocol", props );
+        ProtocolManager.getProtocolManager().add( p );
+        fixedDataLength = p.getFixedDataLength();
+        cmdLength = p.getDefaultCmd().length();
+        parmValues = p.importFixedData( fixedDataHex );
       }
-      p = ProtocolFactory.createProtocol( "pid: " + pid.toString(), pid, "Protocol", props );
-      ProtocolManager.getProtocolManager().add( p );
-      fixedDataLength = p.getFixedDataLength();
-      cmdLength = p.getDefaultCmd().length();
-      parmValues = p.importFixedData( fixedDataHex );
     }
     else
-    // if ( pCode != null )
     {
       // Don't have anything we can use, so create a manual protocol
       if ( pCode == null )
       {
-        // Protocol code is required but absent. Determine fixed data and command lengths
+        // Protocol code is required but absent. If remote has segments, device upgrade
+        // includes fixed data and command lengths.  Otherwise determine these
         // from device hex alone, on the assumption (which will generally be true) that
         // the number of mapped buttons is greater than the number of fixed bytes. (This is
         // the way that IR.exe always determines these for built-in protocols since it does
         // not have access to the protocol code).
-        System.err.println( "Protocol code missing, calculating fixed data and command lengths" );
-        int dataLength = hexCode.length() - fixedDataOffset;
-        cmdLength = ( buttons.size() > 0 ) ? ( dataLength / buttons.size() ) : 1;
-        fixedDataLength = dataLength - cmdLength * buttons.size();
-        System.err.println( "Calculated: Fixed data length = " + fixedDataLength + ", Command length = " + cmdLength );
-        pCode = new Hex(); // signifies missing code
+        if ( remote.getSegmentTypes() != null )
+        {
+          fixedDataLength = sizeDevBytes;
+          cmdLength = sizeCmdBytes;
+        }
+        else
+        {
+          System.err.println( "Protocol code missing, calculating fixed data and command lengths" );
+          int dataLength = hexCode.length() - fixedDataOffset;
+          cmdLength = ( buttons.size() > 0 ) ? ( dataLength / buttons.size() ) : 1;
+          fixedDataLength = dataLength - cmdLength * buttons.size();
+          System.err.println( "Calculated: Fixed data length = " + fixedDataLength + ", Command length = " + cmdLength );  
+        }
+        if ( p == null || !remote.supportsVariant( pid, p.getVariantName() ) )
+        {
+          pCode = new Hex(); // signifies missing code
+        }
+      }
+      
+      if ( remote.getSegmentTypes() != null )
+      {
+        // This allows an import even when the protocol code has a non-standard
+        // format, as with the XSight Touch
+        fixedDataLength = sizeDevBytes;
+        cmdLength = sizeCmdBytes;
       }
 
       System.err.println( "Using a Manual Protocol" );
@@ -1380,6 +1509,12 @@ public class DeviceUpgrade extends Highlight
       String pName = ManualProtocol.getDefaultName( pid );
       mp = new ManualProtocol( pName, pid, cmdType, "MSB", 8, parms, new short[ 0 ], 8 );
       mp.setCode( pCode, remote.getProcessor() );
+      if ( pCode == null )
+      {
+        mp.notes = "This built-in protocol is missing from protocols.ini so although hex values "
+          + "for fixed data and function commands is correct, device parameters and OBC "
+          + "data are unreliable.";
+      }
       ProtocolManager.getProtocolManager().add( mp );
       p = mp;
     }
@@ -1393,6 +1528,7 @@ public class DeviceUpgrade extends Highlight
         Function f = new Function();
         String name = Integer.toString( i );
         f.setName( name );
+        f.setUpgrade( this );
         Hex hex = hexCmds[ i ];
         if ( cmdLength < hex.length() )
         {
@@ -1406,8 +1542,10 @@ public class DeviceUpgrade extends Highlight
     }
 
     index += fixedDataLength;
+    int index2 = index + cmdLength * buttons.size();
 
     protocol = p;
+    int missingIndex = 1;
     for ( Button b : buttons )
     {
       if ( index >= code.length )
@@ -1419,11 +1557,54 @@ public class DeviceUpgrade extends Highlight
       {
         cmd[ i ] = code[ index++ ];
       }
-      Function f = new Function();
-      f.setName( b.getName() );
+      String name = remote.usesEZRC() ?  getFunctionName( b ) : b.getName();
+      if ( name == null )
+      {
+        name = "__missing" + missingIndex++;
+      }
+      Function f = new Function( name );
       f.setHex( new Hex( cmd ) );
+      f.setUpgrade( this );
       functions.add( f );
+      if ( index2 < code.length - 1 )
+      {
+        f.setGid( Hex.get( code, index2 ) );
+        index2 += 2;
+      }
       assignments.assign( b, f );
+    }
+    if ( buttonRestriction != null && buttonRestriction.getSoftButtonNames() != null )
+    {
+      for ( Button b : buttonRestriction.getSoftButtonNames().keySet() )
+      {
+        if ( buttons.contains( b ) )
+        {
+          continue;
+        }
+        Function f = new Function( getFunctionName( b ) );
+        f.setUpgrade( this );
+        functions.add( f );
+        assignments.assign( b, f );
+      }
+    }
+  }
+  
+  private String getFunctionName( Button btn )
+  {
+    String name = null;
+    if ( buttonRestriction != null && buttonRestriction.getSoftButtonNames() != null
+        && ( name = buttonRestriction.getSoftButtonNames().get( btn ) ) != null )
+    {
+      return name;
+    }
+    else if ( buttonRestriction != null && buttonRestriction.getSoftFunctionNames() != null
+        && ( name = buttonRestriction.getSoftFunctionNames().get( btn ) ) != null )
+    {
+      return name;
+    }
+    else
+    {
+      return null;//btn.getName();
     }
   }
 
@@ -1678,6 +1859,10 @@ public class DeviceUpgrade extends Highlight
       if ( data != null )
       {
         rc += data.length;
+        if ( remote.usesEZRC() )
+        {
+          rc += map.getIndexList().length;
+        }
       }
     }
     return rc;
@@ -1739,7 +1924,12 @@ public class DeviceUpgrade extends Highlight
       if ( data != null && data.length != 0 )
       {
         work.add( data );
+        if ( remote.usesEZRC() )
+        {
+          work.add( map.getIndexList() );
+        }
       }
+      mappedButtons = map.getButtonList();
     }
 
     int length = 0;
@@ -1944,6 +2134,7 @@ public class DeviceUpgrade extends Highlight
     int i = 0;
     for ( Function func : functions )
     {
+      func.setRmirIndex( i );
       func.store( out, "Function." + i++ );
     }
 
@@ -1965,6 +2156,10 @@ public class DeviceUpgrade extends Highlight
       if ( f == null )
       {
         fstr = "null";
+      }
+      else if ( remote.usesEZRC() )
+      {
+        fstr = "Function." + f.getRmirIndex();
       }
       else
       {
@@ -2156,7 +2351,7 @@ public class DeviceUpgrade extends Highlight
    */
   public void load( Properties props, boolean loadButtons )
   {
-    load( props, true, null );
+    load( props, true, null, null );
   }
 
   /**
@@ -2167,7 +2362,7 @@ public class DeviceUpgrade extends Highlight
    * @param loadButtons
    *          the load buttons
    */
-  public void load( Properties props, boolean loadButtons, Remote theRemote )
+  public void load( Properties props, boolean loadButtons, Remote theRemote, LinkedHashMap< GeneralFunction, Integer > iconrefMap )
   {
     reset();
     String str = props.getProperty( "Description" );
@@ -2220,7 +2415,8 @@ public class DeviceUpgrade extends Highlight
       try
       {
         int index = Integer.parseInt( str );
-        buttonRestriction = remote.getDeviceButtons()[ index ];
+        buttonRestriction = remote.getDeviceButton( index );
+        buttonRestriction.setUpgrade( this );
       }
       catch ( NumberFormatException nfe )
       {
@@ -2305,16 +2501,33 @@ public class DeviceUpgrade extends Highlight
 
     notes = props.getProperty( "Notes" );
 
+    System.err.println( "Loading functions for device upgrade "
+        + devTypeAliasName + "/" + ( new SetupCode( setupCode ).toString() ) );
     functions.clear();
     int i = 0;
     while ( true )
     {
       Function f = new Function();
+      if ( remote.isSSD() )
+      {
+        f.icon = new RMIcon( 9 );
+      }
       f.load( props, "Function." + i );
+      String temp = null;
+      if ( iconrefMap != null && ( temp = props.getProperty( "Function." + i + ".iconref" ) ) != null )
+      {
+        iconrefMap.put( f, Integer.parseInt( temp ) );
+      }
       if ( f.isEmpty() )
       {
         break;
       }
+      if ( getFunction( f.getName(), functions ) != null )
+      {
+        System.err.println( "Warning:  multiple functions with name " + f.getName() );
+      }
+      f.setRmirIndex( i );
+      f.setUpgrade( this );
       functions.add( f );
       i++ ;
     }
@@ -2351,11 +2564,19 @@ public class DeviceUpgrade extends Highlight
         Function func = null;
         if ( !str.equals( "null" ) )
         {
-          func = getFunction( str.replaceAll( regex, replace ) );
+          if ( remote.usesEZRC() && str.startsWith( "Function." ) )
+          {
+            int rmirIndex = Integer.parseInt( str.substring( 9 ) );
+            func = getFunctionByRmirIndex( rmirIndex );
+          }
+          else
+          {
+            func = getFunction( str.replaceAll( regex, replace ) );
+          }
           assignments.assign( b, func, Button.NORMAL_STATE );
         }
         str = st.nextToken();
-        if ( !str.equals( "null" ) )
+        if ( !str.equals( "null" ) && remote.getShiftEnabled() )
         {
           func = getFunction( str.replaceAll( regex, replace ) );
           assignments.assign( b, func, Button.SHIFTED_STATE );
@@ -2363,7 +2584,7 @@ public class DeviceUpgrade extends Highlight
         if ( st.hasMoreTokens() )
         {
           str = st.nextToken();
-          if ( !str.equals( "null" ) )
+          if ( !str.equals( "null" ) && remote.getXShiftEnabled() )
           {
             func = getFunction( str.replaceAll( regex, replace ) );
             assignments.assign( b, func, Button.XSHIFTED_STATE );
@@ -2986,6 +3207,7 @@ public class DeviceUpgrade extends Highlight
         }
         System.err.println( "Creating function w/ name " + funcName );
         f.setName( funcName );
+        f.setUpgrade( this );
 
         if ( notes != null )
         {
@@ -3591,6 +3813,19 @@ public class DeviceUpgrade extends Highlight
   public void setRemoteConfig( RemoteConfiguration remoteConfig )
   {
     this.remoteConfig = remoteConfig;
+    if ( remote != null && remote.isSSD() )
+    {
+      List< Button > selectors = null;
+      if ( remote.getButtonGroups() != null && ( selectors = remote.getButtonGroups().get( "Selector" ) ) != null )
+      {
+        for ( Button b : selectors )
+        {
+          GeneralFunction gf = new GeneralFunction( b.getName() );
+          gf.addReference( buttonRestriction, b );
+          selectorMap.put( ( int )b.getKeyCode(), gf );
+        }
+      }
+    }
   }
 
   /** The dev type alias name. */
@@ -3610,11 +3845,15 @@ public class DeviceUpgrade extends Highlight
   /** The parm values. */
   private Value[] parmValues = new Value[ 0 ];
 
-  /** The notes. */
-  private String notes = null;
-
   /** The functions. */
   private java.util.List< Function > functions = new ArrayList< Function >();
+  
+  private Button[] mappedButtons = null;
+
+  public Button[] getMappedButtons()
+  {
+    return mappedButtons;
+  }
 
   /** The ext functions. */
   private java.util.List< ExternalFunction > extFunctions = new ArrayList< ExternalFunction >();
@@ -3623,6 +3862,90 @@ public class DeviceUpgrade extends Highlight
   private File file = null;
 
   private DeviceButton buttonRestriction = DeviceButton.noButton;
+  
+  private List< Button > softButtons = null;
+  private List< Button > hardButtons = null;
+  
+  public List< Button > getSoftButtons()
+  {
+    return softButtons;
+  }
+
+  public List< Button > getHardButtons()
+  {
+    return hardButtons;
+  }
+
+  public void classifyButtons()
+  {
+    if ( softButtons == null )
+    {
+      softButtons = new ArrayList< Button >();
+    }
+    else
+    {
+      softButtons.clear();
+    }
+    
+    if ( hardButtons == null )
+    {
+      hardButtons = new ArrayList< Button >();
+    } 
+    else
+    {
+      hardButtons.clear();
+    }
+    
+    for ( Button b : remote.getButtons() )
+    {
+      Function f = assignments.getAssignment( b );
+      if ( f == null || f.getName().startsWith( "__" ) )
+      {
+        continue;
+      }
+      if ( remote.isSoftButton( b ) )
+      {
+        softButtons.add( b );
+      }
+      else
+      {
+        hardButtons.add( b );
+      }
+    }
+    Collections.sort( softButtons, ButtonSorter );
+    Collections.sort( hardButtons, ButtonSorter );
+  }
+  
+  private LinkedHashMap< Integer, Function > functionMap = null;
+  private LinkedHashMap< Integer, Macro > macroMap = null;
+  private LinkedHashMap< Integer, KeyMove > kmMap = null;
+  private LinkedHashMap< Integer, LearnedSignal > learnedMap = null;
+  private LinkedHashMap< Integer, GeneralFunction > selectorMap = null;
+
+  public LinkedHashMap< Integer, Function > getFunctionMap()
+  {
+    return functionMap;
+  }
+
+  public LinkedHashMap< Integer, Macro > getMacroMap()
+  {
+    return macroMap;
+  }
+
+  public LinkedHashMap< Integer, KeyMove > getKmMap()
+  {
+    return kmMap;
+  }
+
+  public LinkedHashMap< Integer, LearnedSignal > getLearnedMap()
+  {
+    return learnedMap;
+  }
+
+  public LinkedHashMap< Integer, GeneralFunction > getSelectorMap()
+  {
+    return selectorMap;
+  }
 
   /**
    * The offset in raw data to the start of this upgrade in the Device Dependent section, when applicable. Value
@@ -3724,6 +4047,11 @@ public class DeviceUpgrade extends Highlight
   /** The assignments. */
   private ButtonAssignments assignments = new ButtonAssignments();
 
+  public ButtonAssignments getAssignments()
+  {
+    return assignments;
+  }
+
   protected HashMap< Integer, Color[] > assignmentColors = new HashMap< Integer, Color[] >();
 
   public void setAssignmentColor( int keyCode, int deviceButtonIndex, Color color )
@@ -3778,19 +4106,250 @@ public class DeviceUpgrade extends Highlight
     this.protocolMemoryUsage += protocolMemoryUsage;
   }
 
-  /**
-   * Sets the function.
-   * 
-   * @param b
-   *          the b
-   * @param f
-   *          the f
-   * @param state
-   *          the state
-   */
-  public void setFunction( Button b, Function f, int state )
+//  public void removeMacro( Button b )
+//  {
+//    int keyCode = b.getKeyCode();
+//    Function bf = getFunction( keyCode );
+//    Macro macro = macroMap.get( keyCode );
+//    if ( macro != null )
+//    {
+//      macroMap.remove( keyCode );
+//      macro.removeReference( buttonRestriction, b );
+//      if ( macro.getUsers().isEmpty() )
+//      {
+//        remoteConfig.getMacros().remove( macro );
+//      }
+//      if ( bf != null )
+//      {
+//        bf.setMacroref( null );
+//      }
+//      if ( bf.getData() == null )
+//      {
+//        functions.remove( bf );
+//        assignments.assign( b, null );
+//      }
+//    }
+//  }
+  
+  public Function setFunction( Button b, GeneralFunction f, int state )
   {
-    assignments.assign( b, f, state );
+    // The return value is null unless f is cloned, in which case the
+    // clone is returned
+    Function result = null;
+    if ( !remote.usesEZRC() )
+    {
+      if ( f instanceof Function )
+      {
+        assignments.assign( b, ( Function )f, state );
+      }
+      return null;
+    }
+    int keyCode = b.getKeyCode();
+    Function bf = getFunction( keyCode );  // function currently on b
+    // On a soft button for an SSD remote, the function is replaced completely
+    // so delete existing function
+    boolean removeBf = remote.isSSD() && remote.isSoftButton( b ) && bf != null;
+    if ( f == null || removeBf )
+    {
+      // Delete current assignment to b.  If assignment is a macro,
+      // leave the underlying function, if any.
+      Macro macro = macroMap.get( keyCode );
+      if ( macro != null )
+      {
+        macroMap.remove( keyCode );
+        macro.removeReference( buttonRestriction, b );
+        if ( macro.isSystemMacro() )
+        {
+          KeySpec ks = macro.getItems().get( 0 );
+          ks.fn.removeReference( buttonRestriction, b );
+        }
+        if ( macro.getUsers().isEmpty() )
+        {
+          remoteConfig.getMacros().remove( macro );
+        }
+        if ( bf != null )
+        {
+          bf.setMacroref( null );
+          if ( bf.data != null )
+          {
+            return null;
+          }
+        }
+      }
+      if ( bf != null || removeBf )
+      {
+        // If assignment was a macro with no underlying function data, or if
+        // assignment was a function, remove the function
+        functions.remove( bf );
+        assignments.assign( b, null );
+        bf = null;
+      }
+      if ( f == null )
+      {
+        return null;
+      }
+    }
+
+    DeviceUpgrade fnUpg = f.getUpgrade( remote );
+    if ( bf == null )
+    {
+      if ( fnUpg == this && f instanceof Function 
+          && ( f.getUsers().isEmpty() || !remote.isSSD() ) )
+      {
+        bf = ( Function )f;
+        assignments.assign( b, bf );
+      }
+      else if ( remote.isSSD() )
+      {
+        // EZ-RC seems to clone a function when it is put on to a second
+        // button, rather than using the same function.  This seems necessary
+        // in case, say, one occurrence then has a macro put on it, as the
+        // macro reference is part of the underlying function.
+        bf = new Function( f.getName() );
+        bf.icon = new RMIcon( 9 );
+        bf.setUpgrade( this );
+        functions.add( bf );
+        assignments.assign( b, bf );
+        result = bf;
+      }
+    }
+    
+    if ( fnUpg == this )
+    {
+      if ( f != bf )
+      {
+        if ( f instanceof Function )
+        {
+          // This is cloning a function, and will only apply 
+          // if remote is SSD, in which case bf != null.
+          Function fn = ( Function )f;
+          bf.setName( f.getName() );
+          bf.setData( new Hex( fn.getData() ) );
+          bf.setGid( fn.getGid() );
+          bf.setKeyflags( fn.getKeyflags() );
+          bf.icon = fn.icon;
+        }
+        else if ( f instanceof Macro )  // At present, the only other possibility
+        {
+          Macro macro = macroMap.get( keyCode );
+          if ( macro != null )
+          {
+            macro.removeReference( buttonRestriction, b );
+            if ( macro.getUsers().isEmpty() )
+            {
+              remoteConfig.getMacros().remove( macro );
+            }
+          }  
+          macro = ( Macro )f;
+          macroMap.put( keyCode, macro );
+          macro.addReference( buttonRestriction, b );
+          remoteConfig.getMacros().add( macro );
+          if ( remote.isSSD() )
+          {
+            // The remote seems to require the function and macro to have the
+            // same name.  In a test with function name "TV Test" and macro
+            // name "TV  Vol Min", the remote displayed "TV Test Min", apparently
+            // overwriting the macro name with the function name.  So for safety
+            // it is better not to allow the names to differ.
+            bf.setName( f.getName() );
+            bf.setMacroref( macro.getSerial() );
+          }
+        }
+      }
+    }
+    else if ( f instanceof Function )
+    {
+      Function fn = ( Function )f;
+      Function irFn = null;
+      if ( remote.isSSD() )
+      {
+        if ( fn.getSerial() >= 0 )
+        {
+          irFn = fn;
+        }
+        else if ( fn.getAlternate() != null )
+        {
+          irFn = fn.getAlternate();
+        }
+        else
+        {
+          irFn = new Function( fn );
+          int serial = getNewFunctionSerial();
+          irFn.setSerial( serial );
+          fnUpg.getFunctionMap().put( serial, irFn );
+          fn.setAlternate( irFn );
+          irFn.setAlternate( fn );
+          fnUpg.functions.add( irFn );
+          irFn.addReference( buttonRestriction, b );
+        }
+      }
+      Macro macro = macroMap.get( keyCode );
+      if ( macro != null )
+      {
+        macro.removeReference( buttonRestriction, b );
+        if ( macro.isSystemMacro() )
+        {
+          KeySpec ks = macro.getItems().get( 0 );
+          ks.fn.removeReference( buttonRestriction, b );
+        }
+        if ( macro.getUsers().isEmpty() )
+        {
+          remoteConfig.getMacros().remove( macro );
+        }
+      }   
+      macro = new Macro( b.getKeyCode(), null, null );
+      remoteConfig.getMacros().add( macro );
+      macro.setName( fn.getName() );  // changed irFn to fn, don't think it makes a difference
+      macro.setSystemMacro( true );
+      int serial = remoteConfig.getNewMacroSerial();
+      macro.setSerial( serial );
+      List< KeySpec > items = new ArrayList< KeySpec >();
+      KeySpec ks = null;
+      if ( remote.isSSD() )
+      {
+        LinkedHashMap< Integer, List<Assister> > assists = new LinkedHashMap< Integer, List<Assister> >();
+        for ( int j = 0; j < 3; j++ )
+        {
+          assists.put( j , new ArrayList< Assister >() );
+        }
+        macro.setAssists( assists );  
+        ks = new KeySpec( fnUpg.buttonRestriction, irFn );
+        bf.setMacroref( serial );
+      }
+      else if ( !f.getUsers().isEmpty() )
+      {
+        User u = f.getUsers().get( 0 );
+        ks = new KeySpec( u.db, u.button );
+        macro.setDeviceButtonIndex( buttonRestriction.getButtonIndex() );
+        macro.addReference( buttonRestriction, b );
+        macro.setSegmentFlags( 0xFF );
+      }
+      ks.duration = 0;
+      ks.delay = 3;
+      items.add( ks );
+      macro.setItems( items );
+      macroMap.put( keyCode, macro );
+    }
+    return result;
+  }
+  
+  public int getNewFunctionSerial()
+  {
+    List< Integer > list = new ArrayList< Integer >();
+    for ( DeviceUpgrade upg : remoteConfig.getDeviceUpgrades() )
+    {
+      for ( Function f : upg.getFunctions() )
+      {
+        list.add( f.getSerial() );
+      }
+    }
+    for ( int serial = 24; ; serial++ )
+    {
+      if ( !list.contains( serial ) )
+      {
+        return serial;
+      }
+    }
   }
 
   private class ButtonState
@@ -3866,6 +4425,60 @@ public class DeviceUpgrade extends Highlight
     ButtonState bs = getButtonState( keyCode );
     return assignments.getAssignment( bs.button, bs.state );
   }
+  
+  public GeneralFunction getGeneralFunction( int keyCode )
+  {
+    Button button = remote.getButton( keyCode );
+    GeneralFunction gf = null;
+    if ( remote.isSSD() )
+    {
+      gf = selectorMap.get( keyCode );
+      if ( gf == null )
+      {
+        gf = learnedMap.get( keyCode );
+      }
+//      Macro macro = macroMap.get( keyCode );
+//      if ( gf == null && macro != null )
+//      {
+//        gf = macro.isSystemMacro() ? macro.getItems().get( 0 ).fn : macro;
+////        if ( !macro.isSystemMacro() )
+////        {
+////          macro = null;
+////        }
+//      }
+    }
+    if ( gf == null )
+    {
+      gf = getFunction( button, Button.NORMAL_STATE );
+    }
+    return gf;
+  }
+  
+  public List< Function > getFunctionList()
+  {
+    List< Function > list = new ArrayList< Function >();
+    for ( Function function : functions )
+    {
+      if ( function.accept() )
+      {
+        list.add( function );
+      }
+    }
+    // Seems no longer to need filter
+//    list = Function.filter( list );
+    return list;
+  }
+  
+  public List< GeneralFunction > getGeneralFunctionList()
+  {
+    List< GeneralFunction > list = new ArrayList< GeneralFunction >( getFunctionList() );
+    if ( remote.isSSD() )
+    {
+      list.addAll( learnedMap.values() );
+      list.addAll( selectorMap.values() );
+    }
+    return list;
+  }
 
   public String toString()
   {
@@ -3931,4 +4544,35 @@ public class DeviceUpgrade extends Highlight
     return baseUpgrade;
   }
   
+  private Segment softButtonSegment = null;
+  private Segment softFunctionSegment = null;
+  
+  public Segment getSoftButtonSegment()
+  {
+    return softButtonSegment;
+  }
+
+  public void setSoftButtonSegment( Segment softButtonSegment )
+  {
+    this.softButtonSegment = softButtonSegment;
+  }
+
+  public Segment getSoftFunctionSegment()
+  {
+    return softFunctionSegment;
+  }
+
+  public void setSoftFunctionSegment( Segment softFunctionSegment )
+  {
+    this.softFunctionSegment = softFunctionSegment;
+  }
+
+  public static Comparator< Button > ButtonSorter = new Comparator< Button >()
+  {
+    @Override
+    public int compare( Button b1, Button b2 )
+    {
+      return ( new Short( b1.getKeyCode() ).compareTo( new Short( b2.getKeyCode()) ) );
+    }    
+  };
 }

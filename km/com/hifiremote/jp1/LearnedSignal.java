@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import com.hifiremote.decodeir.DecodeIRCaller;
+import com.hifiremote.decodeir.DecodeIRCaller;;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -97,8 +97,11 @@ public class LearnedSignal extends Highlight
     keyCode = Integer.parseInt( properties.getProperty( "KeyCode" ) );
     deviceButtonIndex = Integer.parseInt( properties.getProperty( "DeviceButtonIndex" ) );
     format = Integer.parseInt( properties.getProperty( "Format", "0" ) );
-    data = new Hex( properties.getProperty( "Data" ) );
-    notes = properties.getProperty( "Notes" );
+    String temp = properties.getProperty( "Header" );
+    if ( temp != null )
+    {
+      header = new Hex( temp );
+    }
   }
   
   public Hex getSignalHex( Remote remote )
@@ -144,10 +147,9 @@ public class LearnedSignal extends Highlight
     {
       pw.print( "Format", format);
     }
-    pw.print( "Data", data );
-    if ( notes != null && !notes.equals( "" ) )
+    if ( header != null )
     {
-      pw.print( "Notes", notes );
+      pw.print( "Header", header );
     }
   }
 
@@ -175,52 +177,32 @@ public class LearnedSignal extends Highlight
     keyCode = code;
   }
   
-  /** The device button index. */
-  private int deviceButtonIndex;
-
-  /**
-   * Gets the device button index.
-   * 
-   * @return the device button index
-   */
-  public int getDeviceButtonIndex()
+  public void setName( String name )
   {
-    return deviceButtonIndex;
+    this.name = name;
+  }
+  
+  public void setNotes( String notes )
+  {
+    if ( notes != this.notes && ( notes == null || !notes.equals( this.notes ) ) )
+    {
+      this.notes = notes;
+    }
+  }
+  
+  /** The 7-byte header of an XSight Touch learned signal,
+   * not yet understood.
+   */
+  private Hex header = null;
+
+  public Hex getHeader()
+  {
+    return header;
   }
 
-  /**
-   * Sets the device button index.
-   * 
-   * @param newIndex
-   *          the new device button index
-   */
-  public void setDeviceButtonIndex( int newIndex )
+  public void setHeader( Hex header )
   {
-    deviceButtonIndex = newIndex;
-  }
-
-  /** The data. */
-  private Hex data = null;
-
-  /**
-   * Gets the data.
-   * 
-   * @return the data
-   */
-  public Hex getData()
-  {
-    return data;
-  }
-
-  /**
-   * Sets the data.
-   * 
-   * @param hex
-   *          the new data
-   */
-  public void setData( Hex hex )
-  {
-    data = hex;
+    this.header = header;
   }
 
   /**
@@ -228,30 +210,6 @@ public class LearnedSignal extends Highlight
    * 1 for the new format used by remotes with Maxim processors
    */
   private int format = 0;
-  
-  /** The notes. */
-  private String notes = null;
-
-  /**
-   * Gets the notes.
-   * 
-   * @return the notes
-   */
-  public String getNotes()
-  {
-    return notes;
-  }
-
-  /**
-   * Sets the notes.
-   * 
-   * @param text
-   *          the new notes
-   */
-  public void setNotes( String text )
-  {
-    notes = text;
-  }
 
   public int store( short[] buffer, int offset, Remote remote )
   {
@@ -369,5 +327,5 @@ public class LearnedSignal extends Highlight
 
   /** The decode ir. */
   private static DecodeIRCaller decodeIR = null;
-  private static int hasDecodeIR = 0;
+  
 }

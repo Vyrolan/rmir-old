@@ -1,7 +1,14 @@
 package com.hifiremote.jp1;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
+
+import com.hifiremote.jp1.GeneralFunction.IconPanel;
+import com.hifiremote.jp1.GeneralFunction.IconRenderer;
+import com.hifiremote.jp1.GeneralFunction.RMIcon;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -15,12 +22,16 @@ public class FunctionTableModel extends KMTableModel< Function >
 
   /** The remote. */
   private Remote remote = null;
+  private RemoteConfiguration remoteConfig = null;
 
   /** The Constant rowCol. */
   private final static int rowCol = 0;
 
   /** The Constant nameCol. */
   private final static int nameCol = rowCol + 1;
+  
+  private int gidCol = -1;
+  private int iconCol = -1;
 
   /** The Constant efcCol. */
   private int efcCol = nameCol + 1;
@@ -36,6 +47,8 @@ public class FunctionTableModel extends KMTableModel< Function >
 
   /** The notes col. */
   private int notesCol = hexCol + 1;
+  
+  private RMSetterEditor< RMIcon, IconPanel > iconEditor = null;
 
   /**
    * Instantiates a new function table model.
@@ -60,7 +73,17 @@ public class FunctionTableModel extends KMTableModel< Function >
   {
     if ( deviceUpgrade == null )
       return;
-    setData( deviceUpgrade.getFunctions() );
+    List< Function > list = new ArrayList< Function >();
+    for ( Function f : deviceUpgrade.getFunctions() )
+    {
+      if ( f.accept() )
+      {
+        list.add( f );
+      }
+    }
+//    list = Function.filter( list );
+    setData( list );
+    remoteConfig = deviceUpgrade.getRemoteConfig();
     setProtocol( deviceUpgrade.getProtocol(), deviceUpgrade.getRemote() );
     functionsUpdated();
   }
@@ -85,7 +108,16 @@ public class FunctionTableModel extends KMTableModel< Function >
   {
     this.protocol = protocol;
     this.remote = remote;
-    efcCol = nameCol + 1;
+    if ( remote.usesEZRC() )
+    {
+      gidCol = nameCol + 1;
+      efcCol = gidCol + 1;
+    }
+    else
+    {
+      gidCol = -1;
+      efcCol = nameCol + 1;
+    }
     colOffset = efcCol + 1;
     if ( ( remote != null ) && ( remote.getEFCDigits() == 5 ) )
     {
@@ -97,8 +129,19 @@ public class FunctionTableModel extends KMTableModel< Function >
       efc5col = -1;
 
     hexCol = protocol.getColumnCount() + colOffset;
-    notesCol = hexCol + 1;
-
+    if ( remote.isSSD() && remoteConfig != null )
+    {
+      iconCol = hexCol + 1;
+      notesCol = iconCol + 1;
+      iconEditor = new RMSetterEditor< RMIcon, IconPanel >( IconPanel.class );
+      iconEditor.setRemoteConfiguration( remoteConfig );
+    }
+    else
+    {
+      iconCol = -1;
+      notesCol = hexCol + 1;
+    }
+     
     fireTableStructureChanged();
   }
 
@@ -112,8 +155,12 @@ public class FunctionTableModel extends KMTableModel< Function >
     int rc = 5;
     if ( ( remote != null ) && ( remote.getEFCDigits() == 5 ) )
       rc += 1;
+    if ( remote.usesEZRC() )
+      rc += 1;
     if ( protocol != null )
       rc += protocol.getColumnCount();
+    if ( remote.isSSD() && remoteConfig != null )
+      rc += 1;
     return rc;
   }
 
@@ -132,6 +179,8 @@ public class FunctionTableModel extends KMTableModel< Function >
       rc = new Integer( row + 1 );
     else if ( col == nameCol )
       rc = function.getName();
+    else if ( col == gidCol )
+      rc = String.format( "%4X", function.getGid() );
     else if ( col == efcCol )
     {
       if ( hex == null )
@@ -144,6 +193,8 @@ public class FunctionTableModel extends KMTableModel< Function >
         return null;
       rc = new EFC5( hex );
     }
+    else if ( col == iconCol )
+      rc = function.icon;
     else if ( col == notesCol )
       rc = function.getNotes();
     else if ( col == hexCol )
@@ -190,6 +241,7 @@ public class FunctionTableModel extends KMTableModel< Function >
   public void setValueAt( Object value, int row, int col )
   {
     Function function = data.get( row );
+    Function alternate = function.getAlternate() != null ? function.getAlternate() : new Function();
     if ( col == nameCol )
     {
       String text = ( String )value;
@@ -197,12 +249,22 @@ public class FunctionTableModel extends KMTableModel< Function >
         text = null;
       checkFunctionAssigned( function, text );
       function.setName( text );
+      alternate.setName( text );
+    }
+    else if ( col == gidCol )
+    {
+      int ndx = Integer.parseInt( ( String )value, 16 );
+      function.setGid( ndx );
+      alternate.setGid( ndx );
     }
     else if ( col == efcCol )
     {
       checkFunctionAssigned( function, value );
       if ( value == null )
+      {
         function.setHex( null );
+        alternate.setHex( null );
+      }
       else
       {
         Hex hex = function.getHex();
@@ -213,13 +275,17 @@ public class FunctionTableModel extends KMTableModel< Function >
         else
           ( ( EFC )value ).toHex( hex, protocol.getCmdIndex() );
         function.setHex( hex );
+        alternate.setHex( new Hex( hex ) );
       }
     }
     else if ( col == efc5col )
     {
       checkFunctionAssigned( function, value );
       if ( value == null )
+      {
         function.setHex( null );
+        alternate.setHex( null );
+      }
       else
       {
         Hex hex = function.getHex();
@@ -230,6 +296,7 @@ public class FunctionTableModel extends KMTableModel< Function >
         else
           ( ( EFC5 )value ).toHex( hex );
         function.setHex( hex );
+        alternate.setHex( new Hex( hex ) );
       }
     }
     else if ( col == hexCol )
@@ -237,10 +304,17 @@ public class FunctionTableModel extends KMTableModel< Function >
       checkFunctionAssigned( function, value );
       if ( ( value != null ) && ( value.getClass() == String.class ) )
         value = new Hex( ( String )value );
-      function.setHex( ( Hex )value );
+      Hex hex = ( Hex )value;
+      function.setHex( hex );
+      alternate.setHex( new Hex( hex ) );
     }
+    else if ( col == iconCol )
+      function.icon = ( RMIcon )value;
     else if ( col == notesCol )
+    {
       function.setNotes( ( String )value );
+      alternate.setNotes( ( String )value );
+    }
     else
     {
       CmdParameter[] cmdParms = protocol.getCommandParameters();
@@ -254,7 +328,10 @@ public class FunctionTableModel extends KMTableModel< Function >
       System.err.println( "FunctionTableModel.setValueAt(): value is " + value );
 
       if ( ( value == null ) && !cmdParms[ parmIndex ].isOptional() )
+      {
         function.setHex( null );
+        alternate.setHex( null );
+      }
       else
       {
         Hex hex = function.getHex();
@@ -262,6 +339,7 @@ public class FunctionTableModel extends KMTableModel< Function >
         {
           hex = protocol.getDefaultCmd();
           function.setHex( hex );
+          alternate.setHex( new Hex( hex ) );
         }
         protocol.setValueAt( parmIndex, hex, value );
       }
@@ -281,12 +359,16 @@ public class FunctionTableModel extends KMTableModel< Function >
       rc = "#";
     else if ( col == nameCol )
       rc = "Name";
+    else if ( col == gidCol )
+      rc = "KeyGID";
     else if ( col == efcCol )
       rc = "EFC";
     else if ( col == efc5col )
       rc = "EFC5";
     else if ( col == hexCol )
       rc = "Hex";
+    else if ( col == iconCol )
+      rc = "Icon?";
     else if ( col == notesCol )
       rc = "Notes";
     else
@@ -307,12 +389,16 @@ public class FunctionTableModel extends KMTableModel< Function >
       rc = "199";
     else if ( col == nameCol )
       rc = "Function Name";
+    else if ( col == gidCol )
+      rc = "00000_";
     else if ( col == efcCol )
       rc = "CCC";
     else if ( col == efc5col )
       rc = "00000";
     else if ( col == hexCol )
       rc = "CC CC";
+    else if ( col == iconCol )
+      rc = "Icon?_";
     else if ( col == notesCol )
       rc = "A reasonable length function comment";
     else
@@ -328,7 +414,7 @@ public class FunctionTableModel extends KMTableModel< Function >
   public Class< ? > getColumnClass( int col )
   {
     Class< ? > rc = null;
-    if ( ( col == nameCol ) || ( col == notesCol ) )
+    if ( ( col == nameCol ) || ( col == notesCol ) || ( col == gidCol ) )
       rc = String.class;
     else if ( col == rowCol )
       rc = Integer.class;
@@ -338,6 +424,8 @@ public class FunctionTableModel extends KMTableModel< Function >
       rc = EFC5.class;
     else if ( col == hexCol )
       rc = byte[].class;
+    else if ( col == iconCol )
+      rc = RMIcon.class;
     else
       rc = protocol.getColumnClass( col - colOffset );
 
@@ -354,7 +442,7 @@ public class FunctionTableModel extends KMTableModel< Function >
     boolean rc = false;
     if ( col == rowCol )
       rc = false;
-    else if ( ( col <= hexCol ) || ( col == notesCol ) )
+    else if ( ( col <= hexCol ) || ( col == notesCol ) || ( col == iconCol ) )
       rc = true;
     else
       rc = protocol.isEditable( col - colOffset );
@@ -369,7 +457,7 @@ public class FunctionTableModel extends KMTableModel< Function >
    */
   public TableCellEditor getColumnEditor( int col )
   {
-    if ( ( remote == null ) || ( protocol == null ) || ( col == rowCol ) || ( col == nameCol ) || ( col == notesCol ) )
+    if ( ( remote == null ) || ( protocol == null ) || ( col == rowCol ) || ( col == nameCol ) || ( col == notesCol ) || ( col == gidCol ) )
       return null;
     if ( col == efcCol )
       return new EFCEditor( 3 );
@@ -377,6 +465,8 @@ public class FunctionTableModel extends KMTableModel< Function >
       return new EFCEditor( 5 );
     if ( col == hexCol )
       return new HexEditor( protocol.getDefaultCmd() );
+    if ( col == iconCol )
+      return iconEditor;
     else
       return protocol.getColumnEditor( col - colOffset );
   }
@@ -391,7 +481,7 @@ public class FunctionTableModel extends KMTableModel< Function >
     TableCellRenderer rc = null;
     if ( col == rowCol )
       rc = new RowNumberRenderer();
-    else if ( ( col == nameCol ) || ( col == notesCol ) )
+    else if ( ( col == nameCol ) || ( col == notesCol ) || ( col == gidCol ) )
       rc = null;
     else if ( col == efcCol )
       rc = new EFCRenderer();
@@ -399,9 +489,16 @@ public class FunctionTableModel extends KMTableModel< Function >
       rc = new EFCRenderer();
     else if ( col == hexCol )
       rc = new HexRenderer();
+    else if ( col == iconCol )
+      rc = new IconRenderer();
     else
       rc = protocol.getColumnRenderer( col - colOffset );
     return rc;
+  }
+  
+  public void setRemoteConfig( RemoteConfiguration remoteConfig )
+  {
+    this.remoteConfig = remoteConfig;
   }
 
   /*
@@ -414,6 +511,8 @@ public class FunctionTableModel extends KMTableModel< Function >
     if ( ( col == rowCol ) || ( col == nameCol ) || ( col == notesCol ) || ( col == efcCol ) || ( col == efc5col )
         || ( col == hexCol ) )
       return super.isColumnWidthFixed( col );
+    else if ( ( col == gidCol ) || ( col == iconCol ) )
+      return true;
     else
       return protocol.isColumnWidthFixed( col - colOffset );
   }

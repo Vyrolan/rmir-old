@@ -1,3 +1,19 @@
+Changes for v2.03
+-- Alpha 8 --
+- Add support for XSight Lite and ARRX12G, remotes that have a direct USB interface.
+- Note that Alphas prior to Alpha 8 were not uploaded to the SVN and were early stages in this development.
+- An updated version of jp12serial, not yet publicly released, is needed to access this new support.  
+-- Alpha 9 --
+- Fix bug in Alpha 8 that caused downloading to hang if no Favorites are set.
+-- Alpha 10 --
+- Change reading of USB port for XSight remotes to use javahidapi rather than modified jp12serial (3FG)
+- Change form of signature for XSight remotes to be "USB" + PID value returned by HID interface (Graham)
+- Begin support for XSight Touch, displaying data in General, Device and Raw Data tabs (Graham)
+-- Alpha 11 --
+- A few minor bugfixes (Graham)
+-- Alpha 12 --
+- More prototype support for XSight Touch.  Will now display macro data, will upload to the remote but only edits to device data get through to the upload (Graham)
+
 Changes for v2.02
 -- Alpha --
 - Fix bug that prevented fixed data being tested on download (Graham)
@@ -119,6 +135,9 @@ Changes for v2.02
 - Added support for MAXQ612 processor (Graham)
 - Added support for the new format for type 0xDB segments used in URC-7962 (Graham)
 - Added support for the new learned signal format used in the URC-7962 (Graham)
+-- Version 2.02a
+- Upgrade to DecodeIR 2.44 (with suppport for 64-bit Java on 64-bit Windows)
+- Upgrade to JP12Serial 0.19 (with support for 64-bit Java on 64-bit Windows)
 
 Changes for v2.01
 -- Alpha --

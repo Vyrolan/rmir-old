@@ -129,6 +129,15 @@ public class DeviceUpgradeEditor extends JFrame implements ActionListener
     pack();
     editorPanel.setAltPIDReason();
     setLocationRelativeTo( owner );
+//    DeviceButton devBtn = deviceUpgrade.getButtonRestriction();
+//    HashMap< Button, String > softButtonNames = null;
+//    if ( devBtn != null && ( softButtonNames = devBtn.getSoftButtonNames() ) != null )
+//    {
+//      for ( Button btn : softButtonNames.keySet() )
+//      {
+//        btn.setName( softButtonNames.get( btn ) );
+//      }
+//    }
     setVisible( true );
   }
 
@@ -161,6 +170,7 @@ public class DeviceUpgradeEditor extends JFrame implements ActionListener
       {
 //        SetupPanel setupPanel = editorPanel.getSetupPanel();
         DeviceUpgrade upgrade = editorPanel.getDeviceUpgrade();
+        RemoteConfiguration remoteConfig = upgrade.getRemoteConfig();
         
         if ( source == cancelButton )
         {
@@ -179,7 +189,8 @@ public class DeviceUpgradeEditor extends JFrame implements ActionListener
         else if ( panel instanceof DeviceUpgradePanel )
         {
           DeviceUpgradePanel dup = ( DeviceUpgradePanel )panel;
-          RemoteConfiguration remoteConfig = dup.getRemoteConfig();
+//          RemoteConfiguration remoteConfig = dup.getRemoteConfig();
+
           for ( DeviceUpgrade du : remoteConfig.getDeviceUpgrades() )
           {
             if ( du == dup.getOldUpgrade() )
@@ -199,6 +210,12 @@ public class DeviceUpgradeEditor extends JFrame implements ActionListener
           }
         }
         
+        if ( !cancelled && remoteConfig.getRemote().usesEZRC() )
+        {
+          upgrade.classifyButtons();
+//          remoteConfig.assignUpgrades();
+        }
+        
         setVisible( false );
         dispose();
         editorPanel.releasePanels();
@@ -215,7 +232,7 @@ public class DeviceUpgradeEditor extends JFrame implements ActionListener
           DeviceUpgradePanel dup = ( DeviceUpgradePanel )panel;
           if ( !cancelled )
           {
-            RemoteConfiguration remoteConfig = dup.getRemoteConfig();
+//            RemoteConfiguration remoteConfig = dup.getRemoteConfig();
             Protocol pOrig = upgrade.originalProtocol;
             ManualProtocol pConv = upgrade.convertedProtocol;
             for ( DeviceUpgrade du : remoteConfig.getDeviceUpgrades() )

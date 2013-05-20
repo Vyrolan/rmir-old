@@ -6,8 +6,10 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -16,13 +18,18 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URL;
@@ -30,8 +37,10 @@ import java.net.URLClassLoader;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.StringTokenizer;
@@ -73,6 +82,7 @@ import com.hifiremote.LibraryLoader;
 import com.hifiremote.jp1.FixedData.Location;
 import com.hifiremote.jp1.extinstall.ExtInstall;
 import com.hifiremote.jp1.extinstall.RMExtInstall;
+import com.hifiremote.jp1.io.CommHID;
 import com.hifiremote.jp1.io.IO;
 import com.hifiremote.jp1.io.JP12Serial;
 import com.hifiremote.jp1.io.JP1Parallel;
@@ -97,7 +107,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
   private static JP1Frame frame = null;
 
   /** Description of the Field. */
-  public final static String version = "v2.02 Beta 1.5v";
+  public final static String version = "v2.03 Alpha 18";
 
   /** The dir. */
   private File dir = null;
@@ -177,6 +187,14 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
   private JMenuItem initializeTo00Item = null;
 
   private JMenuItem initializeToFFItem = null;
+  
+  private static JCheckBoxMenuItem useSavedDataItem = null;
+  
+  private static JCheckBoxMenuItem getSystemFilesItem = null;
+  
+  private static JMenuItem putSystemFileItem = null;
+  
+  private static JMenuItem parseIRDBItem = null;
 
   // Help menu items
   /** The update item. */
@@ -217,6 +235,8 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
   private TimedMacroPanel timedMacroPanel = null;
 
   private FavScanPanel favScanPanel = null;
+  
+  private FavoritesPanel favoritesPanel = null;
 
   /** The device panel. */
   private DeviceUpgradePanel devicePanel = null;
@@ -234,6 +254,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
 
   /** The adv progress bar. */
   private JProgressBar advProgressBar = null;
+  private JLabel advProgressLabel = null;
 
   /** The upgrade progress bar. */
   private JProgressBar upgradeProgressBar = null;
@@ -245,6 +266,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
   private JProgressBar learnedProgressBar = null;
 
   private JPanel memoryStatus = null;
+  private JPanel extraStatus = null;
 
   private JPanel interfaceStatus = null;
 
@@ -273,7 +295,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
   private TextFileViewer rdfViewer = null;
 
   private List< AssemblerItem > clipBoardItems = new ArrayList< AssemblerItem >();
-
+  
   public class Preview extends JPanel
   {
     Preview()
@@ -376,25 +398,6 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
       if ( sigString.length() > 8 ) // JP1.4/JP2 full signature block
       {
         sig = sigString.substring( 0, 6 );
-        jp2info = new byte[ 18 ];
-        if ( !io.getJP2info( jp2info, 18 ) )
-        {
-          jp2info = null;
-        }
-
-        sigData = new short[ sigString.length() + ( jp2info != null ? jp2info.length : 0 ) ];
-        int index = 0;
-        for ( int i = 0; i < sigString.length(); i++ )
-        {
-          sigData[ index++ ] = ( short )sigString.charAt( i );
-        };
-        if ( jp2info != null )
-        {
-          for ( int i = 0; i < jp2info.length; i++ )
-          {
-            sigData[ index++ ] = ( short )( jp2info[ i ] & 0xFF );
-          }
-        }
       }
       else
       {
@@ -499,8 +502,34 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
         }
         System.err.println( "Remote identified as: " + remote.getName() );
       }
-
+      Remote newRemote = new Remote( remote, remote.getNameIndex() );
+      RemoteManager.getRemoteManager().replaceRemote( remote, newRemote );
+      remote = newRemote;
       remote.load();
+      
+      if ( sigString.length() > 8 ) // JP1.4/JP2 full signature block
+      {
+        int infoLen = 6 + 6 * remote.getProcessor().getAddressLength();
+        jp2info = new byte[ infoLen ];
+        if ( !io.getJP2info( jp2info, infoLen ) )
+        {
+          jp2info = null;
+        }
+
+        sigData = new short[ sigString.length() + ( jp2info != null ? jp2info.length : 0 ) ];
+        int index = 0;
+        for ( int i = 0; i < sigString.length(); i++ )
+        {
+          sigData[ index++ ] = ( short )sigString.charAt( i );
+        };
+        if ( jp2info != null )
+        {
+          for ( int i = 0; i < jp2info.length; i++ )
+          {
+            sigData[ index++ ] = ( short )( jp2info[ i ] & 0xFF );
+          }
+        }
+      }
       remoteConfig = new RemoteConfiguration( remote, RemoteMaster.this );
       int count = io.readRemote( remote.getBaseAddress(), remoteConfig.getData() );
       System.err.println( "Number of bytes read  = $" + Integer.toHexString( count ).toUpperCase() );
@@ -608,6 +637,11 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
       }
       if ( verifyUploadItem.isSelected() )
       {
+        if ( io.getInterfaceType() == 0x106 )
+        {
+          io.closeRemote();
+          io = getOpenInterface();
+        }
         short[] readBack = new short[ data.length ];
         rc = io.readRemote( remote.getBaseAddress(), readBack );
         io.closeRemote();
@@ -781,7 +815,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
           remoteConfig.saveAltPIDs();
           System.err.println( "Starting upload" );
           setInterfaceState( "UPLOADING..." );
-          ( new UploadTask( remoteConfig.getData(), true ) ).execute();
+          ( new UploadTask( RemoteMaster.useSavedData() ? remoteConfig.getSavedData() : remoteConfig.getData(), true ) ).execute();
         }
         else if ( command == "OPENRDF" )
         {
@@ -818,6 +852,11 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
           else if ( currentPanel == activityPanel )
           {
             table = activityPanel.getActiveTable();
+            model = ( JP1TableModel< ? > )table.getModel();
+          }
+          else if ( currentPanel == favoritesPanel )
+          {
+            table = favoritesPanel.getActiveTable();
             model = ( JP1TableModel< ? > )table.getModel();
           }
           Color color = getInitialHighlight( table, 0 );
@@ -1103,31 +1142,27 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     generalPanel.addPropertyChangeListener( this );
 
     keyMovePanel = new KeyMovePanel();
-//    tabbedPane.addTab( "Key Moves", keyMovePanel );
     keyMovePanel.addPropertyChangeListener( this );
 
     macroPanel = new MacroPanel();
-//    tabbedPane.addTab( "Macros", macroPanel );
     macroPanel.addPropertyChangeListener( this );
 
     specialFunctionPanel = new SpecialFunctionPanel();
-//    tabbedPane.add( "Special Functions", specialFunctionPanel );
     specialFunctionPanel.addPropertyChangeListener( this );
 
     timedMacroPanel = new TimedMacroPanel();
-//    tabbedPane.add( "Timed Macros", timedMacroPanel );
     timedMacroPanel.addPropertyChangeListener( this );
 
     favScanPanel = new FavScanPanel();
-//    tabbedPane.addTab( "Fav/Scan", favScanPanel );
     favScanPanel.addPropertyChangeListener( this );
+    
+    favoritesPanel = new FavoritesPanel();
+    favoritesPanel.addPropertyChangeListener( this );
 
     devicePanel = new DeviceUpgradePanel();
-//    tabbedPane.addTab( "Devices", devicePanel );
     devicePanel.addPropertyChangeListener( this );
 
     protocolPanel = new ProtocolUpgradePanel();
-//    tabbedPane.addTab( "Protocols", protocolPanel );
     protocolPanel.addPropertyChangeListener( this );
     
     activityPanel = new ActivityPanel();
@@ -1147,6 +1182,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     mainPanel.add( statusBar, BorderLayout.SOUTH );
 
     memoryStatus = new JPanel();
+    extraStatus = new JPanel( new FlowLayout( FlowLayout.LEFT, 5, 0 ));
     interfaceStatus = new JPanel();
 
     interfaceState = new JProgressBar();
@@ -1163,22 +1199,23 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     statusBar.add( interfaceStatus, "INTERFACE" );
     ( ( CardLayout )statusBar.getLayout() ).first( statusBar );
 
-    memoryStatus.add( new JLabel( "Move/Macro:" ) );
+    advProgressLabel = new JLabel( "Move/Macro:" );
+    memoryStatus.add( advProgressLabel );
 
     advProgressBar = new JProgressBar();
     advProgressBar.setStringPainted( true );
     advProgressBar.setString( "N/A" );
     memoryStatus.add( advProgressBar );
 
-    memoryStatus.add( Box.createHorizontalStrut( 5 ) );
+    extraStatus.add( Box.createHorizontalStrut( 1 ) );
     JSeparator sep = new JSeparator( SwingConstants.VERTICAL );
     d = sep.getPreferredSize();
     d.height = advProgressBar.getPreferredSize().height;
     sep.setPreferredSize( d );
-    memoryStatus.add( sep );
+    extraStatus.add( sep );
     interfaceStatus.add( Box.createVerticalStrut( d.height ) );
 
-    memoryStatus.add( new JLabel( "Upgrade:" ) );
+    extraStatus.add( new JLabel( "Upgrade:" ) );
 
     upgradeProgressBar = new JProgressBar();
     upgradeProgressBar.setStringPainted( true );
@@ -1196,19 +1233,20 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     upgradeProgressPanel.add( upgradeProgressBar, BorderLayout.NORTH );
     upgradeProgressPanel.add( devUpgradeProgressBar, BorderLayout.SOUTH );
 
-    memoryStatus.add( upgradeProgressPanel );
+    extraStatus.add( upgradeProgressPanel );
 
-    memoryStatus.add( Box.createHorizontalStrut( 5 ) );
+    extraStatus.add( Box.createHorizontalStrut( 5 ) );
     sep = new JSeparator( SwingConstants.VERTICAL );
     sep.setPreferredSize( d );
-    memoryStatus.add( sep );
+    extraStatus.add( sep );
 
-    memoryStatus.add( new JLabel( "Learned:" ) );
+    extraStatus.add( new JLabel( "Learned:" ) );
 
     learnedProgressBar = new JProgressBar();
     learnedProgressBar.setStringPainted( true );
     learnedProgressBar.setString( "N/A" );
-    memoryStatus.add( learnedProgressBar );
+    extraStatus.add( learnedProgressBar );
+    memoryStatus.add( extraStatus );
 
     String temp = properties.getProperty( "RMBounds" );
     if ( temp != null )
@@ -1237,6 +1275,89 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
   public static JP1Frame getFrame()
   {
     return frame;
+  }
+  
+  public static boolean useSavedData()
+  {
+    return useSavedDataItem.isSelected();
+  }
+  
+  public static boolean getSystemFiles()
+  {
+    return getSystemFilesItem.isSelected();
+  }
+  
+  public static void setSystemFilesItems( boolean active )
+  {
+    getSystemFilesItem.setVisible( active );
+    putSystemFileItem.setVisible( active );
+    parseIRDBItem.setVisible( active );
+    if ( active )
+    {
+      File file = new File( new File( workDir, "XSight" ), "irdb.bin" );
+      parseIRDBItem.setEnabled( file.exists() && file.isFile() );
+    }
+    else
+    {
+      getSystemFilesItem.setSelected( false );
+    }
+  }
+  
+  public static byte[] readBinary( File file )
+  {
+    int totalBytesRead = 0;
+    byte[] data = null;
+    try
+    {
+      int length = ( int )file.length();
+      if ( length == 0 )
+      {
+        System.err.println( "File " + file.getAbsolutePath() + " empty or not found" );
+        return null;
+      }
+      data = new byte[ length ];
+      InputStream input = null;
+      try 
+      {
+        input = new BufferedInputStream(new FileInputStream( file ) );
+        while( totalBytesRead < data.length )
+        {
+          int bytesRemaining = data.length - totalBytesRead;
+          //input.read() returns -1, 0, or more :
+          int bytesRead = input.read( data, totalBytesRead, bytesRemaining ); 
+          if ( bytesRead > 0 )
+          {
+            totalBytesRead = totalBytesRead + bytesRead;
+          }
+        }
+        /*
+             the while loop usually has a single iteration only.
+         */
+        if ( totalBytesRead != length )
+        {
+          System.err.println( "File read error: file length = " + length + ", bytes read = " + totalBytesRead );
+          return null;
+        }
+        System.err.println( "Bytes read from file: " + totalBytesRead );
+      }
+      catch (FileNotFoundException ex) {
+        System.err.println( "File not found" );
+        return null;
+      }
+      finally 
+      {
+        if ( input != null )
+        {
+          System.err.println("Closing input stream.");
+          input.close();
+        }
+      }
+    }
+    catch (IOException ex) {
+      System.err.println( ex );
+      return null;
+    }
+    return data;
   }
 
   public static ImageIcon createIcon( String imageName )
@@ -1371,6 +1492,17 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
       System.err.println( "Unable to create JP12Serial object: " + le.getMessage() );
     }
 
+    try
+    {
+      CommHID commHID = new CommHID( userDir );
+      interfaces.add( commHID );
+      System.err.println( "    CommHID version " + commHID.getInterfaceVersion() );
+    }
+    catch ( LinkageError le )
+    {
+      System.err.println( "Unable to create CommHID object: " + le.getMessage() );
+    }
+    
     try
     {
       JP1USB jp1usb = new JP1USB( userDir );
@@ -1620,6 +1752,38 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     initializeToFFItem.setEnabled( false );
     initializeToFFItem.addActionListener( this );
     menu.add( initializeToFFItem );
+    
+    menu.addSeparator();
+    
+    useSavedDataItem = new JCheckBoxMenuItem( "Preserve original data" );
+    useSavedDataItem.setSelected( false );
+    useSavedDataItem.addActionListener( this );
+    menu.add( useSavedDataItem );
+
+    getSystemFilesItem = new JCheckBoxMenuItem( "Get system files" );
+    getSystemFilesItem.setToolTipText( "<html>When checked, a download from the remote also copies<br>"
+        + "the system files of the remote to the XSight subfolder<br>"
+        + "of the installation folder, creating it if it does not<br>"
+        + "exist.</html>" );
+    getSystemFilesItem.setVisible( false );
+    getSystemFilesItem.setSelected( false );
+    menu.add( getSystemFilesItem );
+
+    putSystemFileItem = new JMenuItem( "Put system file..." );
+    putSystemFileItem.setToolTipText( "<html>Uploads a system file to the remote, selected from<br>"
+        + "the XSight subfolder of the installation folder.</html>" );
+    putSystemFileItem.setVisible( false );
+    putSystemFileItem.addActionListener( this );
+    menu.add( putSystemFileItem );
+
+    parseIRDBItem = new JMenuItem( "Extract from irdb.bin" );
+    parseIRDBItem.setToolTipText( "<html>Extracts data for an RDF from the copy of the irdb.bin<br>"
+        + "system file in the XSight subfolder of the installation<br>"
+        + "folder.  You must first use \"Get system files\" to copy<br>"
+        + "this and other system files from the remote to this folder.</html>" );
+    parseIRDBItem.setVisible( false );
+    parseIRDBItem.addActionListener( this );
+    menu.add( parseIRDBItem );
 
     menu = new JMenu( "Help" );
     menu.setMnemonic( KeyEvent.VK_H );
@@ -1811,6 +1975,44 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
       if ( result.equals( dir ) )
       {
         result = null; // Not changed
+      }
+    }
+    return result;
+  }
+  
+  public File getSystemFileChoice()
+  {
+    // Selects an XSight system file for uploading
+    File result = null;
+    File dir = new File( workDir, "XSight" );
+    if ( !dir.exists() )
+    {
+      System.err.println( "Folder " + dir.getAbsolutePath() + " not found" );
+      return null;
+    }
+    
+    while ( result == null )
+    {
+      RMFileChooser chooser = new RMFileChooser( dir );
+      int returnVal = chooser.showOpenDialog( this );
+      if ( returnVal == RMFileChooser.APPROVE_OPTION )
+      {
+        result = chooser.getSelectedFile();
+
+        if ( !result.exists() )
+        {
+          JOptionPane.showMessageDialog( this, result.getName() + " doesn't exist.", "File doesn't exist.",
+              JOptionPane.ERROR_MESSAGE );
+        }
+        else if ( result.isDirectory() )
+        {
+          JOptionPane.showMessageDialog( this, result.getName() + " is a directory.", "File doesn't exist.",
+              JOptionPane.ERROR_MESSAGE );
+        }
+      }
+      else
+      {
+        return null;
       }
     }
     return result;
@@ -2297,7 +2499,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
           portName = temp.openRemote( portName );
           if ( portName != null && !portName.isEmpty() )
           {
-            System.err.println( "Opened" );
+            System.err.println( "Opened on Port " + portName );
             return temp;
           }
           else
@@ -2318,6 +2520,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
         System.err.println( "Port Name = " + ( portName.isEmpty() ? "NULL" : portName ) );
         if ( !portName.isEmpty() )
         {
+          System.err.println( "Opened on Port " + portName );
           return temp;
         }
       }
@@ -2455,9 +2658,10 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
         if ( result == JOptionPane.OK_OPTION )
         {
           // Remote has segments
+          Remote remote = remoteConfig.getRemote();
           short[] data = remoteConfig.getData();
-          int startAddr = remoteConfig.getRemote().getCheckSums()[ 0 ].getAddressRange().getEnd() + 1;
-          Arrays.fill( data, startAddr, data.length, ( short )0xFF );
+          Arrays.fill( data, remote.getUsageRange().getFreeStart(), data.length, ( short )0xFF );
+          remoteConfig.updateCheckSums();
           update();
           return;
         }
@@ -2567,6 +2771,20 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
         System.err.println( "Starting upload to initialize to FF" );
         setInterfaceState( "INITIALIZING TO FF..." );
         ( new UploadTask( data, false ) ).execute();
+      }
+      else if ( source == putSystemFileItem )
+      {
+        File file = getSystemFileChoice();
+        IO io = getOpenInterface();
+        if ( io instanceof CommHID )
+        {
+          ( ( CommHID )io ).writeSystemFile( file );
+        }
+      }
+      else if ( source == parseIRDBItem )
+      {
+        extractIrdb();
+        setSystemFilesItems( true );
       }
       else if ( source == rdfPathItem )
       {
@@ -2814,8 +3032,8 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     index = checkTabbedPane( "Macros", macroPanel, remote.hasMacroSupport(), index );
     index = checkTabbedPane( "Special Functions", specialFunctionPanel, !remote.getSpecialProtocols().isEmpty(), index );
     index = checkTabbedPane( "Timed Macros", timedMacroPanel, remote.hasTimedMacroSupport(), index );
-    index = checkTabbedPane( "Fav/Scan", favScanPanel, remote.hasFavKey(), index );
-//    index++;  // Devices tab
+    index = checkTabbedPane( "Fav/Scan", favScanPanel, remote.hasFavKey() && !remote.hasFavorites() && !remote.isSSD(), index );
+    index = checkTabbedPane( "Favorites", favoritesPanel, remote.hasFavorites(), index );
     index = checkTabbedPane( "Devices", devicePanel, true, index );
     index = checkTabbedPane( "Protocols", protocolPanel, remote.hasFreeProtocols(), index );
     index = checkTabbedPane( "Activities", activityPanel, remote.hasActivitySupport(), index );
@@ -2830,7 +3048,7 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     specialFunctionPanel.set( remoteConfig );
     timedMacroPanel.set( remoteConfig );
     favScanPanel.set( remoteConfig );
-
+    favoritesPanel.set( remoteConfig );
     devicePanel.set( remoteConfig );
     protocolPanel.set( remoteConfig );
     activityPanel.set( remoteConfig );
@@ -2940,13 +3158,20 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     Remote remote = remoteConfig.getRemote();
     Dimension d = advProgressBar.getPreferredSize();
     Font font = advProgressBar.getFont();
-    if ( remote.getDeviceUpgradeAddress() == null )
+    if ( remoteConfig.hasSegments() )
+    {
+      extraStatus.setVisible( false );
+      advProgressLabel.setText( "Memory usage:" );
+    }
+    else if ( remote.getDeviceUpgradeAddress() == null )
     {
       upgradeProgressBar.setVisible( false );
       upgradeProgressBar.setPreferredSize( d );
       upgradeProgressBar.setFont( font );
       upgradeProgressBar.setVisible( true );
       devUpgradeProgressBar.setVisible( false );
+      extraStatus.setVisible( true );
+      advProgressLabel.setText( "Move/Macro:" );
     }
     else
     {
@@ -2960,11 +3185,13 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
       devUpgradeProgressBar.setPreferredSize( d );
       devUpgradeProgressBar.setFont( font2 );
       devUpgradeProgressBar.setVisible( true );
+      extraStatus.setVisible( true );
+      advProgressLabel.setText( "Move/Macro:" );
     }
 
     String title = "Available Space Exceeded";
     String message = "";
-    AddressRange range = remote.getAdvancedCodeAddress();
+    AddressRange range = remoteConfig.hasSegments() ? remote.getUsageRange() : remote.getAdvancedCodeAddress();
     if ( !updateUsage( advProgressBar, range ) )
     {
       valid = false;
@@ -3038,6 +3265,10 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     {
       ( ( KeyMoveTableModel )keyMovePanel.getModel() ).resetKeyMoves();
     }
+    if ( currentPanel == activityPanel && event.getPropertyName().equals( "tabs" ) )
+    {
+      activityPanel.set( remoteConfig );
+    }
     remoteConfig.updateImage();
     updateUsage();
     hasInvalidCodes = generalPanel.setWarning();
@@ -3053,10 +3284,16 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     {
       return true;
     }
-    String title = "Setup codes";
+    Remote remote = remoteConfig.getRemote();
+    String title = "Setup configuration";
     if ( setupValidation == Remote.SetupValidation.WARN )
     {
-      String message = "The current setup contains invalid device codes.\n" + "Are you sure you wish to continue?";
+      String message = "The current setup contains invalid device codes";
+      if ( remote.usesEZRC() )
+      {
+        message += "\nor devices without a matching device upgrade";
+      }      
+      message +=  ".\n\nAre you sure you wish to continue?";
       return JOptionPane.showConfirmDialog( this, message, title, JOptionPane.YES_NO_OPTION ) == JOptionPane.YES_OPTION;
     }
     else if ( setupValidation == Remote.SetupValidation.ENFORCE )
@@ -3292,6 +3529,11 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
   
   private static File workDir = null;
 
+  public static File getWorkDir()
+  {
+    return workDir;
+  }
+
   /** The Constant rmirEndings. */
   private final static String[] rmirEndings =
   {
@@ -3441,4 +3683,215 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     }
   }
   
+  private void extractIrdb()
+  {
+    int pos = 0;
+    File file = new File( new File( workDir, "XSight" ), "irdb.bin" );
+    byte[] data = RemoteMaster.readBinary( file );
+    LinkedHashMap< Integer, List< Integer > > setups = new LinkedHashMap< Integer, List<Integer> >();
+    LinkedHashMap< Integer, Integer > pidLenBytes = new LinkedHashMap< Integer, Integer >();
+    List< Integer > prots = new ArrayList< Integer >();
+    List< Integer > distinctTags = new ArrayList< Integer >();
+    String name = file.getName();
+    List< String > tagNames = new ArrayList< String >();
+    System.err.println( name + " tags:" );
+    int itemsLength = ( data[ pos + 14 ] & 0xFF ) + 0x100 * ( data[ pos + 15 ] & 0xFF );
+    pos += 16;
+    int itemCount = data[ pos++ ] & 0xFF;
+    int itemsEnd = pos + itemsLength;
+    char ch;
+    for ( int i = 0; i < itemCount; i++ )
+    {
+      StringBuilder sb = new StringBuilder();
+      while ( ( ch = ( char )( data[ pos++ ] & 0xFF ) ) != 0 )
+      {
+        sb.append( ch );
+      }
+      String tag = Integer.toHexString( i );
+      if ( tag.length() == 1 )
+      {
+        tag = "0" + tag;
+      }
+      String tagName = sb.toString();
+      tagNames.add( tagName );
+      System.err.println( "  " + tag + "  " + tagName );
+    }
+    if ( pos != itemsEnd )
+    {
+      System.err.println( "Parsing error in " + name );
+      return;
+    }
+
+    List< Integer > tags = new ArrayList< Integer >();
+    int devLen = 0;
+    int cmdLen = 0;
+    int pid = -1;
+    while ( true )
+    {
+      int tag = data[ pos++ ] & 0xFF;
+      if ( ( tag & 0x80 ) == 0 )
+      {
+        tags.add( 0, tag );
+        if ( !distinctTags.contains( tag ) )
+        {
+          distinctTags.add( tag );
+        }
+        if ( tag == 0x0B )
+        {
+          int type = data[ pos + 1 ];
+          char[] chs = new char[ 4 ];
+          for ( int i = 2; i < 6; i++ )
+          {
+            chs[ i - 2 ] = ( char )data[ pos + i ];
+          }
+          int val = Integer.parseInt( new String( chs ) );
+          List< Integer > list = setups.get( type );
+          if ( list == null )
+          {
+            list = new ArrayList< Integer >();
+            setups.put( type, list );
+          }
+          if ( !list.contains( val ) )
+          {
+            list.add( val );
+          }
+        }
+        else if ( tag == 0x0D )
+        {
+          devLen = data[ pos ];
+        }
+        else if ( tag == 0x11 )
+        {
+          pid = ( data[ pos + 1 ] & 0xFF ) + 0x100 * ( data[ pos + 2 ] & 0xFF );
+          if ( !prots.contains( pid ) )
+          {
+            prots.add( pid );
+          }
+        }
+        else if ( tag == 0x10 )
+        {
+          if ( cmdLen == 0 )
+          {
+            cmdLen = data[ pos ] - 1;
+          }
+          else if ( cmdLen != data[ pos ] - 1 )
+          {
+            System.err.println( "Inconsistent cmdLen in pid = " + Integer.toHexString( pid ) );
+          }
+        }
+        int len = data[ pos++ ] & 0xFF;
+        pos += len;
+      }
+      else
+      {
+        int last = tags.remove( 0 );
+        if ( tag != ( last | 0x80  ) )
+        {
+          System.err.println( "XCF file nesting error at " + Integer.toHexString( pos - 1 ) );
+          return;
+        }
+        else if ( tag == 0x8B )
+        {
+          int val = 0xFFFF;
+          if ( devLen < 16 && cmdLen < 16 )
+          {
+            val = cmdLen | ( devLen << 4 );
+          }
+          Integer oldVal = pidLenBytes.get( pid );
+          if ( oldVal == null )
+          {
+            pidLenBytes.put( pid, val );
+          }
+          else if ( oldVal != val )
+          {
+            System.err.println( "Inconsistent occurrences of pid " + Integer.toHexString( pid ) );
+          }
+          devLen = 0;
+          cmdLen = 0;
+          pid = -1;
+        }
+
+        if ( tags.isEmpty() )
+        {
+          System.err.println( "irdb parsing terminating at position " + Integer.toHexString( pos ) );
+          break;
+        }
+      }  
+    }
+
+    Collections.sort( prots );
+    Collections.sort( distinctTags );
+    System.err.println();
+    System.err.print( "Distinct tags: " );
+    for ( int tag : distinctTags )
+    {
+      System.err.print( String.format( "%02X ", tag ) );
+    }
+    System.err.println();
+    System.err.println();
+    System.err.println( "[SetupCodes]");
+    for ( int type : setups.keySet() )
+    {
+      List< Integer > list = setups.get( type );
+      System.err.print( ( char )type );
+      System.err.print( " = " );
+      int i = -1;
+      for ( int val : list )
+      {
+        if ( ++i > 0 )
+        {
+          System.err.print( ", " );
+
+          if ( ( i % 10 ) == 0 )
+          {
+            System.err.println();
+            System.err.print( "    " );
+          }
+        }
+        System.err.print( new SetupCode( val ) );
+      }
+      System.err.println();
+    }
+
+    System.err.println();
+    System.err.println( "[Protocols]" );
+    int i = -1;
+    for ( int p : prots )
+    {
+      if ( ++i > 0 )
+      {
+        System.err.print( ", " );
+
+        if ( ( i % 10 ) == 0 )
+        {
+          System.err.println();
+        }
+      }
+      System.err.print( String.format( "%04X", p ) );
+    }
+    System.err.println();
+    System.err.println();
+    i = -1;
+    System.err.println( "Dev/Cmd lengths by protocol");
+    for ( int p : prots )
+    {
+      if ( ++i > 0 )
+      {
+        System.err.print( "; " );
+
+        if ( ( i % 8 ) == 0 )
+        {
+          System.err.println();
+        }
+      }
+      System.err.print( String.format( "%04X %02X", p, pidLenBytes.get( p ) ) );
+    }
+    System.err.println();
+    System.err.println();
+    String title = "Extract irdb.bin";
+    String message = 
+        "Extract data, including [Protocols] and [SetupCodes] sections\n"
+        + "for the RDF, have been output to rmaster.err"; 
+    JOptionPane.showMessageDialog( this, message, title, JOptionPane.INFORMATION_MESSAGE );
+  } 
 }

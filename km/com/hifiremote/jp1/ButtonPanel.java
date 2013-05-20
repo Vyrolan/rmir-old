@@ -1,6 +1,10 @@
 package com.hifiremote.jp1;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
@@ -19,16 +23,23 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.io.BufferedReader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
@@ -36,6 +47,7 @@ import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.TransferHandler;
+import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -59,9 +71,35 @@ public class ButtonPanel extends KMPanel implements ActionListener
     super( "Buttons", devUpgrade );
     setLayout( new BorderLayout() );
 
-    table = new JTableX();
     model = new ButtonTableModel( devUpgrade );
-    table.setModel( model );
+    model.setPanel( this );
+    table = new JTableX( model )
+    {
+      @Override
+      public String getToolTipText( MouseEvent e ) 
+      {
+        Remote remote = model.getDeviceUpgrade().getRemote();
+        if ( !remote.usesEZRC() )
+        {
+          return null;
+        }
+        String tip = null;
+        java.awt.Point p = e.getPoint();
+        int row = rowAtPoint( p );
+        int rawCol = columnAtPoint( p );
+        boolean editable = model.isCellEditable( row, rawCol );
+        int col = model.getEffectiveColumn( rawCol );
+        if ( col == ButtonTableModel.functionCol && !editable )
+        {
+          GeneralFunction gf = ( GeneralFunction )getValueAt( row, rawCol );
+          String tab = gf instanceof Macro ? "Macros" : "Learned Signals";
+          tip = "<html>To change this assignment, first delete the corresponding<br>"
+              + "assignment on the " + tab + " tab.";
+        }
+        return tip;
+      }
+    };
+    
     table.setRowSelectionAllowed( false );
     table.setColumnSelectionAllowed( false );
     table.setCellSelectionEnabled( true );
@@ -70,6 +108,7 @@ public class ButtonPanel extends KMPanel implements ActionListener
     table.getInputMap().put( KeyStroke.getKeyStroke( KeyEvent.VK_DELETE, 0 ), "delete" );
     table.setAutoResizeMode( JTable.AUTO_RESIZE_LAST_COLUMN );
     table.setDefaultEditor( Function.class, popupEditor );
+    table.setDefaultEditor( Macro.class, new SelectAllCellEditor() );
 
     deleteAction = new AbstractAction( "Remove" )
     {
@@ -88,6 +127,37 @@ public class ButtonPanel extends KMPanel implements ActionListener
 
     renderer = new FunctionRenderer( deviceUpgrade );
     table.setDefaultRenderer( Button.class, renderer );
+    table.setDefaultRenderer( DeviceButton.class, new DefaultTableCellRenderer() );
+    table.setDefaultRenderer( GeneralFunction.class, 
+        new DefaultTableCellRenderer()
+    {
+      Font baseFont = getFont();
+      Font boldFont = baseFont.deriveFont( Font.BOLD );
+      
+      @Override
+      public Component getTableCellRendererComponent( JTable table, Object value, boolean isSelected,
+          boolean hasFocus, int row, int col )
+      {
+        GeneralFunction gf = ( GeneralFunction )value;
+        String name = gf != null ? gf.getDisplayName() : "";
+        Component component = super.getTableCellRendererComponent( table, name, isSelected, false, row, col );
+        component.setFont( table.isCellEditable( row, col ) ? baseFont : boldFont );
+        return component;
+      }
+    } );
+    table.setDefaultRenderer( Macro.class, new DefaultTableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent( JTable table, Object value, boolean isSelected, boolean hasFocus,
+          int row, int col )
+      {     
+        Component component = super.getTableCellRendererComponent( table, value, value == null ? false : isSelected, false, row, col );
+        Color color = value == null ? Color.LIGHT_GRAY
+            : isSelected ? UIManager.getColor( "Table.selectionBackground" ) : Color.WHITE;
+        setBackground( color );
+        return component;
+      } 
+    } );
+    
     table.getTableHeader().setReorderingAllowed( false );
 
     ListSelectionListener lsl = new ListSelectionListener()
@@ -196,7 +266,7 @@ public class ButtonPanel extends KMPanel implements ActionListener
           {
             try
             {
-              Function f = ( Function )t.getTransferData( LocalObjectTransferable.getFlavor() );
+              GeneralFunction f = ( GeneralFunction )t.getTransferData( LocalObjectTransferable.getFlavor() );
               setFunctionAt( f, row, col );
             }
             catch ( Exception e )
@@ -357,10 +427,13 @@ public class ButtonPanel extends KMPanel implements ActionListener
     };
     table.addMouseMotionListener( mmh );
 
+    JPanel selectionPanel = new JPanel( new BorderLayout() );
+    
     JPanel panel = new JPanel( new BorderLayout() );
     JLabel label = new JLabel( "Available Functions:" );
     label.setBorder( BorderFactory.createEmptyBorder( 2, 2, 3, 2 ) );
-    panel.add( label, BorderLayout.NORTH );
+    selectionPanel.add( label, BorderLayout.PAGE_END);
+    panel.add( selectionPanel, BorderLayout.NORTH );
     add( panel, BorderLayout.EAST );
 
     JPanel outerPanel = new JPanel( new BorderLayout() );
@@ -368,10 +441,17 @@ public class ButtonPanel extends KMPanel implements ActionListener
     outerPanel.add( functionPanel, BorderLayout.NORTH );
     panel.add( new JScrollPane( outerPanel ), BorderLayout.CENTER );
 
-    JSplitPane splitPane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT, new JScrollPane( table ), new JScrollPane(
-        panel ) );
+    JSplitPane splitPane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT, new JScrollPane( table ), panel );
     splitPane.setResizeWeight( 0.3 );
 
+    Remote remote = devUpgrade.getRemote();
+    selector = new SelectionPanel( this, this );
+    if ( remote.usesEZRC() )
+    {
+      selectionPanel.add( selector, BorderLayout.CENTER );
+      selector.deviceBox.setSelectedItem( deviceUpgrade.getButtonRestriction() );
+    }
+    
     add( splitPane, BorderLayout.CENTER );
     panel = new JPanel();
     autoAssign = new JButton( "Auto assign" );
@@ -384,6 +464,96 @@ public class ButtonPanel extends KMPanel implements ActionListener
     panel.add( button );
 
     add( panel, BorderLayout.SOUTH );
+  }
+  
+  public static class SelectionPanel extends JPanel
+  {
+    protected JRadioButton functionButton = new JRadioButton( "Functions for device:" );
+//    protected JRadioButton keyMoveButton = new JRadioButton( "Key Moves" );
+    protected JRadioButton macroButton = new JRadioButton( "Macros" );
+    protected JRadioButton learnedButton = new JRadioButton( "Learned" );
+    protected JComboBox deviceBox = new JComboBox();
+    private KMPanel panel = null;
+    
+    public SelectionPanel( KMPanel panel, ActionListener al )
+    {
+      super();
+      this.panel = panel;
+      setLayout( new BorderLayout() );
+//      JPanel inner = new JPanel( new GridLayout( 1, 3 ) );
+      JPanel inner = new JPanel( new WrapLayout( FlowLayout.LEFT ) );
+      setBorder( BorderFactory.createTitledBorder( " Select items to show: " ) );
+      inner.add( functionButton );
+//      inner.add( macroButton );
+//      inner.add( learnedButton );
+//      add( keyMoveButton );
+      add( inner, BorderLayout.PAGE_START );
+      Remote remote = panel.deviceUpgrade.getRemote();
+      DeviceButton[] allDB = remote.getDeviceButtons();
+      List< DeviceButton > dbList = new ArrayList< DeviceButton >();
+      for ( DeviceButton db : allDB )
+      {
+        if ( db.getUpgrade() != null )
+        {
+          dbList.add( db );
+        }
+      }
+      DefaultComboBoxModel comboModel = new DefaultComboBoxModel( dbList.toArray() );
+      deviceBox.setModel( comboModel );
+      Dimension d = deviceBox.getPreferredSize();
+      d.width = 100;
+      deviceBox.setPreferredSize( d );
+      deviceBox.addActionListener( al );
+//      inner = new JPanel();
+//      inner.add( new JLabel( "of device button:") );
+      inner.add( deviceBox );
+      inner.add( Box.createHorizontalStrut( 20 ) );
+      inner.add( macroButton );
+//      add( inner, BorderLayout.PAGE_END );
+      ButtonGroup grp = new ButtonGroup();
+      grp.add( functionButton );
+      grp.add( learnedButton );
+      grp.add( macroButton );
+      functionButton.setSelected( true );
+      functionButton.addActionListener( al );
+      learnedButton.addActionListener( al );
+      macroButton.addActionListener( al );
+      macroButton.setEnabled( remote.isSSD() );
+    }
+
+    protected void addFunctions()
+    {
+      if ( functionButton.isSelected() )
+      {
+        DeviceButton db = ( DeviceButton )deviceBox.getSelectedItem();
+        DeviceUpgrade du = db.getUpgrade();
+        if ( du.getButtonRestriction() == panel.deviceUpgrade.getButtonRestriction() )
+        {
+          du = panel.deviceUpgrade;
+        }
+        for ( Function function : du.getFunctionList() )
+        {
+          panel.addFunction( function );
+        }
+
+        for ( ExternalFunction function : db.getUpgrade().getExternalFunctions() )
+          panel.addFunction( function );
+      }
+      else if ( macroButton.isSelected() )
+      {
+        for ( Macro macro : panel.deviceUpgrade.getRemoteConfig().getMacros() )
+        {
+          panel.addFunction( macro );
+        }
+      }
+      else if ( learnedButton.isSelected() )
+      {
+        for ( LearnedSignal ls : panel.deviceUpgrade.getRemoteConfig().getLearnedSignals() )
+        {
+          panel.addFunction( ls );
+        }
+      }
+    }
   }
 
   /**
@@ -398,20 +568,26 @@ public class ButtonPanel extends KMPanel implements ActionListener
     {
       int row = rows[ r ];
       Button b = ( Button )model.getValueAt( row, 0 );
+      int keyCode = b.getKeyCode();
       for ( int c = 0; ( c < cols.length ) && !enableDelete; c++ )
       {
-        int col = cols[ c ];
+        int col = model.getEffectiveColumn( cols[ c ] );
         if ( col > 0 )
         {
-          Function f = null;
-          if ( col == 1 )
-            f = deviceUpgrade.getFunction( b, Button.NORMAL_STATE );
-          else if ( col == 2 )
-            f = deviceUpgrade.getFunction( b, Button.SHIFTED_STATE );
+          if ( col == 2 )
+          {
+            enableDelete = deviceUpgrade.getFunction( b, Button.NORMAL_STATE ) != null;
+            if ( deviceUpgrade.getRemote().isSSD() )
+            {
+              enableDelete = enableDelete || deviceUpgrade.getMacroMap().get( keyCode ) != null
+                || deviceUpgrade.getKmMap().get( keyCode ) != null
+                || deviceUpgrade.getLearnedMap().get( keyCode ) != null;
+            }
+          }
           else if ( col == 3 )
-            f = deviceUpgrade.getFunction( b, Button.XSHIFTED_STATE );
-          if ( f != null )
-            enableDelete = true;
+            enableDelete = deviceUpgrade.getFunction( b, Button.SHIFTED_STATE ) != null;
+          else if ( col == 4 )
+            enableDelete = deviceUpgrade.getFunction( b, Button.XSHIFTED_STATE ) != null; 
         }
       }
     }
@@ -452,16 +628,22 @@ public class ButtonPanel extends KMPanel implements ActionListener
    * @param f
    *          the f
    */
-  private void addFunction( Function f )
+  @Override
+  public void addFunction( GeneralFunction f )
   {
-    if ( ( f == null ) || ( ( f.getHex() != null ) && ( f.getName() != null ) && ( f.getName().length() > 0 ) ) )
+    if ( ( f == null ) || ( ( f.hasData() ) && ( f.getName() != null ) && ( f.getName().length() > 0 ) ) )
     {
+      if ( f != null && !f.accept() )
+      {
+        return;
+      }
       FunctionLabel l;
       if ( f == null )
         l = new FunctionLabel( null );
       else
         l = f.getLabel();
       l.addMouseListener( doubleClickListener );
+      l.showAssigned( deviceUpgrade.getButtonRestriction() );
       functionPanel.add( l );
 
       popupEditor.addObject( f );
@@ -474,15 +656,8 @@ public class ButtonPanel extends KMPanel implements ActionListener
   private void setFunctions()
   {
     popupEditor.removeAll();
-
     functionPanel.removeAll();
-
-    for ( Function function : deviceUpgrade.getFunctions() )
-      addFunction( function );
-
-    for ( ExternalFunction function : deviceUpgrade.getExternalFunctions() )
-      addFunction( function );
-
+    selector.addFunctions();
     functionPanel.doLayout();
   }
 
@@ -514,6 +689,11 @@ public class ButtonPanel extends KMPanel implements ActionListener
       else
         Toolkit.getDefaultToolkit().beep();
     }
+    else if ( source == selector.deviceBox || source instanceof JRadioButton )
+    {
+      setFunctions();
+      functionPanel.revalidate();
+    }
     deviceUpgrade.checkSize();
   }
 
@@ -541,7 +721,7 @@ public class ButtonPanel extends KMPanel implements ActionListener
    * @param col
    *          the col
    */
-  private void setFunctionAt( Function function, int row, int col )
+  private void setFunctionAt( GeneralFunction function, int row, int col )
   {
     int[] rows = null;
     int[] cols = null;
@@ -623,6 +803,12 @@ public class ButtonPanel extends KMPanel implements ActionListener
       return;
     table.setRowHeight( aFont.getSize() + 2 );
   }
+  
+  @Override
+  public void revalidateFunctions()
+  {
+    functionPanel.revalidate();
+  }
 
   /** The table. */
   private JTableX table = null;
@@ -665,4 +851,7 @@ public class ButtonPanel extends KMPanel implements ActionListener
 
   /** The paste item. */
   private JMenuItem pasteItem = null;
+  
+  private SelectionPanel selector = null;
+  
 }

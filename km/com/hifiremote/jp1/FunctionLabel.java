@@ -27,7 +27,7 @@ public class FunctionLabel
    * 
    * @param function the function
    */
-  public FunctionLabel( Function function )
+  public FunctionLabel( GeneralFunction function )
   {
     if ( function == null )
       setText( "- none -" );
@@ -92,7 +92,7 @@ public class FunctionLabel
    * 
    * @return the function
    */
-  public Function getFunction(){ return function; }
+  public GeneralFunction getFunction(){ return function; }
 
   /**
    * Update tool tip text.
@@ -120,7 +120,9 @@ public class FunctionLabel
           else
             buff.append( ", " );
           Button b = user.button;
+          DeviceButton db = user.db;
           int state = user.state;
+          buff.append( db.getName() + "/" );
           if ( state == Button.NORMAL_STATE )
             buff.append( b.getName());
           else if ( state == Button.SHIFTED_STATE )
@@ -149,6 +151,18 @@ public class FunctionLabel
   {
     setForeground( Color.red );
   }
+  
+  public void showAssigned( DeviceButton db )
+  {
+    if ( function.assigned( db ) )
+    {
+      showAssigned();
+    }
+    else
+    {
+      showUnassigned();
+    }
+  }
 
   /* (non-Javadoc)
    * @see javax.swing.JComponent#getPreferredSize()
@@ -162,7 +176,7 @@ public class FunctionLabel
   }
 
   /** The function. */
-  private Function function = null;
+  private GeneralFunction function = null;
   
   /** The ml. */
   private static MouseMotionAdapter ml = null;
