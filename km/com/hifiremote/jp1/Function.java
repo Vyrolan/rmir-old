@@ -8,7 +8,7 @@ import java.util.Properties;
 /**
  * The Class Function.
  */
-public class Function
+public class Function extends GeneralFunction
 {
 
   /**
@@ -30,7 +30,7 @@ public class Function
   public Function( String name, Hex hex, String notes )
   {
     this.name = name;
-    this.hex = hex;
+    data = hex;
     this.notes = notes;
   }
 
@@ -54,9 +54,18 @@ public class Function
   public Function( Function base )
   {
     name = base.name;
-    if ( base.hex != null )
-      hex = new Hex( base.hex );
+    gid = base.gid;
+    if ( base.data != null )
+      data = new Hex( base.data );
     notes = base.notes;
+    upgrade = base.upgrade;
+    alternate = base.alternate;
+    serial = base.serial;
+    macroref = base.macroref;
+    keyflags = base.keyflags;
+    if ( base.icon != null )
+//      icon = new RMIcon( base.icon );
+      icon = base.icon;  // *** not sure why it needed to be copied
   }
 
   /**
@@ -76,28 +85,7 @@ public class Function
    */
   public boolean isEmpty()
   {
-    return ( name == null ) && ( hex == null ) && ( notes == null );
-  }
-
-  /**
-   * Store.
-   * 
-   * @param props
-   *          the props
-   * @param prefix
-   *          the prefix
-   */
-  public void store( Properties props, String prefix )
-  {
-    if ( isEmpty() )
-      props.setProperty( prefix + ".name", "" );
-
-    if ( name != null )
-      props.setProperty( prefix + ".name", name );
-    if ( hex != null )
-      props.setProperty( prefix + ".hex", hex.toString() );
-    if ( notes != null )
-      props.setProperty( prefix + ".notes", notes );
+    return ( name == null ) && ( data == null ) && ( notes == null );
   }
 
   /**
@@ -115,12 +103,26 @@ public class Function
 
     if ( name != null )
       out.print( prefix + ".name", name );
-    if ( hex != null )
-      out.print( prefix + ".hex", hex.toString() );
+    if ( gid != null && gid != defaultGID )
+      out.print( prefix + ".index", Integer.toString( gid ) );
+    if ( keyflags != null )
+      out.print( prefix + ".keyflags", Integer.toString( keyflags ) );
+    if ( serial >= 0 )
+      out.print( prefix + ".serial", Integer.toString( serial ) );
+    if ( data != null )
+      out.print( prefix + ".hex", data.toString() );
+    if ( macroref != null )
+    {
+      out.print( prefix + ".macroref", Integer.toString( macroref ) );
+    }
+    if ( icon != null && icon.ref > 0 )
+    {
+      out.print( prefix + ".iconref", Integer.toString( icon.ref ) );
+    }
     if ( notes != null )
       out.print( prefix + ".notes", notes );
   }
-
+  
   /**
    * Load.
    * 
@@ -134,21 +136,28 @@ public class Function
     String str = props.getProperty( prefix + ".name" );
     if ( str != null )
       setName( str );
+    str = props.getProperty( prefix + ".index" );
+    if ( str != null )
+    {
+      setGid( Integer.parseInt( str ) );
+    }
+    str = props.getProperty( prefix + ".keyflags" );
+    if ( str != null )
+      setKeyflags( Integer.parseInt( str ) );
+    str = props.getProperty( prefix + ".serial" );
+    if ( str != null )
+      setSerial( Integer.parseInt( str ) );
     str = props.getProperty( prefix + ".hex" );
     if ( str != null )
       setHex( new Hex( str ) );
+    str = props.getProperty( prefix + ".macroref" );
+    if ( str != null )
+      setMacroref( Integer.parseInt( str ) );
     str = props.getProperty( prefix + ".notes" );
     if ( str != null )
       setNotes( str );
   }
 
-  /**
-   * Sets the name.
-   * 
-   * @param name
-   *          the name
-   * @return the function
-   */
   public Function setName( String name )
   {
     this.name = name;
@@ -160,6 +169,16 @@ public class Function
     if ( item != null )
       item.setText( name );
     return this;
+  }
+
+  public Integer getGid()
+  {
+    return gid;
+  }
+
+  public void setGid( Integer gid )
+  {
+    this.gid = gid;
   }
 
   /**
@@ -180,7 +199,7 @@ public class Function
   }
 
   /**
-   * Sets the hex.
+   * Sets the data.
    * 
    * @param hex
    *          the hex
@@ -188,7 +207,7 @@ public class Function
    */
   public Function setHex( Hex hex )
   {
-    this.hex = hex;
+    this.data = hex;
     return this;
   }
 
@@ -203,62 +222,13 @@ public class Function
   }
 
   /**
-   * Gets the name.
-   * 
-   * @return the name
-   */
-  public String getName()
-  {
-    return name;
-  }
-
-  /**
-   * Gets the notes.
-   * 
-   * @return the notes
-   */
-  public String getNotes()
-  {
-    return notes;
-  }
-
-  /**
    * Gets the hex.
    * 
    * @return the hex
    */
   public Hex getHex()
   {
-    return hex;
-  }
-
-  /**
-   * Gets the label.
-   * 
-   * @return the label
-   */
-  public FunctionLabel getLabel()
-  {
-    if ( label == null )
-    {
-      label = new FunctionLabel( this );
-      label.updateToolTipText();
-      if ( assigned() )
-        label.showAssigned();
-    }
-    return label;
-  }
-
-  /**
-   * Gets the item.
-   * 
-   * @return the item
-   */
-  public FunctionItem getItem()
-  {
-    if ( item == null )
-      item = new FunctionItem( this );
-    return item;
+    return data;
   }
 
   /**
@@ -297,94 +267,103 @@ public class Function
       label.updateToolTipText();
     }
   }
-
-  public void removeReferences()
+  
+  public Integer getMacroref()
   {
-    users.clear();
-    if ( label != null )
+    return macroref;
+  }
+
+  public void setMacroref( Integer macroref )
+  {
+    this.macroref = macroref;
+  }
+
+  public Integer getKeyflags()
+  {
+    return keyflags;
+  }
+
+  public void setKeyflags( Integer keyflags )
+  {
+    this.keyflags = keyflags;
+  }
+  
+  public boolean isEquivalent( Function f )
+  {
+    // There appear to be functions that differ only in the keygid
+    // but as the keygid seems not to be used by the remote, they are
+    // treated here as equivalent
+    return name.equals( f.name )
+        && upgrade == f.upgrade
+        && data.equals( f.data );
+//        && gid.equals(  f.gid );
+  }
+  
+  public Function getEquivalent( List< Function > list )
+  {
+    for ( Function f : list )
     {
-      label.showUnassigned();
-      label.updateToolTipText();
+      if ( this.isEquivalent( f ) )
+      {
+        return f;
+      }
     }
+    return null;
   }
-
-  /**
-   * Assigned.
-   * 
-   * @return true, if successful
-   */
-  public boolean assigned()
+  
+  public boolean accept()
   {
-    return ( !users.isEmpty() );
+    return data != null && ( serial < 0 || alternate == null );
   }
-
-  /**
-   * Gets the users.
-   * 
-   * @return the users
-   */
-  public List< User > getUsers()
+  
+  public static List< Function > filter( List< Function > in )
   {
-    return users;
-  }
-
-  /**
-   * The Class User.
-   */
-  public class User
-  {
-
-    /**
-     * Instantiates a new user.
-     * 
-     * @param b
-     *          the b
-     * @param state
-     *          the state
-     */
-    public User( Button b, int state )
+    List< Function > out = new ArrayList< Function >();
+    for ( Function f : in )
     {
-      button = b;
-      this.state = state;
+      if ( f.getEquivalent( out ) == null )
+      {
+        out.add( f );
+      }
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    public boolean equals( Object o )
-    {
-      User u = ( User )o;
-      if ( button != u.button )
-        return false;
-      if ( state != u.state )
-        return false;
-      return true;
-    }
-
-    /** The button. */
-    public Button button;
-
-    /** The state. */
-    public int state;
+    return out;
   }
 
-  /** The name. */
-  protected String name = null;
+  public Function getAlternate()
+  {
+    return alternate;
+  }
 
-  /** The notes. */
-  protected String notes = null;
+  public void setAlternate( Function alternate )
+  {
+    this.alternate = alternate;
+  }
 
-  /** The hex. */
-  protected Hex hex = null;
+  public int getRmirIndex()
+  {
+    return rmirIndex;
+  }
 
-  /** The label. */
-  private FunctionLabel label = null;
+  public void setRmirIndex( int rmirIndex )
+  {
+    this.rmirIndex = rmirIndex;
+  }
 
-  /** The item. */
-  private FunctionItem item = null;
+  /** The EZ-RC GID value corresponding to this function name */
+  protected Integer gid = null;
+  
+  private Integer macroref = null;
+  
+  private Integer keyflags = null;
+  
+  private int rmirIndex = -1;
+  
+  /** Gives the equivalent ir form (serial >= 0)
+   *  for an assigned form (serial == -1), and vice versa
+   */
+  private Function alternate = null;
+  
+  /** Default value used in upgrade when index==null */
+  public static final int defaultGID = 0;
 
-  /** The users. */
-  private List< User > users = new ArrayList< User >();
 }

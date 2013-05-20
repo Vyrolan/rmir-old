@@ -6,6 +6,8 @@ package com.hifiremote;
 import java.io.File;
 import java.util.HashMap;
 
+import com.hifiremote.jp1.io.CommHID;
+
 /**
  * @author Greg
  */
@@ -13,18 +15,20 @@ public class LibraryLoader
 {
   public static void loadLibrary( File folder, String libraryName ) throws UnsatisfiedLinkError
   {
+    if ( libraryName.equals( "hidapi" ) )
+    {
+      CommHID.LoadHIDLibrary();
+      return;
+    }
+    
     if ( libraryFolder == null )
     {
-      String folderName = "";
       String osName = System.getProperty( "os.name" );
       if ( osName.startsWith( "Windows" ) )
       {
-        folderName = "Windows";
+        osName = "Windows";
       }
-      else
-      {
-        folderName = osName + '-' + System.getProperty( "os.arch" );
-      }
+      String folderName = osName + '-' + System.getProperty( "os.arch" ).toLowerCase();
       libraryFolder = new File( folder, folderName );
       System.err.println( "libraryFolder=" + libraryFolder.getAbsolutePath() );
     }

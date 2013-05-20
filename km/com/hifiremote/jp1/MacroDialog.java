@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -20,8 +21,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+
+import com.hifiremote.jp1.RemoteConfiguration.KeySpec;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -78,24 +82,16 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
 
     JComponent contentPane = ( JComponent )getContentPane();
     contentPane.setBorder( BorderFactory.createEmptyBorder( 5, 5, 5, 5 ) );
-
+    upperPanel = new JPanel( new BorderLayout() );
+    contentPane.add( upperPanel, BorderLayout.NORTH );
+    
     // Add the bound device and key controls
-    JPanel panel = new JPanel( new FlowLayout( FlowLayout.LEFT ) );
-    contentPane.add( panel, BorderLayout.NORTH );
-    panel.setBorder( BorderFactory.createTitledBorder( "Bound Key" ) );
-
-    panel.add( Box.createHorizontalStrut( 5 ) );
+    boundPanel = new JPanel( new WrapLayout( FlowLayout.LEFT ) );
+    upperPanel.add( boundPanel, BorderLayout.CENTER );
+    boundPanel.setBorder( BorderFactory.createTitledBorder( "Bound Key" ) );
 
     boundKey.addActionListener( this );
-    panel.add( new JLabel( "Key:" ) );
-    panel.add( boundKey );
-
-    shift.addActionListener( this );
-    panel.add( shift );
-
-    xShift.addActionListener( this );
-    panel.add( xShift );
-
+    
     // Add the Macro definition controls
     macroBox = new MacroDefinitionBox();
     macroBox.setButtonEnabler( this );
@@ -105,7 +101,7 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
     contentPane.add( bottomPanel, BorderLayout.SOUTH );
     
     // Add the notes
-    panel = new JPanel( new BorderLayout() );
+    JPanel panel = new JPanel( new BorderLayout() );
     bottomPanel.add( panel, BorderLayout.NORTH );
     panel.setBorder( BorderFactory.createTitledBorder( "Notes" ) );
     notes.setLineWrap( true );
@@ -138,11 +134,41 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
     Remote remote = config.getRemote();
 
     boundKey.setModel( new DefaultComboBoxModel( remote.getMacroButtons() ) );
-
-    shift.setText( remote.getShiftLabel() );
-    xShift.setText( remote.getXShiftLabel() );
-    xShift.setEnabled( remote.getXShiftEnabled() );
-
+    if ( remote.getMacroButtons().length > 0 )
+    {
+      boundKey.setSelectedIndex( 0 );
+    }
+    
+    if ( remote.usesEZRC() )
+    {
+      nameField = new JTextField( 20 );
+      JPanel panel = new JPanel( new WrapLayout() );
+      panel.add( new JLabel( "Name:") );
+      panel.add( nameField );
+      upperPanel.add(  panel, BorderLayout.PAGE_START );
+      boundDevice = new JComboBox();
+      remote.setDeviceComboBox( boundDevice );
+      boundPanel.add( new JLabel( "Device:" ) );
+      boundPanel.add( boundDevice );
+      boundPanel.add( Box.createHorizontalStrut( 5 ) );
+      boundPanel.add( new JLabel( "Key:" ) );
+      boundPanel.add( boundKey );
+    }
+    else
+    {
+      shift.setText( remote.getShiftLabel() );
+      shift.setEnabled( remote.getShiftEnabled() );
+      xShift.setText( remote.getXShiftLabel() );
+      xShift.setEnabled( remote.getXShiftEnabled() );
+      boundPanel.add( Box.createHorizontalStrut( 5 ) );
+      boundPanel.add( new JLabel( "Key:" ) );
+      boundPanel.add( boundKey );
+      shift.addActionListener( this );
+      boundPanel.add( shift );
+      xShift.addActionListener( this );
+      boundPanel.add( xShift );
+    }
+    
     macroBox.setRemoteConfiguration( config );
   }
 
@@ -152,9 +178,10 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
    * @param macro
    *          the new macro
    */
+  @SuppressWarnings( "unchecked" )
   private void setMacro( Macro macro )
   {
-    this.macro = null;
+    this.macro = macro;
 
     if ( macro == null )
     {
@@ -162,12 +189,27 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
       shift.setSelected( false );
       xShift.setSelected( false );
       macroBox.setValue( null );
+//      macroBox.setValue( ( List< KeySpec > )null );
       notes.setText( null );
     }
     else
     {
       setButton( macro.getKeyCode(), boundKey, shift, xShift );
-      macroBox.setValue( macro.getData() );
+//      macroBox.setValue( macro.getData() );
+      Object val = macro.getValue();
+      if ( val instanceof Hex )
+      {
+        macroBox.setValue( ( Hex )val );
+      }
+      else if ( val instanceof List< ? > )
+      {
+        macroBox.setValue( ( List< KeySpec > )val );
+      }
+      if ( config.getRemote().usesEZRC() )
+      {
+        boundDevice.setSelectedItem( macro.getDeviceButton( config ) );
+        nameField.setText( macro.getName() );
+      }
       notes.setText( macro.getNotes() );
     }
 
@@ -199,16 +241,16 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
       if ( base != 0 )
       {
         b = remote.getButton( base );
-        if ( ( base | remote.getShiftMask() ) == code )
+        if ( remote.getShiftEnabled() &&( ( base | remote.getShiftMask() ) == code ) )
         {
-          shiftBox.setEnabled( b.allowsShiftedMacro() );
+          shiftBox.setEnabled( remote.getShiftEnabled() && b.allowsShiftedMacro() );
           shiftBox.setSelected( true );
           comboBox.setSelectedItem( b );
           return;
         }
         if ( remote.getXShiftEnabled() && ( ( base | remote.getXShiftMask() ) == code ) )
         {
-          xShiftBox.setEnabled( remote.getXShiftEnabled() & b.allowsXShiftedMacro() );
+          xShiftBox.setEnabled( remote.getXShiftEnabled() && b.allowsXShiftedMacro() );
           xShiftBox.setSelected( true );
           comboBox.setSelectedItem( b );
           return;
@@ -225,12 +267,12 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
       }
     }
 
-    shiftBox.setEnabled( b.allowsShiftedMacro() );
-    xShiftBox.setEnabled( remote.getXShiftEnabled() & b.allowsXShiftedMacro() );
+    shiftBox.setEnabled( remote.getShiftEnabled() && b.allowsShiftedMacro() );
+    xShiftBox.setEnabled( remote.getXShiftEnabled() && b.allowsXShiftedMacro() );
 
-    if ( b.getIsXShifted() )
+    if ( remote.getXShiftEnabled() && b.getIsXShifted() )
       xShiftBox.setSelected( true );
-    else if ( b.getIsShifted() )
+    else if ( remote.getShiftEnabled() && b.getIsShifted() )
       shiftBox.setSelected( true );
 
     comboBox.removeActionListener( this );
@@ -280,8 +322,26 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
     Object source = event.getSource();
     Remote remote = config.getRemote();
     Button b = ( Button )boundKey.getSelectedItem();
+
     if ( source == okButton )
     {
+      String name = null;
+      DeviceButton db = null;
+      if ( remote.isSSD() )
+      {
+        name = nameField.getText();
+        if ( name == null || name.isEmpty() )
+        {
+          showWarning( "You must give a name for this macro." );
+          return;
+        }        
+        if ( boundDevice.getSelectedItem() == null )
+        {
+          showWarning( "You must select a device for the bound key." );
+          return;
+        }
+        db = ( DeviceButton )boundDevice.getSelectedItem();
+      }
       if ( boundKey.getSelectedItem() == null )
       {
         showWarning( "You must select a key for the bound key." );
@@ -294,18 +354,62 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
         showWarning( "You haven't included any keys in your macro!" );
         return;
       }
-      
-      Hex data = macroBox.getValue();
 
       String notesStr = notes.getText();
-
-      macro = new Macro( keyCode, data, notesStr );
-      if ( config.hasSegments() )
+      Object value = macroBox.getValue();
+      Macro newMacro = new Macro( keyCode, null, notesStr );
+      if ( remote.isSSD() )
+      {
+        @SuppressWarnings( "unchecked" )
+        List< KeySpec >items = ( List< KeySpec > )value;
+        newMacro.setItems( items );
+        newMacro.setName( name );
+        newMacro.setDeviceButtonIndex( db.getButtonIndex() );
+        newMacro.setSerial( config.getNewMacroSerial() );
+//        DeviceUpgrade du = macro.getUpgrade( remote );
+//        du.setFunction( b, newMacro, Button.NORMAL_STATE );
+      }
+      else
+      {
+        Hex data = ( Hex )value;
+        newMacro.setData( data );
+      }
+      
+      if ( config.hasSegments() && !remote.isSSD() )
       {
         // set default values
-        macro.setDeviceIndex( 0 );
-        macro.setSegmentFlags( 0xFF );
+        if ( macro == null && remote.usesEZRC() )
+        {
+          newMacro.setDeviceButtonIndex( remote.getDeviceButtons()[ 0 ].getButtonIndex() );
+          newMacro.setSegmentFlags( 0xFF );
+          newMacro.setName( "New macro" );
+          newMacro.setSerial( config.getNewMacroSerial() );
+        }
+        else if ( macro == null )
+        {
+          newMacro.setDeviceButtonIndex( 0 );
+          newMacro.setSegmentFlags( 0xFF );
+        }
+        else
+        {
+          newMacro.setName( macro.getName() );
+          newMacro.setSegmentFlags( macro.getSegmentFlags() );
+          newMacro.setDeviceButtonIndex( macro.getDeviceButtonIndex() );
+          newMacro.setSerial( macro.getSerial() );
+        }
       }
+      if ( remote.isSSD() )
+      {
+        if ( macro != null )
+        {
+          Button currb = remote.getButton( macro.getKeyCode() );
+          DeviceUpgrade currdb = macro.getUpgrade( remote );
+          currdb.setFunction( currb, null, Button.NORMAL_STATE );
+        }
+        DeviceUpgrade du = newMacro.getUpgrade( remote );
+        du.setFunction( b, newMacro, Button.NORMAL_STATE );
+      }
+      macro = newMacro;
       setVisible( false );
     }
     else if ( source == cancelButton )
@@ -347,6 +451,16 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
   @Override
   public void enableButtons( Button b, MacroDefinitionBox macroBox )
   {
+    if ( config.getRemote().usesEZRC() )
+    {
+      macroBox.add.setEnabled( true );
+      macroBox.insert.setEnabled( true );
+      macroBox.addShift.setVisible( false );
+      macroBox.addXShift.setVisible( false );
+      macroBox.insertShift.setVisible( false );
+      macroBox.insertXShift.setVisible( false );
+      return;
+    }
     int limit = 15;
     if ( config.getRemote().getAdvCodeBindFormat() == AdvancedCode.BindFormat.LONG )
       limit = 255;
@@ -354,8 +468,13 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
 
     macroBox.add.setEnabled( canAdd && b.canAssignToMacro() );
     macroBox.insert.setEnabled( canAdd && b.canAssignToMacro() );
-    macroBox.addShift.setEnabled( canAdd && b.canAssignShiftedToMacro() );
-    macroBox.insertShift.setEnabled( canAdd && b.canAssignShiftedToMacro() );
+    macroBox.addShift.setVisible( true );
+    macroBox.addXShift.setVisible( true );
+    macroBox.insertShift.setVisible( true );
+    macroBox.insertXShift.setVisible( true );
+    boolean shiftEnabled = config.getRemote().getShiftEnabled();
+    macroBox.addShift.setEnabled( shiftEnabled && canAdd && b.canAssignShiftedToMacro() );
+    macroBox.insertShift.setEnabled( shiftEnabled && canAdd && b.canAssignShiftedToMacro() );
     boolean xShiftEnabled = config.getRemote().getXShiftEnabled();
     macroBox.addXShift.setEnabled( xShiftEnabled && canAdd && b.canAssignXShiftedToMacro() );
     macroBox.insertXShift.setEnabled( xShiftEnabled && canAdd && b.canAssignXShiftedToMacro() );
@@ -369,8 +488,11 @@ public class MacroDialog extends JDialog implements ActionListener, ButtonEnable
     || b.canAssignXShiftedToMacro();
   }
 
-  /** The bound key. */
+  private JPanel upperPanel = null;
+  private JPanel boundPanel = null;
   private JComboBox boundKey = new JComboBox();
+  private JComboBox boundDevice = null;
+  private JTextField nameField = null;
 
   /** The shift. */
   private JCheckBox shift = new JCheckBox();

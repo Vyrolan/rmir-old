@@ -1,6 +1,7 @@
 package com.hifiremote.jp1;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,9 +28,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
+import com.hifiremote.jp1.Activity.Assister;
 import com.hifiremote.jp1.FixedData.Location;
+import com.hifiremote.jp1.GeneralFunction.RMIcon;
+import com.hifiremote.jp1.GeneralFunction.User;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -60,6 +66,7 @@ public class RemoteConfiguration
     }
     in.close();
     updateImage();
+    RemoteMaster.setSystemFilesItems( remote.isSSD() );
   }
   
   public RemoteConfiguration( String str, RemoteMaster rm, Remote remote ) throws IOException
@@ -70,10 +77,19 @@ public class RemoteConfiguration
     PropertyReader pr = new PropertyReader( in );
     importIR( pr, false );
     in.close();
+    RemoteMaster.setSystemFilesItems( remote.isSSD() );
   }
   
   private void createActivities()
   {
+    Button fav = remote.getButtonByStandardName( "Favorites" );
+    if ( fav != null )
+    {
+      activities = new LinkedHashMap< Button, Activity >();
+      Activity activity = new Activity( fav, remote );
+      activities.put( fav, activity );
+    }
+    
     LinkedHashMap< String, List< Button > > buttonGroups = remote.getButtonGroups();
     List< Button > activityBtns = null;
     if ( buttonGroups != null )
@@ -84,7 +100,10 @@ public class RemoteConfiguration
     {
       return;
     }
-    activities = new LinkedHashMap< Button, Activity >();
+    if ( fav == null )
+    {
+      activities = new LinkedHashMap< Button, Activity >();
+    }
     for ( Button btn : activityBtns )
     {
       Activity activity = new Activity( btn, remote );
@@ -126,6 +145,12 @@ public class RemoteConfiguration
     }
 
     remote = RemoteManager.getRemoteManager().findRemoteByName( section.getProperty( "Remote.name" ) );
+    
+    // Ensure any properties of the remote left from previous configuration are removed
+    Remote newRemote = new Remote( remote, remote.getNameIndex() );
+    RemoteManager.getRemoteManager().replaceRemote( remote, newRemote );
+    remote = newRemote;
+
     String prop = section.getProperty( "Remote.sigData" );
     if ( prop != null )
     {
@@ -138,7 +163,25 @@ public class RemoteConfiguration
 
     loadBuffer( pr );
     
-    if ( hasSegments() )
+    int e2FormatOffset = remote.getProcessor().getE2FormatOffset();
+    if ( e2FormatOffset >= 0 )
+    {
+      char[] val = new char[ 6 ];
+      for ( int i = 0; i < 6; i++ )
+      {
+        val[ i ] = ( char )data[ e2FormatOffset + i ];
+      }
+      eepromFormatVersion = new String( val );               
+    }
+    
+    LinkedHashMap< GeneralFunction, Integer > iconrefMap = null;
+    
+    if ( remote.isSSD() )
+    {
+      loadFiles( false );
+      iconrefMap = new LinkedHashMap< GeneralFunction, Integer >();
+    }
+    else if ( hasSegments() )
     {
       loadSegments( false );
     }
@@ -149,6 +192,7 @@ public class RemoteConfiguration
       activityMacros = new HashMap< Button, Macro >();
     }
 
+    int favWidth = 0;
     while ( ( section = pr.nextSection() ) != null )
     {
       String sectionName = section.getName();
@@ -181,14 +225,44 @@ public class RemoteConfiguration
       {
         DeviceUpgrade upgrade = new DeviceUpgrade();
         upgrade.setRemoteConfig( this );
-        upgrade.load( section, true, remote );
+        upgrade.load( section, true, remote, iconrefMap );
         devices.add( upgrade );
+        if ( remote.usesEZRC() )
+        {
+          upgrade.classifyButtons();
+        }
+      }
+      else if ( sectionName.equals( "FavData" ) )
+      {
+        Button favBtn = remote.getButton( remote.getFavKey().getKeyCode() );
+        Activity activity = null;
+        if ( favBtn != null && ( activity = activities.get( favBtn )) != null )
+        {
+          ActivityGroup.parse( section, activity );
+          activity.set( remote );
+        }
+        String temp = section.getProperty( "Pause" );
+        if ( temp != null )
+        {
+          favPause = Integer.parseInt( temp );
+        }
+        temp = section.getProperty( "FavWidth" );
+        if ( temp != null )
+        {
+          favWidth = Integer.parseInt( temp );
+        }
+        temp = section.getProperty( "FinalKey" );
+        if ( temp != null )
+        {
+          favFinalKey = remote.getButton( Integer.parseInt( temp ) );
+        }
       }
       else
       {
         try
         {
-          Class< ? > c = Class.forName( "com.hifiremote.jp1." + sectionName );
+          String className = sectionName.equals( "Profile" ) ? "Activity" : sectionName;
+          Class< ? > c = Class.forName( "com.hifiremote.jp1." + className );
           Constructor< ? > ct = c.getConstructor( Properties.class );
           Object o = ct.newInstance( section );
           if ( o instanceof SpecialProtocolFunction )
@@ -202,14 +276,28 @@ public class RemoteConfiguration
           else if ( sectionName.equals( "Macro" ) )
           {
             Macro macro = ( Macro )o;
-            Button button = remote.getButton( macro.getDeviceIndex() );
-            if ( activityMacros != null && remote.getButtonGroups().get( "Activity" ).contains( button ) )
+            Button button;
+            if ( remote.usesEZRC() )
             {
-              activityMacros.put( button, macro );
+              macro.setItems( macro.getData(), remote );
+              macro.setData( null );
+              button = remote.getButton( macro.getKeyCode() );
             }
             else
             {
-              macros.add( ( Macro )o );
+              button = remote.getButton( macro.getDeviceButtonIndex() );
+            }
+            if ( activityMacros != null && remote.getButtonGroups().get( "Activity" ).contains( button ) )
+            {
+              activityMacros.put( button, macro );
+              if ( remote.isSSD() )
+              {
+                macros.add( macro );
+              }
+            }
+            else
+            {
+              macros.add( macro );
             }
           }
           else if ( sectionName.equals( "TimedMacro" ) )
@@ -223,6 +311,10 @@ public class RemoteConfiguration
             if ( remote.getAdvCodeBindFormat() == AdvancedCode.BindFormat.LONG )
             {
               favScan.setDeviceButton( favKeyDevButton );
+            }
+            if ( remote.isSSD() )
+            {
+              favScan.icon = new RMIcon( 6 );
             }
             favScans.add( favScan );
           }
@@ -240,6 +332,16 @@ public class RemoteConfiguration
             }
             activities.put( activity.getButton(), activity );
           }
+          else if ( sectionName.equals( "Profile" ) && remote.getFavKey() != null )
+          {
+            Activity activity = ( Activity )o;
+            activity.set( remote );
+            if ( remote.getFavKey().getProfiles() == null )
+            {
+              remote.getFavKey().setProfiles( new ArrayList< Activity >() );
+            }
+            remote.getFavKey().getProfiles().add( activity );
+          }
           else if ( sectionName.equals( "LearnedSignal" ) )
           {
             learned.add( ( LearnedSignal )o );
@@ -253,6 +355,13 @@ public class RemoteConfiguration
             // attach it to the most recently added protocol upgrade
             protocols.get( protocols.size() - 1 ).setProtocol( mp );
           }
+          
+          String temp = null;
+          if ( iconrefMap != null && o instanceof GeneralFunction 
+              && ( temp = section.getProperty( "Iconref" ) ) != null )
+          {
+            iconrefMap.put(  ( GeneralFunction )o, Integer.parseInt( temp ) );
+          }
         }
         catch ( Exception e )
         {
@@ -261,6 +370,27 @@ public class RemoteConfiguration
         }
       } 
     }
+    if ( iconrefMap != null )
+    {
+      setIcons( iconrefMap );
+    }
+    
+    if ( remote.usesEZRC() )
+    {
+      for ( DeviceButton db : remote.getDeviceButtons() )
+      {
+        if ( db.getUpgrade() != null )
+        {
+          db.getUpgrade().setRemote( remote );
+        }
+      }
+      if ( favWidth > 0 )
+      {
+        favKeyDevButton.setFavoritewidth( favWidth );
+      }
+      updateReferences();
+    }
+    
     if ( activityMacros != null )
     {
       for ( Button btn : activityMacros.keySet() )
@@ -268,6 +398,7 @@ public class RemoteConfiguration
         Activity activity = activities.get( btn );
         Macro macro = activityMacros.get( btn );
         activity.setMacro( macro );
+        macro.setActivity( activity );
         if ( activity.getSelector() == null )
         {
           activity.setSelector( remote.getButton( macro.getKeyCode() ) );
@@ -294,34 +425,36 @@ public class RemoteConfiguration
     
     if ( property.name.equals( "[Signature]" ) )
     {
-      int sigLen = 0;
+      int sigDataLen = 0;
       do
       {
         property = pr.nextProperty();
         short[] data = Hex.parseHex( property.value );
-        sigLen += data.length;
+        sigDataLen += data.length;
         values.add( data );
       } 
       while ( ( property != null ) && ( property.name.length() > 0 ) );
       
-      sigData = new short[ Math.min( sigLen, 56 ) ];
-      sigLen = 0;
+      sigData = new short[ Math.min( sigDataLen, 56 ) ];
+      sigDataLen = 0;
       for ( short[] data : values )
       {
-        if ( sigLen > sigData.length )
+        if ( sigDataLen > sigData.length )
         {
           break;
         }
-        System.arraycopy( data, 0, sigData, sigLen, Math.min( data.length, sigData.length - sigLen ) );
-        sigLen += data.length;
+        System.arraycopy( data, 0, sigData, sigDataLen, Math.min( data.length, sigData.length - sigDataLen ) );
+        sigDataLen += data.length;
       }
-      char[] sig = new char[ 6 ];
-      for ( int i = 0; i < 6; i++ )
+      int sigbase = ( ( sigData[ 0 ] + sigData[ 1 ] ) == 0xFF ) ? 6 : 0;
+      int sigLen = ( sigDataLen <= 8 ) ? sigDataLen : 6;
+      char[] sig = new char[ sigLen ];
+      for ( int i = 0; i < sigLen; i++ )
       {
-        sig[ i ] = ( char )sigData[ i ];
+        sig[ i ] = ( char )sigData[ sigbase + i ];
       }
       signature = new String( sig );
-      if ( sigLen < 8 )
+      if ( sigDataLen <= 8 )
       {
         // Not the full signature block so reset to defaults
         sigData = null;
@@ -390,6 +523,13 @@ public class RemoteConfiguration
         throw new IllegalArgumentException( "No matching remote selected for signature " + signature );
       }
     }
+    if ( remote.isSSD() && eepromSize < remote.getEepromSize() )
+    {
+      data = Arrays.copyOf( data, remote.getEepromSize() );
+      Arrays.fill( data, eepromSize, remote.getEepromSize(), ( short )0xFF );
+      eepromSize = remote.getEepromSize();
+    }
+    remote.setFixedData( remote.getRawFixedData() );
     remote.load();
     createActivities();
     highlight = new Color[ eepromSize + 8 * remote.getSettingAddresses().size() ];
@@ -451,15 +591,1057 @@ public class RemoteConfiguration
   {
     return activities;
   }
+  
+  private void loadFiles( boolean decode )
+  {
+    int pos = 4;
+    int index = -1;
+    int status = data[ 0 ] + ( ( data[ 1 ] & 0x0F ) << 8 );
+    int end = data[ 2 ] + ( data[ 3 ] << 8 ) + ( ( data[ 1 ] & 0xF0 ) << 12 );
+    ssdFiles.clear();
+    userIcons = new LinkedHashMap< Integer, RMIcon >();
+    sysIcons = new LinkedHashMap< Integer, RMIcon >();
+    for ( DeviceButton db : remote.getDeviceButtons() )
+    {
+      db.setSegment( null );
+    }
+    
+    Items items = new Items();
+    while ( pos < end )
+    {
+      while ( index < 12 && ( status & ( 1 << ++index ) ) == 0 ) {};
+      if ( index == 12 )
+      {
+        break;
+      }
+      String name = Remote.userFilenames[ index ];
+      SSDFile file = new SSDFile();
+      if ( name.endsWith( ".xcf" ) )
+      {
+        List< String > tagNames = new ArrayList< String >();
+        file.tagNames = tagNames;
+        System.err.println( name + " tags:" );
+        int itemsLength = data[ pos + 14 ] + 0x100 * data[ pos + 15 ];
+        pos += 16;
+        int itemCount = data[ pos++ ];
+        int itemsEnd = pos + itemsLength;
+        char ch;
+        for ( int i = 0; i < itemCount; i++ )
+        {
+          StringBuilder sb = new StringBuilder();
+          while ( ( ch = ( char )data[ pos++ ] ) != 0 )
+          {
+            sb.append( ch );
+          }
+          String tag = Integer.toHexString( i );
+          if ( tag.length() == 1 )
+          {
+            tag = "0" + tag;
+          }
+          String tagName = sb.toString();
+          tagNames.add( tagName );
+          System.err.println( "  " + tag + "  " + tagName );
+        }
+        if ( pos != itemsEnd )
+        {
+          System.err.println( "Parsing error in " + name );
+          break;
+        }
+        int start = pos;
+        pos = parseXCFFile( items, index, start, tagNames, decode );
+        Hex hex = new Hex( data, start, pos - start );
+        file.hex = hex;
+        ssdFiles.put( name, file );
+        System.err.println( name + " hex = " + hex );
+      }
+      else if ( name.endsWith( ".pkg" ) )
+      {
+        // icons file
+
+        int numIcons = data[ pos + 12 ] + 0x100 * data[ pos + 13 ];
+        int numEntries = data[ pos + 14 ] + 0x100 * data[ pos + 15 ];
+        
+//        System.err.println();
+//        System.err.println( name + ":" );
+//        System.err.println();
+//        System.err.println( "Number of icons: " + numIcons );
+//        System.err.println();
+        
+        int fileStart = pos;
+        pos += 16;
+        int startIndex = pos + 28 * numIcons;
+        int iconEnd = 16 + 28 * numIcons + numEntries;
+        for ( int i = 0; i < numEntries; i++ )
+        {
+          int j = data[ startIndex + i ];
+          if ( j == 0 )
+          {
+            continue;
+          }
+          int k = pos + 28 * ( j - 1 );
+          RMIcon icon = new RMIcon();
+          icon.ref = i;
+          icon.intro = new Hex( data, pos, 8 );
+          int width = data[ k + 8 ] + 0x100 * data[ k + 9 ];
+          int height = data[ k + 10 ] + 0x100 * data[ k + 11 ];
+          icon.type = data[ k + 15 ];
+          int start = data[ k + 16 ] + 0x100 * data[ k + 17 ] + 0x10000 * data[ k + 18 ];
+          if ( start != iconEnd )
+          {
+            System.err.println( "Icon at index " + ( j - 1 ) + " has inconsistent start" );
+            continue;
+          }
+          int size = data[ k + 24 ] + 0x100 * data[ k + 25 ] - 0x200;
+          int lineWidth = size / height;
+          int byteWidth = lineWidth / width;
+          Hex hex1 = new Hex( data, fileStart + start, size );
+          Hex hex2 = null;
+          start += size;
+          if ( start == data[ k + 20 ] + 0x100 * data[ k + 21 ] + 0x10000 * data[ k + 22 ] )
+          {
+            size = height * width;
+            hex2 = new Hex( data, fileStart + start, size );
+            iconEnd = start + size;
+          }
+          else
+          {
+            System.err.println( "Icon at index " + ( j - 1 ) + " has inconsistent data" );
+            continue;
+          }
+          
+          BufferedImage image = new BufferedImage( width, height, BufferedImage.TYPE_INT_ARGB );
+//          System.err.println( "Icon " + i + ": size " + height + "x" + width );
+//          System.err.println( "Intro: " + icon.intro );
+//          System.err.println( "Dataset 1: " + byteWidth + "-byte values");
+          
+          for ( int m = 0; m < hex1.length(); m += lineWidth )
+          {
+            for ( int n = m; n < m + lineWidth; n += byteWidth )
+            {
+              int val = 0;
+              for ( int p = 0; p < byteWidth; p++ )
+              {
+                val += hex1.getData()[ n + p ] << ( 8 * p );
+              }
+              int alpha = hex2.getData()[ n / byteWidth ];
+              int row = m / lineWidth;
+              int col = ( n - m ) / byteWidth;
+              int rgb = 0;
+              if ( byteWidth == 2 )
+              {
+                double rf = ( val >> 11 ) / 31.0;
+                double gf = ( ( val >> 5 ) & 0x3F ) / 63.0;
+                double bf = ( val & 0x1F ) / 31.0;
+                int r = ( int )( rf * 255.0 + 0.5 );
+                int g = ( int )( gf * 255.0 + 0.5 );
+                int b = ( int )( bf * 255.0 + 0.5 );
+                rgb = ( alpha << 24 ) | ( r << 16 ) | ( g << 8 ) | b;
+              }
+              else if ( byteWidth == 1 )
+              {
+                rgb = ( alpha << 24 ) | ( val << 16 ) | ( val << 8 ) | val;
+              }
+              image.setRGB( col, row, rgb );
+//              String s = Integer.toHexString( val );
+//              s = ( "0000".substring( s.length() ) ) + s + " ";
+//              System.err.print( s.toUpperCase() );
+            }
+//            System.err.println();
+          }
+          icon.image = new ImageIcon( image );
+//          System.err.println();
+//          System.err.println( "Dataset 2: " + "1-byte values");
+//          for ( int m = 0; m < icon.height; m++ )
+//          {
+//            System.err.println( hex2.subHex( m * width, width ) );
+//          }
+//          System.err.println();
+          if ( index == 8 )
+          {
+            userIcons.put( i, icon );
+          }
+          else if ( index == 9 )
+          {
+            sysIcons.put( i, icon );
+          }
+        }
+        if ( index == 9 )
+        {
+          // Save the sysicons.pkg file in full
+          Hex hex = new Hex( data, fileStart, iconEnd );
+          file.hex = hex;
+          ssdFiles.put( name, file );
+        }
+        pos = fileStart + iconEnd;
+      }
+    }
+    setIcons( items.iconrefMap );
+  }
+  
+  private void setIcons( LinkedHashMap< GeneralFunction, Integer > iconrefMap )
+  {
+    for ( GeneralFunction gf : iconrefMap.keySet() )
+    {
+      Integer iconref = iconrefMap.get( gf );
+      RMIcon icon = sysIcons.get( iconref );
+      if ( icon == null )
+      {
+        icon = userIcons.get( iconref );
+      }
+      if ( icon != null )
+      {
+//        gf.icon = new RMIcon( icon );
+        gf.icon = icon;  // *** not sure why it needed to be copied
+      }
+      else if ( gf.icon != null )
+      {
+        // handles the case, possibly non-existent in real use, in which a
+        // non-existent system icon is referenced
+        gf.icon.ref = iconref;
+      }
+    }
+  }
+  
+  private void decodeItem( Items items, int fileIndex, String tag, int pos, boolean start, boolean dbOnly )
+  {
+    if ( fileIndex < 2 || fileIndex > 6 || fileIndex > 2 && dbOnly )
+    {
+      return;
+    }
+    int ndx = 0;
+    if ( start )
+    {
+      if ( tag.equals( "device" ) )
+      {
+        int len = data[ pos++ ];
+        // Convert device serial into a keycode by adding 0x50, to take it
+        // out of the range of real keycodes
+        int dev = 0x50 + data[ pos++ ];
+        char[] ch = new char[ len / 2 ];
+        for ( int i = 0; i < len - 1; i += 2 )
+        {
+          ch[ i / 2 ] = ( char )( data[ pos + i ] + 0x100 * data[ pos + i + 1 ] );
+        }
+        String name = new String( ch );
+        items.db = remote.getDeviceButton( dev );
+        items.dbList.add( items.db );
+        items.db.setName( name );
+        items.db.setSerial( dev - 0x50 );
+        new Segment( 0, 0xFF, new Hex( 15 ), items.db );
+      }
+      else if ( ( ndx = Arrays.asList( "brand", "model", "remotemodel" ).indexOf( tag ) ) >= 0 )
+      {
+        int len = data[ pos ];
+        Segment seg = items.db.getSegment();
+        int oldLen = seg.getHex().length();
+        Hex hex = new Hex( seg.getHex(), 0, oldLen + len );
+        for ( int i = 0; i < len + 1; i++ )
+        {
+          hex.getData()[ oldLen - 3 + ndx + i ] = ( short )( data[ pos++ ] & 0xFF );
+        }
+        seg.setHex( hex );
+      }
+      else if ( tag.equals( "volumemaster" ) )
+      {
+        items.db.setVpt( 2 );
+      }
+      else if ( tag.equals( "volumelock" ) )
+      {
+        if ( items.db.getVpt() != 2 )
+        {
+          items.db.setVpt( 1 );
+        }
+      }
+      else if ( tag.equals(  "iconref" ) )
+      {
+        pos++;
+        if ( fileIndex == 2 )
+        {
+          if ( items.key != null )
+          {
+            items.key.iconref = ( int )data[ pos++ ];
+          }
+          else
+          {
+            items.iconrefMap.put( items.db, ( int )data[ pos++ ] );
+          }
+        }
+        else if ( fileIndex == 3 || fileIndex == 4 )
+        {
+          if ( items.key != null && items.activity.getButton() != items.key.btn )
+          {
+            items.key.iconref = ( int )data[ pos++ ];
+          }
+          else
+          {
+            items.iconrefMap.put( items.activity, ( int )data[ pos++ ] );
+          }
+        }
+        else if ( fileIndex == 5 )
+        {
+          items.iconrefMap.put( items.fav, ( int )data[ pos++ ] );
+        }
+      }
+      else if ( tag.equals(  "favoritewidth" ) )
+      {
+        pos++;
+        items.db.setFavoritewidth( data[ pos++ ] );
+      }
+      else if ( tag.equals(  "enterkey" ) )
+      {
+        pos++;
+        favFinalKey = remote.getButton( data[ pos++ ] );
+      }
+      else if ( tag.equals( "codeset" ) )
+      {
+        int len = data[ pos++ ];
+        short[] segData = items.db.getSegment().getHex().getData();
+        int typeIndex = data[ pos++ ];
+        items.db.setDeviceTypeIndex( ( short )typeIndex, segData );
+        char[] ch = new char[ len - 1 ];
+        for ( int i = 0; i < len - 1; i++ )
+        {
+          ch[ i ] = ( char )data[ pos++ ];
+        }
+        String str = new String( ch );
+        int code = -1;
+        try
+        {
+          code = Integer.parseInt( str );
+        }
+        catch ( NumberFormatException e )
+        {
+          items.db.setConstructed( true );
+          System.err.println( "Malformed setup code " + str + " at " + Integer.toHexString( pos - 4 ) );
+        }
+        items.setupCode = code;
+        items.db.setSetupCode( ( short )items.setupCode, segData );
+      }
+      else if ( tag.equals( "keydef" ) || tag.equals( "irdef" ) )
+      {
+        // Needed here for processing of iconref
+        items.key = new Key();
+      }
+      
+      if ( dbOnly )
+      {
+        return;
+      }
+ 
+      if ( tag.equals( "favorites" ) )
+      {
+        items.activity = activities.get( remote.getButtonByStandardName( "Favorites" ) );
+      }
+      else if ( tag.equals( "activity" ) )
+      {
+        int len = data[ pos++ ];
+        // Convert activity serial into a keycode by adding 0xF0
+        int keyCode = 0xF0 + data[ pos++ ];
+        char[] ch = new char[ len / 2 ];
+        for ( int i = 0; i < len - 1; i += 2 )
+        {
+          ch[ i / 2 ] = ( char )( data[ pos + i ] + 0x100 * data[ pos + i + 1 ] );
+        }
+        String name = new String( ch );
+        Button btn = remote.getButton( keyCode );
+        items.key = new Key();
+        items.key.btn = btn;
+        items.key.keycode = keyCode;
+        items.activity = activities.get( btn );
+        items.activity.setActive( true );
+        items.activity.setSelector( btn );
+        items.activity.setName( name );
+        items.activity.getAssists().clear();
+        items.activity.icon = new RMIcon( 5 );  // Type = System icon
+        items.activities.add( items.activity );
+      }
+      else if ( tag.equals( "profile" ) )
+      {
+        int len = data[ pos++ ];
+        int profileIndex = data[ pos++ ];
+        char[] ch = new char[ len / 2 ];
+        for ( int i = 0; i < len - 1; i += 2 )
+        {
+          ch[ i / 2 ] = ( char )( data[ pos + i ] + 0x100 * data[ pos + i + 1 ] );
+        }
+        String name = new String( ch );
+        items.activity = remote.getFavKey().createProfile( name, profileIndex, remote );
+      }
+      else if ( tag.equals( "favorite" ) )
+      {
+        int len = data[ pos++ ];
+        int serial = data[ pos++ ];
+        char[] ch = new char[ len / 2 ];
+        for ( int i = 0; i < len - 1; i += 2 )
+        {
+          ch[ i / 2 ] = ( char )( data[ pos + i ] + 0x100 * data[ pos + i + 1 ] );
+        }
+        String name = new String( ch );
+        items.fav = new FavScan( remote.getFavKey().getKeyCode(), null, null );
+        items.fav.icon = new RMIcon( 6 );
+        items.fav.setSerial( serial );
+        items.fav.setName( name );
+        items.fav.setProfileIndices( new ArrayList< Integer >() );
+        favScans.add( items.fav );
+      }
+      else if ( tag.equals( "profileindex" ) )
+      {
+        pos++;
+        items.fav.getProfileIndices().add( ( int )data[ pos++ ] );
+      }
+      else if ( tag.equals( "deviceid" ) )
+      {
+        pos++;
+        favKeyDevButton = remote.getDeviceButton( data[ pos++ ] + 0x50 );
+      }
+      else if ( tag.equals(  "channelnumber" ) )
+      {
+        pos++;
+        String channel = "";
+        for ( int i = 0; i < favKeyDevButton.getFavoriteWidth(); i++ )
+        {
+          int n = data[ pos + i / 2 ] >> ( i % 2 << 2 ) & 0x0F;
+          channel = ( char )( n + 0x30 ) + channel;
+        }
+        items.fav.setChannel( channel );
+      }
+      else if ( tag.equals( "codeset" ) )
+      {
+        short[] segData = items.db.getSegment().getHex().getData();
+        int typeIndex = items.db.getDeviceTypeIndex( segData );
+        items.upgrade = new DeviceUpgrade();        
+        items.upgrade.setRemote( remote );
+        items.upgrade.setButtonIndependent( false );
+        items.upgrade.setButtonRestriction( items.db );
+        items.upgrade.setRemoteConfig( this );
+        items.db.setUpgrade( items.upgrade );
+        items.alias = remote.getDeviceTypeAlias( remote.getDeviceTypeByIndex( typeIndex ) );        
+        devices.add( items.upgrade );
+        items.keys = new ArrayList< Key >();
+      }
+      else if ( tag.equals( "prefix" ) )
+      {
+        int len = data[ pos++ ];
+        items.fixedData = new Hex( len );
+        items.upgrade.setSizeDevBytes( len );
+        System.arraycopy( data, pos, items.fixedData.getData(), 0, len );
+      }
+      else if ( tag.equals( "executor" ) )
+      {
+        int len = data[ pos++ ];
+        items.pid = new Hex( 2 );
+        if ( len == 2 )
+        {
+          items.pid.set( data[ pos++ ], 1 );
+          items.pid.set( data[ pos++ ], 0 );
+        }
+      }
+      else if ( tag.equals( "keydef" ) )
+      {
+        items.keys.add( items.key );
+        pos++;
+        items.key.keycode = data[ pos++ ];
+        if ( items.softPageIndex != null )
+        {
+          items.key.keycode += 6 * items.softPageIndex;
+        }
+        items.key.btn = remote.getButton( items.key.keycode );
+      }
+      else if ( tag.equals( "keygid" ) )
+      {
+        int len = data[ pos++ ];
+        if ( len == 2 )
+        {
+          items.key.keygid = data[ pos ] + 0x100 * data[ pos + 1 ];
+        }
+      }
+      else if ( tag.equals( "keyflags" ) )
+      {
+        pos++;
+        items.key.keyflags = ( int )data[ pos++ ];
+      }
+      else if ( tag.equals( "irdata" ) )
+      {
+        int len = data[ pos++ ];
+        items.key.irdata = new Hex( len );
+        System.arraycopy( data, pos, items.key.irdata.getData(), 0, len );
+        items.upgrade.setSizeCmdBytes( len );
+      }
+      else if ( tag.equals(  "learnedkey" ) )
+      {
+        // 1st byte is usual length but next 8 bytes not yet understood
+        pos += 2;
+        Hex header = Hex.subHex( data, pos, 7 );
+        System.err.println( "Learned header: " + items.db.getName() + "/" + items.key.fname + ": " + header );
+        pos += 7; 
+        int len = data[ pos++ ];  // length of learned signal
+        Hex hex = Hex.subHex( data, pos, len );
+        LearnedSignal ls = new LearnedSignal( items.key.keycode, items.db.getButtonIndex(), 0, hex, null );
+        ls.setHeader( header );
+        items.key.ls = ls;
+        learned.add( ls );
+        ls.addReference( items.db, items.key.btn );
+        items.upgrade.getLearnedMap().put( items.key.keycode, ls );
+      }
+      else if ( tag.equals( "name8" ) )
+      {
+        int len = data[ pos++ ];
+        char[] ch = new char[ len ];
+        for ( int i = 0; i < len; i++ )
+        {
+          ch[ i ] = ( char )data[ pos++ ];
+        }
+        items.key.fname = new String( ch );
+      }
+      else if ( tag.equals( "macroref" ) )
+      {
+        pos++;
+        int ref = data[ pos ] + 0x100 * data[ pos + 1 ];
+        pos += 2;
+        items.key.macroref = ref;
+        Macro macro = items.macroMap.get( ref );
+        if ( macro != null )
+        {
+          macro.addReference( items.db, remote.getButton( items.key.keycode ) );
+        }
+        else
+        {
+          macro = new Macro( items.key.keycode, null, null );
+          macro.setSerial( ref );
+          items.macroMap.put( ref, macro );
+          if ( items.db != null )
+          {
+            macro.setDeviceButtonIndex( items.db.getButtonIndex() );
+            macro.addReference( items.db, remote.getButton( items.key.keycode ) );
+          }
+          else if ( items.activity != null )
+          {
+            items.activity.setMacro( macro );
+            macro.setActivity( items.activity );
+          }
+        }
+      }
+      else if ( tag.equals( "objcode" ) )
+      {
+        int len = data[ pos++ ];
+        items.pCode = new Hex( len );
+        System.arraycopy( data, pos, items.pCode.getData(), 0, len );
+        decryptObjcode( items.pCode );
+      }
+      else if ( tag.equals( "irdef" ) )
+      {
+        items.keys.add( items.key );
+        pos++;
+        items.key.irserial = data[ pos ] + 0x100 * data[ pos + 1 ];
+      }
+      else if ( tag.equals( "macro" ) )
+      {
+        pos++;
+        int ref = data[ pos ] + 0x100 * data[ pos + 1 ];
+        items.macro = items.macroMap.get( ref );
+        for ( Activity activity : activities.values() )
+        {
+          if ( !activity.isActive() )
+          {
+            continue;
+          }
+          if ( activity.getMacro() != null &&  activity.getMacro().getSerial() == ref )
+          {
+            items.activity = activity;
+            items.macro = activity.getMacro();
+          }
+        }
+        if ( items.macro == null )
+        {
+          System.err.println( "Macro with reference 0x" + Integer.toHexString( ref ) +" is unassigned" );
+          Macro macro = new Macro( 0, null, null );
+          macro.setSerial( ref );
+          items.macroMap.put( ref, macro );
+          items.macro = macro;
+        }
+        macros.add( items.macro );
+        items.macro.setItems( new ArrayList< KeySpec >() );
+      }
+      else if ( tag.equals( "issystemmacro"  ))
+      {
+        pos++;
+        items.macro.setSystemMacro( data[ pos++ ] == 1 );
+      }
+      else if ( tag.equals( "name16" ) )
+      {
+        int len = data[ pos++ ];
+        char[] ch = new char[ len / 2 ];
+        for ( int i = 0; i < len; i += 2 )
+        {
+          ch[ i / 2 ] = ( char )( data[ pos + i ] + 0x100 * data[ pos + i + 1 ] );
+        }
+        items.macro.setName( new String( ch ) );
+      }
+      else if ( tag.equals( "sendhardkey" ) )
+      {
+        pos++;
+        // device serial converted to keycode
+        DeviceButton db = remote.getDeviceButton(  0x50 + data[ pos++ ] );
+        // keycode for that device
+        Button b = remote.getButton( data[ pos++ ] );
+        DeviceUpgrade upgrade = db.getUpgrade();
+        GeneralFunction f = upgrade.getLearnedMap().get( ( int )b.getKeyCode() );
+        if ( f == null )
+        {
+          f = upgrade.getAssignments().getAssignment( b );
+        }
+        if ( f == null )
+        {
+          items.macro.getItems().add( new KeySpec( db, b) );
+        }
+        else
+        {
+          items.macro.getItems().add( new KeySpec( db, f) );
+        }
+      }
+      else if ( tag.equals( "sendsoftkey" ) )
+      {
+        pos++;
+        // device serial converted to keycode
+        DeviceButton db = remote.getDeviceButton(  0x50 + data[ pos++ ] );
+        int softIndex = data[ pos++ ];
+        // keycode for that device
+        Button b = remote.getButton( data[ pos++ ] + 6 * softIndex );
+        Function f = db.getUpgrade().getAssignments().getAssignment( b );
+        if ( f == null )
+        {
+          items.macro.getItems().add( new KeySpec( db, b) );
+        }
+        else
+        {
+          items.macro.getItems().add( new KeySpec( db, f) );
+        }
+      }
+      else if ( tag.equals(  "sendir" ) )
+      {
+        pos++;
+        // device serial converted to keycode
+        DeviceButton db = remote.getDeviceButton(  0x50 + data[ pos++ ] );
+        int serial = data[ pos ] + 0x100 * data[ pos + 1 ];
+        Function f = db.getUpgrade().getFunctionMap().get( serial );
+        items.macro.getItems().add( new KeySpec( db, f ) );
+      }
+      else if ( tag.equals( "duration" ) )
+      {
+        pos++;
+        KeySpec ks = items.macro.getItems().get( items.macro.getItems().size() - 1  );
+        int duration = ( data[ pos ] + 0x100 * data[ pos + 1 ] ) / 100;
+        ks.duration = duration;
+      }
+      else if ( tag.equals(  "delay" ) )
+      {
+        pos++;
+        if ( fileIndex == 5 )
+        {
+          favPause = data[ pos++ ];
+        }
+        else
+        {
+          KeySpec ks = items.macro.getItems().get( items.macro.getItems().size() - 1  );
+          int delay = data[ pos++ ];
+          ks.delay = delay;
+        }
+      }
+      else if ( tag.equals(  "assistant" ) )
+      {
+        if ( items.activity != null && items.activity.getAssists().isEmpty() )
+        {
+          for ( int i = 0; i < 3; i++ )
+          {
+            items.activity.getAssists().put( i, new ArrayList< Assister >() );
+          }
+        }
+        else if ( items.macro != null )
+        {
+          items.macro.setAssists( new LinkedHashMap< Integer, List<Assister> >() );
+          for ( int i = 0; i < 3; i++ )
+          {
+            items.macro.getAssists().put( i, new ArrayList< Assister >() );
+          }
+        }
+      }
+      else if ( tag.equals(  "pictureinputs" ) )
+      {
+        items.assisters = items.activity != null ? 
+            items.activity.getAssists().get( 0 ) :
+              items.macro.getAssists().get( 0 );
+      }
+      else if ( tag.equals(  "audioinputs" ) )
+      {
+        items.assisters = items.activity != null ? 
+            items.activity.getAssists().get( 1 ) :
+              items.macro.getAssists().get( 1 );
+      }
+      else if ( tag.equals(  "powerkeys" ) )
+      {
+        items.assisters = items.activity != null ? 
+            items.activity.getAssists().get( 2 ) :
+              items.macro.getAssists().get( 2 );
+      }
+      else if ( tag.equals( "hardkey" ) )
+      {
+        pos++;
+        // device serial converted to keycode
+        DeviceButton dev = remote.getDeviceButton( 0x50 + data[ pos++ ] );
+        // keycode for that device
+        Button btn = remote.getButton( ( int )data[ pos++ ] );
+//        Function f = dev.getUpgrade().getAssignments().getAssignment( btn );
+        if ( dev != null && btn != null )
+        {
+          items.assisters.add(  new Assister( dev, btn ) );
+        }
+      }
+      else if ( tag.equals( "softkey" ) )
+      {
+        pos++;
+        // device serial converted to keycode
+        DeviceButton dev = remote.getDeviceButton( 0x50 + data[ pos++ ] );
+        // keycode for that device
+        int softpage = data[ pos++ ];
+        Button btn = remote.getButton( data[ pos++ ] + 6 * softpage );
+        if ( dev != null && btn != null )
+        {
+          items.assisters.add(  new Assister( dev, btn ) );
+        }
+      }
+      else if ( tag.equals(  "irref" ) )
+      {
+        pos++;
+        // device serial converted to keycode
+        DeviceButton dev = remote.getDeviceButton( 0x50 + data[ pos++ ] );
+        // constructed keycode for the function
+        int ref = data[ pos ] + 0x100 * data[ pos + 1 ];
+        Function f = dev.getUpgrade().getFunctionMap().get( ref );
+        if ( dev != null && f != null )
+        {
+          items.assisters.add(  new Assister( dev, f ) );
+        }
+      }
+      else if ( tag.equals(  "punchthrumap" ) )
+      {
+        items.map = new LinkedHashMap< Button, KeySpec >();
+      }
+      else if ( tag.equals(  "punchthruspec" ) )
+      {
+        items.key = new Key();
+        int offset = items.softPageIndex == null ? 0 : 6 * items.softPageIndex;
+        pos++;
+        DeviceButton dev = remote.getDeviceButton( data[ pos++ ] | 0x50 );
+        Button target = remote.getButton( data[ pos++ ] + offset );
+        Button source = remote.getButton( data[ pos++ ] + offset );
+        items.key.btn = target;
+        items.key.keycode = target.getKeyCode();
+        if ( dev != null && target != null && source != null )
+        {
+          items.map.put( source, new KeySpec( dev, target ) );
+        }
+      }
+      else if ( tag.equals(  "softpage" ) )
+      {
+        pos++;
+        items.softPageIndex = ( int )data[ pos++ ];
+      }
+    }
+    else // tag end
+    {
+      if ( tag.equals( "devices" ) )
+      {
+        for ( DeviceButton db : remote.getDeviceButtons() )
+        {
+          if ( !items.dbList.contains( db ) )
+          {
+            items.dbList.add( db );
+          }
+        }
+        for ( int i = 0; i < items.dbList.size(); i++ )
+        {
+          remote.getDeviceButtons()[ i ] = items.dbList.get( i );
+        }
+      }
+      else if ( tag.equals( "favorites" ) )
+      {
+        items.activity = null;
+      }
+      else if ( tag.equals( "device" ) )
+      {
+        items.db = null;
+        items.key = null;
+      }
+      else if ( tag.equals( "favorite" ) )
+      {
+        items.fav = null;
+        items.key = null;
+      }
+      else if ( tag.equals( "activity" ) )
+      {
+        items.activity = null;
+        items.key = null;
+      }
+      else if ( tag.equals( "profile" ) )
+      {
+        items.activity = null;
+        items.key = null;
+      }
+      if ( dbOnly )
+      {
+        return;
+      }
+      if ( tag.equals( "codeset" ) )
+      {
+        Hex hex = new Hex( items.pid, 0, items.fixedData.length() + 3 );
+        hex.put( items.fixedData, 3 );
+        hex.set( ( short )0x01, 2 );
+        try
+        { 
+          items.upgrade.importRawUpgrade( hex, remote, items.alias, items.pid, items.pCode );
+          items.upgrade.setSetupCode( items.setupCode );
+          for ( Key key : items.keys )
+          {
+            if ( key.keygid == null && key.ls == null && key.macroref == null )
+            {
+              continue;
+            }
+            String name = key.fname;
+            if ( name == null )
+            {
+              name = "__missing" + items.missingIndex++;
+            }
+            if ( key.ls != null )
+            {
+              key.ls.setName( name );
+            }
+            if ( key.keygid != null || key.macroref != null )
+            {
+              Function f = new Function( name );
+              f.setUpgrade( items.upgrade );
+              f.icon = new RMIcon( 9 );
+              items.upgrade.getFunctions().add( f );
+              if ( key.keygid != null )
+              {
+                f.setHex( key.irdata );
+                f.setGid( key.keygid );
+                if ( key.iconref != null )
+                {
+                  items.iconrefMap.put( f, key.iconref );
+                }
+                f.setKeyflags( key.keyflags );
+              }
+              if ( key.macroref != null )
+              {
+                f.setMacroref( key.macroref );
+                f.setKeyflags( key.keyflags );
+              }
+              if ( key.irserial >= 0 )
+              {
+                f.setSerial( key.irserial );
+                Function ff = f.getEquivalent( items.upgrade.getFunctions() );
+                if ( ff != null && ff.getSerial() == -1 )
+                {
+                  f.setAlternate( ff );
+                  ff.setAlternate( f );
+                }
+                items.upgrade.getFunctionMap().put( key.irserial, f );
+              }
+              if ( key.btn != null )
+              {
+                items.upgrade.getAssignments().assign( key.btn, f );
+              }
+              System.err.println( "Upg=" + f.upgrade + " Fn=" + f.name + " Serial=" + f.getSerial() + " Btn" + key.btn + " Macroref=" + f.getMacroref() + " Data=" + f.getData() );
+            }
+          }
+        }
+        catch ( java.text.ParseException pe )
+        {
+          pe.printStackTrace( System.err );
+        }
+//        items.pid = null;
+//        items.fixedData = null;
+        items.missingIndex = 0;
+        items.upgrade = null;
+        items.keys = null;
+        items.pCode = null;
+      }
+      else if ( tag.equals( "keydef" ) )
+      {
+        items.key = null;
+      }
+      else if ( tag.equals( "macro" ) )
+      {       
+        items.macro = null;
+        items.activity = null;
+        items.assisters = null;
+      }
+      else if ( tag.equals( "macros" ) )
+      {
+        for ( int i = 0; i < macros.size(); i++ )
+        {
+          Macro macro = ( Macro )macros.get( i );
+          for ( User u : macro.getUsers() )
+          {
+            u.db.getUpgrade().getMacroMap().put( ( int )u.button.getKeyCode(), macro );
+          }
+          if ( macro.isSystemMacro() )
+          {
+            KeySpec ks = macro.getItems().get( 0 );
+            GeneralFunction gf = ks.fn;
+            gf.getUsers().addAll( macro.getUsers() );
+          }
+        }
+//        Collections.sort( macros, MacroSorter );
+      }
+      else if ( tag.equals( "activities" ) )
+      {
+        for ( Activity a : activities.values() )
+        {
+          if ( !items.activities.contains( a ) )
+          {
+            items.activities.add( a );
+          }
+        }
+        activities.clear();
+        for ( Activity a : items.activities )
+        {
+          activities.put( a.getButton(), a );
+        }
+      }
+      else if ( tag.equals(  "punchthrumap" ) )
+      {
+        ActivityGroup[] groups = items.activity.getActivityGroups();
+        for ( ActivityGroup group : groups )
+        {
+          Button[] buttonGroup = group.getButtonGroup();
+          if ( buttonGroup != null && buttonGroup.length > 0 )
+          {
+            Button btn = buttonGroup[ 0 ];
+            KeySpec ks = items.map.get( btn );
+            group.setDevice( ks != null ? ks.db : null );
+          }
+        }
+        items.map = null;
+      }
+      else if ( tag.equals(  "punchthruspec" ) )
+      {
+        KeySpec ks = items.map.get( items.key.btn );
+        DeviceUpgrade upg = ks.db.getUpgrade();
+        Function f = upg.getAssignments().getAssignment( items.key.btn );
+        if ( f == null && items.key.fname != null )
+        {
+          f = new Function( items.key.fname );
+          f.setUpgrade( upg );
+          upg.getAssignments().assign( items.key.btn, f );
+        }
+        if ( f != null )
+        {
+          if ( items.key.iconref != null )
+          {
+            items.iconrefMap.put(  f, items.key.iconref );
+          }
+        }
+      }
+      else if ( tag.equals(  "softpage" ) )
+      {
+        items.softPageIndex = null;
+      }
+    }
+  }
+  
+  private int parseXCFFile( Items items, int fileIndex, int fileStart, List< String > tagNames, boolean decode )
+  {
+    int pos = fileStart;
+    List< Integer > tags = new ArrayList< Integer >();
+    while ( true )
+    {
+      int tag = data[ pos++ ];
+      if ( ( tag & 0x80 ) == 0 )
+      {
+        tags.add( 0, tag );
+        decodeItem( items, fileIndex, tagNames.get( tag ), pos, true, !decode );
+        int len = data[ pos++ ];
+        pos += len;
+      }
+      else
+      {
+        int last = tags.remove( 0 );
+        if ( tag != ( last | 0x80  ) )
+        {
+          System.err.println( "XCF file nesting error at " + Integer.toHexString( pos - 1 ) );
+          break;
+        }
+        decodeItem( items, fileIndex, tagNames.get( tag & 0x7F ), pos, false, !decode );
+        if ( tags.isEmpty() )
+        {
+          break;
+        }
+      }  
+    }
+    return pos;
+  }
+  
+  private void decryptObjcode( Hex code )
+  {
+    for (  int i = 0; i < code.length(); i++ )
+    {
+      code.getData()[ i ] ^= ( short )encryptionKey[ i % 54 ];
+    }
+  }
+  
+  private Hex encryptObjcode( Hex code )
+  {
+    Hex hex = new Hex( code );
+    for (  int i = 0; i < hex.length(); i++ )
+    {
+      hex.getData()[ i ] ^= ( short )encryptionKey[ i % 54 ];
+    }
+    return hex;
+  }
+  
+//  private List< KeySpec > getMacroItems( Hex hex )
+//  {
+//    int count = hex.length() / 2;
+//    DeviceButton db = remote.getDeviceButtons()[ 0 ]; // default, only used for ill-formed macro
+//    //      short[] durations = hex.subHex( count, count ).getData();
+//    int duration = -1;
+//    List< KeySpec > items = new ArrayList< KeySpec >();
+//    for ( int i = 0; i < count; i++ )
+//    {
+//      int keyCode = hex.getData()[ i ];
+//      DeviceButton db2 = remote.getDeviceButton( keyCode );
+//      Button btn = remote.getButton( keyCode );
+//      if ( db2 != null )
+//      {
+//        db = db2;
+//      }
+//      else if ( keyCode == 0xFE )
+//      {
+//        duration = hex.getData()[ i + count ];
+//      }
+//      else if ( btn != null )
+//      {
+//        KeySpec ks = new KeySpec( db, btn );
+//        ks.delay = hex.getData()[ i + count ];
+//        ks.duration = duration;
+//        items.add( ks );
+//        duration = -1; 
+//      }
+//    }
+//    return items;
+//  }
 
   private void loadSegments( boolean decode )
   {
-    int pos = 2;  // first two bytes are checksum
+    // first two bytes are checksum, and in XSight remotes next 18 bytes are E2 info
+    int pos = remote.usesEZRC() ? 20 : 2;
     int segLength = 0;
+    int segType = 0;
     segmentLoadOrder.addAll( remote.getSegmentTypes() );
     while ( pos < remote.getEepromSize() && ( segLength = Hex.get( data, pos ) ) <= remote.getEepromSize() - pos  )
     {
-      int segType = data[ pos + 2 ];
+      segType = data[ pos + 2 ];
       int segFlags = data[ pos + 3 ];
       Hex segData = new Hex( data, pos + 4, segLength - 4 );
       pos += segLength;
@@ -482,9 +1664,16 @@ public class RemoteConfiguration
     }
 
     setDeviceButtonSegments();
+    
     if ( !decode )
       return;
+    segType = 1;
     List< Segment > macroList = segments.get( 1 );
+    if ( macroList == null )
+    {
+      segType = 3;
+      macroList = segments.get( 3 );
+    }
     if ( macroList != null )
     {
       for ( Segment segment : macroList )
@@ -493,15 +1682,26 @@ public class RemoteConfiguration
         int deviceIndex = hex.getData()[ 0 ]; // Known values are 0 (not device specific) or an activity button number
         Button btn = remote.getButton( deviceIndex );
         int keyCode = hex.getData()[ 1 ];
-        Hex keyCodes = hex.subHex( 3, Math.min( hex.getData()[ 2 ], hex.length() - 3 ) );
-        Macro macro = new Macro( keyCode, keyCodes, deviceIndex, 0, null );
+        int count = Math.min( hex.getData()[ 2 ], hex.length() - 3 );
+        Hex data = hex.subHex( 3, count );
+        Macro macro = new Macro( keyCode, segType == 1 ? data : null, deviceIndex, 0, null );
         macro.setSegmentFlags( segment.getFlags() );
         segment.setObject( macro );
-        if ( btn != null && activities != null && activities.get( btn ) != null )
+        if ( segType == 1 && btn != null && activities != null && activities.get( btn ) != null )
         {
           activities.get( btn ).setMacro( macro );
         }
         else setMacro( macro );
+        if ( segType == 3 )
+        {
+          macro.setItems( hex.subHex( 3, 2 * count ), remote );
+          int len = hex.getData()[ 3 + 2 * count ];
+          if ( hex.length() > 5 + 2 * count + len )
+          {
+            macro.setName( hex.subString( 4 + 2 * count, len ) );
+            macro.setSerial( hex.get( 4 + 2 * count + len) );
+          }
+        }
       }
     }
     List< Segment > multiMacroList = segments.get( 2 );
@@ -578,13 +1778,72 @@ public class RemoteConfiguration
         ls.setSegmentFlags( segment.getFlags() );
         learned.add( ls );
       }
-    }
+    } 
+    
+    List< Segment > softNamesList = segments.get( 0x0A );
+    if ( softNamesList != null )
+    {
+      for ( Segment segment : softNamesList )
+      { 
+        LinkedHashMap< Integer, String > nameMap = parseNameSegment( segment );
+        DeviceButton devBtn = remote.getDeviceButton( segment.getHex().getData()[ 0 ] );
+        if ( devBtn == null )
+        {
+          continue;
+        }
+        HashMap< Button, String > softButtonNames = devBtn.getSoftButtonNames();
+        if ( softButtonNames == null )
+        {
+          softButtonNames = new HashMap< Button, String >();
+        }
+        for ( Integer key : nameMap.keySet() )
+        {
+          Button btn = remote.getButton( key );
+          if ( btn != null )
+          {
+            softButtonNames.put( btn, nameMap.get( key ) );
+          }        
+        }
+        devBtn.setSoftButtonNames( softButtonNames );
+      }
+    } 
+    
+    softNamesList = segments.get( 0x20 );
+    if ( softNamesList != null )
+    {
+      for ( Segment segment : softNamesList )
+      { 
+        LinkedHashMap< Integer, String > nameMap = parseNameSegment( segment );
+        DeviceButton devBtn = remote.getDeviceButton( segment.getHex().getData()[ 0 ] );
+        if ( devBtn == null )
+        {
+          continue;
+        }
+//        devBtn.setSoftFunctionSegment( segment );
+        HashMap< Button, String > softFunctionNames = devBtn.getSoftFunctionNames();
+        if ( softFunctionNames == null )
+        {
+          softFunctionNames = new HashMap< Button, String >();
+        }
+        for ( Integer key : nameMap.keySet() )
+        {
+          Button btn = remote.getButton( key );
+          if ( btn != null )
+          {
+            softFunctionNames.put( btn, nameMap.get( key ) );
+          }        
+        }
+        devBtn.setSoftFunctionNames( softFunctionNames );
+      }
+    }  
+    
     List< Segment > upgradeList = segments.get( 0x10 );
     if ( upgradeList != null )
     {
       for ( Segment segment : upgradeList )
       {
         Hex hex = segment.getHex();
+        int dev = hex.getData()[ 0 ];                       
         int protocolOffset = hex.get( 2 );
         DeviceType devType = remote.getDeviceTypeByIndex( hex.getData()[ 4 ] );
         int setupCode = hex.get( 5 );
@@ -609,11 +1868,22 @@ public class RemoteConfiguration
         DeviceUpgrade upgrade = new DeviceUpgrade();
         try
         {
+          if ( dev != 0 )
+          {
+            DeviceButton devBtn = remote.getDeviceButton( dev );
+            if ( devBtn != null )
+            {
+              upgrade.setButtonIndependent( false );
+              upgrade.setButtonRestriction( devBtn );
+              devBtn.setUpgrade( upgrade );
+            }
+          }
           upgrade.setRemoteConfig( this );
-          upgrade.importRawUpgrade( deviceHex, remote, alias, new Hex( pidHex ), protocolCode );
-          upgrade.setSetupCode( setupCode );
           upgrade.setSizeCmdBytes( hex.getData()[ 7 ] );
           upgrade.setSizeDevBytes( hex.getData()[ 8 ] );
+          upgrade.importRawUpgrade( deviceHex, remote, alias, new Hex( pidHex ), protocolCode );
+          upgrade.setSetupCode( setupCode );
+          
           upgrade.setSegmentFlags( segment.getFlags() );
           Protocol protocol = upgrade.getProtocol();
           if ( upgrade.getSizeCmdBytes() != protocol.getDefaultCmd().length()
@@ -635,9 +1905,172 @@ public class RemoteConfiguration
         }
         segment.setObject( upgrade );
         devices.add( upgrade );
+        if ( remote.usesEZRC() )
+        {
+          upgrade.setRemote( remote );
+          upgrade.classifyButtons();
+        }
       }
     }
-    List< Segment > activityAssignments = segments.get( 0xDB );
+
+    if ( segments.get( 0x1D ) != null && segments.get( 0x1D ).size() > 0 )
+    {
+      Segment favDefinitions = segments.get( 0x1D ).get( 0 );
+      Hex hex = favDefinitions.getHex();
+      int deviceIndex = hex.getData()[ 0 ];
+      int keyCode = hex.getData()[ 1 ];
+      favPause = hex.getData()[ 3 ];
+      favFinalKey = remote.getButton( hex.getData()[ 4 ] );
+      int skip = ( favFinalKey == null ) ? 0 : 1;
+      int numFavs = hex.getData()[ 6 ];
+      int j = 0; 
+      DeviceButton btn = remote.getDeviceButton( deviceIndex );
+      favKeyDevButton = ( btn != null ) ? btn : null;
+      if ( favKeyDevButton != null )
+      {
+        favKeyDevButton.setFavoritewidth( hex.getData()[ 2 ] );
+      }
+      for ( int i = 0; i < numFavs; i++ )
+      {
+        int count = hex.getData()[ 7 + j ];
+        short[] data = hex.subHex( 8 + j, count - skip ).getData();
+        j += 1 + count;
+        String val = "";
+        for ( int k = 0; k < data.length; k++ )
+        {
+          Button b = remote.getButton( data[ k ] );
+          val += b.getName().substring( 0, 1 );
+        }
+        FavScan favScan = new FavScan( keyCode, null, null );
+        favScan.setChannel( val );
+        favScan.setSegmentFlags( favDefinitions.getFlags() );
+        favScans.add( favScan );
+      }
+      j++;
+      for ( int i = 0; i < numFavs; i++ )
+      {
+        int count = hex.getData()[ 7 + j ];
+        favScans.get( i ).setName( hex.subString( 8 + j, count ) );
+        j += 1 + count;
+      }
+    }
+
+    if ( segments.get( 0x1E ) != null && segments.get( 0x1E ).size() > 0 )
+    {
+      Segment activityDefinitions = segments.get( 0x1E ).get( 0 );
+      Hex hex = activityDefinitions.getHex();
+      int numActivities = hex.getData()[ 2 ];
+      int j = 0;
+      for ( int i = 0; i < numActivities; i++ )
+      {
+        int deviceIndex = hex.getData()[ 3 + i ];
+        Button btn = remote.getButton( deviceIndex );
+        Activity activity = activities.get( btn );
+        activity.setActive( true );
+        activity.setSelector( btn );
+        int count = hex.getData()[ 3 + numActivities + j ];
+        Macro macro = new Macro( deviceIndex, null, deviceIndex, 0, null );
+        macro.setItems( hex.subHex( 4 + numActivities + j, 2 * count ), remote );
+        activity.setSegmentFlags( activityDefinitions.getFlags() );
+        activity.setSegment( activityDefinitions );
+        activity.setMacro( macro );
+        j += 1 + 2 * count;
+      }
+      j++;
+      for ( int i = 0; i < numActivities; i++ )
+      {
+        int deviceIndex = hex.getData()[ 3 + i ];
+        Button btn = remote.getButton( deviceIndex );
+        Activity activity = activities.get( btn );
+        int count = hex.getData()[ 3 + numActivities + j ];
+        activity.setName( hex.subString( 4 + numActivities + j, count ) );
+        j += 1 + count;
+      }
+      for ( Activity activity : activities.values() )
+      {
+        activity.getMacro().setSegmentFlags( activityDefinitions.getFlags() );
+        activity.getMacro().setSegment( activityDefinitions );
+        activity.getMacro().setName( activity.getName() );
+      }
+    }
+    
+    List< Segment > activityAssists = segments.get( 0x1F );
+    if ( activityAssists != null )
+    {
+      for ( Segment segment : activityAssists )
+      {
+        Hex hex = segment.getHex();
+        Button btn = remote.getButton( hex.getData()[ 0 ] );
+        Activity activity = activities.get( btn );
+        if ( activity == null )
+        {
+          continue;
+        }
+        activity.setHelpSegmentFlags( segment.getFlags() );
+        activity.setHelpSegment( segment );
+        int j = 2;
+        for ( int i = 0; i < 3; i++ )
+        {
+          int count = hex.getData()[ j++ ];
+          if ( count == 0 )
+          {
+            continue;
+          }
+          List< Assister > assists = activity.getAssists().get( i );
+          for ( int k = 0; k < count; k++ )
+          {
+            btn = remote.getButton( hex.getData()[ j + k ] );
+            DeviceButton dev = remote.getDeviceButton( hex.getData()[ j + k + count ] );
+            if ( btn != null && dev != null )
+            {
+              assists.add( new Assister( dev, btn ) );
+            }
+          }
+          j += 2 * count + 1;
+          for ( int k = 0; k < count; k++ )
+          {
+            j += hex.getData()[ j ] + 1;
+          }
+        }
+      }
+    }
+    
+    List< Segment > activityAssignments = segments.get( 0x0B );
+    if ( activityAssignments != null )
+    {
+      for ( Segment segment : activityAssignments )
+      {
+        Hex hex = segment.getHex();
+        Button btn = remote.getButton( hex.getData()[ 0 ] );
+        Activity activity = activities.get( btn );
+        if ( activity == null )
+        {
+          continue;
+        }
+        ActivityGroup[] groups = activity.getActivityGroups();
+        int count = hex.getData()[ 2 ];
+        LinkedHashMap< Button, DeviceButton > map = new LinkedHashMap< Button, DeviceButton >();
+        for ( int i = 0; i < count; i++ )
+        {
+          btn = remote.getButton( hex.getData()[ 3 + i ] );
+          DeviceButton dev = remote.getDeviceButton( hex.getData()[ 3 + i + count ] );
+          map.put( btn, dev );
+        }
+        for ( ActivityGroup group : groups )
+        {
+          group.setSegment( segment );
+          group.setSegmentFlags( segment.getFlags() );
+          Button[] buttonGroup = group.getButtonGroup();
+          if ( buttonGroup != null && buttonGroup.length > 0 )
+          {
+            btn = buttonGroup[ 0 ];
+            group.setDevice( map.get( btn ) );
+          }
+        }
+      }
+    }
+
+    activityAssignments = segments.get( 0xDB );
     if ( activityAssignments != null )
     {
       for ( Segment segment : activityAssignments )
@@ -647,6 +2080,7 @@ public class RemoteConfiguration
         Activity activity = activities.get( btn );
         int tabIndex = remote.getButtonGroups().get( "Activity" ).indexOf( btn );
         activity.setSegmentFlags( segment.getFlags() );
+        activity.setActive( true );
         ActivityGroup[] groups = activity.getActivityGroups();
         if ( remote.hasActivityControl() )
         {
@@ -707,7 +2141,153 @@ public class RemoteConfiguration
         activity.setHelpSegment( segment );
       }
     }
+    if ( remote.usesEZRC() )
+    {
+      updateReferences();
+    }
     pos = 0;
+  }
+  
+  private void updateReferences()
+  {
+    for ( DeviceUpgrade upgrade : devices )
+    {
+      for ( Function fn : upgrade.getFunctions() )
+      {
+        if ( fn.getSerial() >= 0 )
+        {
+          Function ff = fn.getEquivalent( upgrade.getFunctions() );
+          if ( ff != null && ff.getSerial() == -1 )
+          {
+            fn.setAlternate( ff );
+            ff.setAlternate( fn );
+          }
+          upgrade.getFunctionMap().put( fn.getSerial(), fn );
+        }
+      }
+    }
+    for ( Macro macro : macros )
+    {
+      DeviceButton db = remote.getDeviceButton( macro.getDeviceButtonIndex() );
+      Button btn = remote.getButton( macro.getKeyCode() );
+      for ( KeySpec ks : macro.getItems() )
+      {
+        if ( ks.irSerial >= 0 )
+        {
+          ks.fn = ks.db.getUpgrade().getFunctionMap().get( ks.irSerial );
+        }
+      }
+      if ( db != null && db.getUpgrade() != null && btn != null )
+      {
+        db.getUpgrade().getMacroMap().put( macro.getKeyCode(), macro );
+        macro.addReference( db, btn );
+        KeySpec ks = null;
+        macro.setSystemMacro( macro.getItems() != null && macro.getItems().size() == 1
+            && ( ks = macro.getItems().get( 0 ) ).duration == 0 && ks.delay == 3 );
+      }
+    }
+    for ( DeviceUpgrade upgrade : devices )
+    {
+      for ( Function fn : upgrade.getFunctions() )
+      {
+        if ( fn.getMacroref() != null )
+        {
+          // Experimental!!!
+          for ( Macro macro : macros )
+          {
+            if ( macro.getSerial() == fn.getMacroref() )
+            {
+              for ( User u : fn.getUsers() )
+              {
+                macro.addReference( u.db, u.button );
+                u.db.getUpgrade().getMacroMap().put( ( int )u.button.getKeyCode(), macro );
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+    for ( LearnedSignal ls : learned )
+    {
+      DeviceButton db = remote.getDeviceButton( ls.getDeviceButtonIndex() );
+      Button btn = remote.getButton( ls.getKeyCode() );
+      if ( db != null && db.getUpgrade() != null && btn != null )
+      {
+        db.getUpgrade().getLearnedMap().put( ( int )ls.getKeyCode(), ls );
+        ls.addReference( db, btn );
+      }
+    }
+    Button favBtn = remote.getButton( remote.getFavKey().getKeyCode() );
+    Activity activity = null;
+    if ( favBtn != null && ( activity = activities.get( favBtn )) != null )
+    {
+      Assister.setFunctions( activity.getAssists(), remote );
+    }
+    for ( Activity a : activities.values() )
+    {
+      Assister.setFunctions( a.getAssists(), remote  );
+    }
+    if ( remote.getFavKey() != null && remote.getFavKey().getProfiles() != null )
+    {
+      for ( Activity a : remote.getFavKey().getProfiles() )
+      {
+        Assister.setFunctions( a.getAssists(), remote  );
+      }
+    }
+    for ( Macro macro : macros )
+    {
+      if ( macro.getAssists() != null )
+      {
+        Assister.setFunctions( macro.getAssists(), remote  );
+      }
+    }
+  }
+  
+  private LinkedHashMap< Integer, String > parseNameSegment( Segment segment )
+  {
+    LinkedHashMap< Integer, String > nameMap = new LinkedHashMap< Integer, String >();
+    Hex hex = segment.getHex();
+    int count = hex.getData()[ 2 ];
+    int start = 4 + count;
+    for ( int i = 0; i < count; i++ )
+    {
+      int nameLen = hex.getData()[ start ];
+      nameMap.put( new Integer(hex.getData()[ i + 3 ]), hex.subString( start + 1, nameLen ) );
+      start += nameLen + 1;
+    }   
+    return nameMap;
+  }
+  
+  private Hex createNameHex( LinkedHashMap< Button, String > map )
+  {
+    int size = 4;
+    for ( String str : map.values() )
+    {
+      size += 2 + str.length();
+    }
+    size += ( size & 1 ) == 1 ? 1 : 0;
+    Hex hex = new Hex( size );
+    hex.set( ( short )0xFF, size - 1 );
+    hex.put( 0, 0 );
+    hex.set( ( short )map.size(), 2 );
+    int i = 3;
+    int j = 4 + map.size();
+    for ( Button btn : map.keySet() )
+    {
+      hex.set( btn.getKeyCode(), i++ );
+      String name = map.get(  btn );
+      hex.set( ( short )name.length(), j++ );
+      for ( char ch : name.toCharArray() )
+      {
+        hex.set( ( short )ch, j++ );
+      }
+    }
+    if ( !map.isEmpty() )
+    {
+      hex.set( ( short )0, i );
+    }
+    return hex;
   }
   
   /* 
@@ -715,7 +2295,7 @@ public class RemoteConfiguration
    */
   private void setMacro( Macro macro )
   {
-    Button btn = remote.getButton( macro.getDeviceIndex() );
+    Button btn = remote.getButton( macro.getDeviceButtonIndex() );
     if ( btn != null && remote.getButtonGroups() != null
         && remote.getButtonGroups().get( "Device" ) != null      
         && remote.getButtonGroups().get( "Device" ).contains( btn ) )
@@ -753,10 +2333,30 @@ public class RemoteConfiguration
           DeviceButton db = remote.getDeviceButton( hex.getData()[ 0 ] );
           if ( db != null )
           {
+            db.setDefaultName();
             db.setVolumePT( getPTButton( hex.getData()[ 6 ] ) );
             db.setTransportPT( getPTButton( hex.getData()[ 7 ] ) );
             db.setChannelPT( getPTButton( hex.getData()[ 8 ] ) );
             segment.setObject( db );
+            int setupCode = db.getSetupCode( hex.getData() );
+            db.setConstructed( setupCode == -1 );
+          }
+        }
+      }
+    }
+    
+    List< Segment >devNamesList = segments.get( 0x15 );
+    if ( devNamesList != null )
+    {
+      for ( Segment segment : devNamesList )
+      {
+        LinkedHashMap< Integer, String > nameMap = parseNameSegment( segment );
+        for ( Integer key : nameMap.keySet() )
+        {
+          DeviceButton devBtn = remote.getDeviceButton( key );
+          if ( devBtn != null )
+          {
+            devBtn.setName( nameMap.get( key ) );
           }
         }
       }
@@ -771,13 +2371,15 @@ public class RemoteConfiguration
   
   public static Remote filterRemotes( List< Remote > remotes, String signature, int eepromSize, 
       short[] data, short[] sigData, boolean allowMismatch )
-  {
+  { 
     Remote remote = null;
     
     // Filter on matching eeprom size
     for ( Iterator< Remote > it = remotes.iterator(); it.hasNext(); )
     {
-      if ( it.next().getEepromSize() != eepromSize )
+      Remote r = it.next();
+      if ( !( r.getEepromSize() == eepromSize
+          || r.isSSD() && r.getEepromSize() > eepromSize ) )
       {
           it.remove();
       }
@@ -823,7 +2425,10 @@ public class RemoteConfiguration
             null, choices, choices[ 0 ] );
       }
     }
-    return remote;
+    // Ensure any properties of the remote left from previous configuration are removed
+    Remote newRemote = new Remote( remote, remote.getNameIndex() );
+    RemoteManager.getRemoteManager().replaceRemote( remote, newRemote );
+    return newRemote;
   }
   
 
@@ -913,11 +2518,9 @@ public class RemoteConfiguration
    */
   private LearnedSignal findLearnedSignal( String deviceName, String keyName )
   {
-    DeviceButton[] deviceButtons = remote.getDeviceButtons();
-
     for ( LearnedSignal ls : learned )
     {
-      DeviceButton devButton = deviceButtons[ ls.getDeviceButtonIndex() ];
+      DeviceButton devButton = remote.getDeviceButton( ls.getDeviceButtonIndex() );
       if ( !devButton.getName().equals( deviceName ) )
       {
         continue;
@@ -930,6 +2533,24 @@ public class RemoteConfiguration
       }
     }
     System.err.println( "No learned signal found matching " + deviceName + ':' + keyName );
+    return null;
+  }
+  
+  private LearnedSignal findLearnedSignal( DeviceButton db, Button btn )
+  {
+    for ( LearnedSignal ls : learned )
+    {
+      DeviceButton devButton = remote.getDeviceButton( ls.getDeviceButtonIndex() );
+      if ( devButton != db )
+      {
+        continue;
+      }
+      
+      if ( btn.getKeyCode() == ls.getKeyCode() )
+      {
+        return ls;
+      }
+    }
     return null;
   }
 
@@ -954,7 +2575,24 @@ public class RemoteConfiguration
       ProtocolManager.getProtocolManager().reset();
     }
     
-    if ( hasSegments() )
+    int e2FormatOffset = remote.getProcessor().getE2FormatOffset();
+    if ( e2FormatOffset >= 0 )
+    {
+      char[] val = new char[ 6 ];
+      for ( int i = 0; i < 6; i++ )
+      {
+        val[ i ] = ( char )data[ e2FormatOffset + i ];
+      }
+      eepromFormatVersion = new String( val );               
+    }
+    
+    if ( remote.isSSD() )
+    {
+      loadFiles( true );
+//      parseSystemFiles();
+      return;
+    }
+    else if ( hasSegments() )
     {
       loadSegments( true );
     }
@@ -1257,10 +2895,10 @@ public class RemoteConfiguration
       out.println( "[Signature]" );
       short[] sd = sigData;
       if ( sd == null )
-      {
-        sd = new short[ 6 ];
+      { 
         String sig = remote.getSignature();
-        for ( int i = 0; i < 6; i++ )
+        sd = new short[ sig.length() ];
+        for ( int i = 0; i < sig.length(); i++ )
         {
           sd[ i ] = ( short )sig.charAt( i );
         }
@@ -1270,7 +2908,8 @@ public class RemoteConfiguration
       out.println( "[Buffer]" );
     }
 
-    Hex.print( out, data, remote.getBaseAddress() );
+    short[] dataToSave = RemoteMaster.useSavedData() ? savedData : data;
+    Hex.print( out, Arrays.copyOf( dataToSave, getDataEnd( dataToSave ) ), remote.getBaseAddress() );
 
     out.println();
     out.println( "[Notes]" );
@@ -1280,6 +2919,12 @@ public class RemoteConfiguration
       out.println( "$0000=" + exportNotes( notes ) );
     }
 
+    if ( remote.isSSD() )
+    {
+      out.close();
+      return;
+    }
+    
     // Do the advanced codes
     int i = 0x1000;
     updateSpecialFunctionSublists();
@@ -1500,6 +3145,7 @@ public class RemoteConfiguration
       highlight[ i ] = Color.WHITE;
     }
     deviceButtonNotes = new String[ remote.getDeviceButtons().length ];
+    RemoteMaster.setSystemFilesItems( remote.isSSD() );
   }
 
   /**
@@ -1803,7 +3449,7 @@ public class RemoteConfiguration
 //            f = new Function( text, cmd, null );
             
             f = new Function( remote.getButtonName( keyCode ), cmd, keyMove.getNotes() );
-            
+            f.setUpgrade( boundUpgrade );
             boundUpgrade.getFunctions().add( f );
           }
           // Perform the migration.
@@ -1831,6 +3477,10 @@ public class RemoteConfiguration
       DeviceButton button = deviceButtons[ i ];
       if ( hasSegments() )
       {
+        if ( button.getSegment() == null )
+        {
+          continue;
+        }
         data = button.getSegment().getHex().getData();
       }
       if ( button.getDeviceTypeIndex( data ) == upgrade.getDeviceType().getNumber()
@@ -1913,7 +3563,7 @@ public class RemoteConfiguration
   {
     for ( SpecialProtocol sp : remote.getSpecialProtocols() )
     {
-      if ( sp.isInternal() && sp.getInternalSerial() == macro.getSequenceNumber() && macro.getDeviceIndex() != 0x0F )
+      if ( sp.isInternal() && sp.getInternalSerial() == macro.getSequenceNumber() && macro.getDeviceButtonIndex() != 0x0F )
       {
         return sp;
       }
@@ -1952,6 +3602,135 @@ public class RemoteConfiguration
    */
   public void updateImage()
   {
+    if ( remote.isSSD() )
+    {
+      // XSight remotes
+      ssdFiles.remove( "home.xcf" );
+      ssdFiles.remove( "devices.xcf" );
+      ssdFiles.remove( "activities.xcf" );
+      ssdFiles.remove( "profiles.xcf" );
+      ssdFiles.remove( "favorites.xcf" );
+      ssdFiles.remove( "macros.xcf" );
+      LinkedHashMap< Integer, List< RMIcon > > map = new LinkedHashMap< Integer, List<RMIcon> >();
+      Comparator< RMIcon > sortUp = new Comparator< RMIcon >()
+      {
+        @Override
+        public int compare( RMIcon icon1, RMIcon icon2 )
+        {
+          return ( new Integer( icon1.ref ).compareTo( new Integer( icon2.ref ) ) );
+        } 
+      };
+      Comparator< RMIcon > sortDown = new Comparator< RMIcon >()
+      {
+        @Override
+        public int compare( RMIcon icon1, RMIcon icon2 )
+        {
+          return ( new Integer( icon2.ref ).compareTo( new Integer( icon1.ref ) ) );
+        } 
+      };
+      
+      for ( RMIcon icon : userIcons.values() )
+      {
+        int type = icon.type;
+        List< RMIcon > list = map.get( type );
+        if ( list == null )
+        {
+          list = new ArrayList< RMIcon >();
+          map.put( type, list );
+        }
+        list.add( icon );
+      }
+      userIcons.clear();
+      int ref = 8 * 16 - 1;
+      Collections.sort( map.get( 6 ), sortUp );
+      for ( RMIcon icon : map.get( 6 ) )
+      {
+        icon.ref = ref++;
+        userIcons.put( icon.ref, icon );
+      }
+      ref = 13 * 16 - 2;
+      Collections.sort( map.get( 9 ), sortDown );
+      for ( RMIcon icon : map.get( 9 ) )
+      {
+        icon.ref = ref--;
+        userIcons.put( icon.ref, icon );
+      }
+      Collections.sort( map.get( 8 ), sortDown );
+      for ( RMIcon icon : map.get( 8 ) )
+      {
+        icon.ref = ref--;
+        userIcons.put( icon.ref, icon );
+      }
+      
+      
+      SSDFile file = makeDevicesXCF();
+      if ( file != null )
+      {
+        ssdFiles.put( "devices.xcf", file );
+      }
+      file = makeActivitiesXCF();
+      if ( file != null )
+      {
+        ssdFiles.put( "activities.xcf", file );
+      }
+      file = makeProfilesXCF();
+      if ( file != null )
+      {
+        ssdFiles.put( "profiles.xcf", file );
+      }
+      file = makeFavoritesXCF();
+      if ( file != null )
+      {
+        ssdFiles.put( "favorites.xcf", file );
+      }
+      file = makeMacrosXCF();
+      if ( file != null )
+      {
+        ssdFiles.put( "macros.xcf", file );
+      }
+      file = makeHomeXCF();
+      ssdFiles.put( "home.xcf", file );
+      
+      int pos = 4;
+      int status = 0;
+      Arrays.fill( data, ( short )0xFF );
+      Hex hex = null;
+      for ( int n = 0; n < Remote.userFilenames.length; n++ )
+      {
+        String name = Remote.userFilenames[ n ];
+        if ( name.equals( "usericons.pkg" ) )
+        {
+          hex = makeUserIconsPKG();
+        }
+        else if ( name.equals( "sysicons.pkg" ) )
+        {
+          file = ssdFiles.get( name );
+          hex = file != null ? file.hex : null;
+        }
+        else if ( name.endsWith( ".xcf" ) )
+        {
+          file = ssdFiles.get( name );
+          hex = makeBXMLFile( file );
+        }
+        
+        if ( hex == null )
+        {
+          continue;
+        }
+        
+        status |= 1 << n;
+        System.arraycopy( hex.getData(), 0, data, pos, hex.length() );
+        pos += hex.length();      
+      }
+      data[ 0 ] = ( short )( status & 0xFF );
+      data[ 1 ] = ( short )( ( ( status >> 8 ) & 0x0F ) | ( ( pos >> 12 ) & 0xF0 ) );
+      data[ 2 ] = ( short )( pos & 0xFF );
+      data[ 3 ] = ( short )( ( pos >> 8 ) & 0xFF );
+      return;
+    }
+    
+    // All other remotes
+    
     // update upgrades last so that only spare space in other regions can be used for
     // upgrade overflow
     for ( int i = 0; i < highlight.length; i++ )
@@ -1977,7 +3756,23 @@ public class RemoteConfiguration
     if ( hasSegments() )
     {
       updateActivities();
+      updateFavorites();
       int pos = 2;
+      int e2Offset = remote.getProcessor().getE2FormatOffset();
+      if ( e2Offset >= 0 )
+      {
+        Arrays.fill( data, 0, 20, ( short )0xFF );
+        int size = remote.getEepromSize();
+        for ( int i = 24; i >= 0; i -= 8 )
+        {
+          data[ pos++ ] = ( short )( ( size >> i ) & 0xFF );
+        }
+        for ( int i = 0; i < 6; i++ )
+        {
+          data[ pos++ ] = ( short )( eepromFormatVersion == null ? '-' : eepromFormatVersion.charAt( i ) );
+        }
+        pos = 20;
+      }
       for ( int type : segmentLoadOrder )
       {
         List< Segment > list = segments.get( type );
@@ -1996,14 +3791,23 @@ public class RemoteConfiguration
         }
       }
       Hex.put( 0xFFFF, data, pos );
+      remote.getUsageRange().setFreeStart( pos + 2 );
       
       updateKeyMoveHighlights( keymoves );
       updateKeyMoveHighlights( upgradeKeyMoves );
       updateMacroHighlights();
       updateUpgradeHighlights();
       updateLearnedHighlights();
-      updateActivityHighlights();
-      remote.getCheckSums()[ 0 ].getAddressRange().setEnd( pos - 1 );
+      if ( remote.usesEZRC() )
+      {
+        updateActivityHighlightsEZRC();
+        updateFavoritesHighlights();
+      }
+      else
+      {
+        updateActivityHighlights();
+        remote.getCheckSums()[ 0 ].getAddressRange().setEnd( pos - 1 );
+      }
     }
     updateCheckSums();
     checkImageForByteOverflows();
@@ -2027,7 +3831,7 @@ public class RemoteConfiguration
   private void updateMacroHighlights()
   {
     List< Macro > allMacros = new ArrayList< Macro >();
-    allMacros.addAll( getAllMacros() );
+    allMacros.addAll( getAllMacros( false ) );
     allMacros.addAll( specialFunctionMacros );
     for ( Macro macro : allMacros )
     {
@@ -2044,7 +3848,7 @@ public class RemoteConfiguration
       {
         updateHighlight( macro, address + 4, segData[ 2 ] + 3 );
       }
-      else // segType == 2
+      else if ( segType == 2 )
       {
         int pos = 3;
         for ( int i = 0; i < index; i++ )
@@ -2056,6 +3860,12 @@ public class RemoteConfiguration
         {
           updateHighlight( macro, address + pos + 1, 2 );
         }
+      }
+      else if ( segType == 3 )
+      {
+        int len = 2 * segData[ 2 ]; // keys and durations
+        len += segData[ 3 + len ] + 2;  // name and serial
+        updateHighlight( macro, address + 4, len + 4 );
       }
     }
   }
@@ -2079,7 +3889,18 @@ public class RemoteConfiguration
       {
         highlight[ address + protOffset + 8 + i ] = dev.getProtocolHighlight();
       }
-      
+      segment = dev.getSoftButtonSegment();
+      if ( segment != null )
+      {
+        address = segment.getAddress();
+        updateHighlight( dev, address + 4, segment.getHex().length() );
+      }
+      segment = dev.getSoftFunctionSegment();
+      if ( segment != null )
+      {
+        address = segment.getAddress();
+        updateHighlight( dev, address + 4, segment.getHex().length() );
+      }
     }
   }
   
@@ -2106,8 +3927,8 @@ public class RemoteConfiguration
     }
     for ( Activity activity : activities.values() )
     {
-      Segment segment = activity.getSegment();
       ActivityGroup[] groups = activity.getActivityGroups();
+      Segment segment = activity.getSegment();
       int address = segment.getAddress();
       int incr = ( remote.hasActivityControl() ) ? 0 : 1;
       int pos = 1 - incr;
@@ -2134,6 +3955,130 @@ public class RemoteConfiguration
       {
         activity.addMemoryUsage( activity.getMacro().getMemoryUsage() );
       }
+    }
+  }
+  
+  private void updateActivityHighlightsEZRC()
+  {
+    if ( activities == null )
+    {
+      return;
+    }
+    for ( Activity activity : activities.values() )
+    {
+      if ( !activity.isActive() && ( favScans.size() == 0 || remote.getFavKey() == null 
+          || activity.getButton().getKeyCode() != remote.getFavKey().getKeyCode() ) )
+      {
+        continue;
+      }
+      ActivityGroup[] groups = activity.getActivityGroups();
+      if ( groups.length > 0 )
+      {
+        Segment segment = groups[ 0 ].getSegment();
+        List< Short > keyCodes = new ArrayList< Short >();
+        short[] segData = segment.getHex().getData();
+        int len = segData[ 2 ];
+        for ( int i = 0; i < len; i++ )
+        {
+          keyCodes.add( segData[ 3 + i ] );
+        }
+        int address = segment.getAddress();
+        for ( ActivityGroup group : groups )
+        {
+          group.clearMemoryUsage();
+          for ( Button btn : group.getButtonGroup() )
+          {
+            int pos = keyCodes.indexOf( btn.getKeyCode() );
+            if ( pos >= 0 )
+            {
+              updateHighlight( group, address + 7 + pos, 1 );
+              updateHighlight( group, address + len + 7 + pos, 1 );
+            }
+          }
+          Segment softSegment = group.getSoftNamesSegment();
+          if ( softSegment != null )
+          {
+            int softAddress = softSegment.getAddress();
+            int softLen = softSegment.getHex().length();
+            if ( softSegment.getHex().getData()[ softLen - 1 ] == 0xFF )
+            {
+              softLen--;
+            }
+            updateHighlight( group, softAddress + 4, softLen );
+          }
+        }
+      }
+
+      Segment segment = activity.getSegment();
+      if ( segment == null )
+      {
+        continue;
+      }
+      int address = segment.getAddress();
+      short[] segData = segment.getHex().getData();
+      int len = segData[ 2 ];
+      int index = 0;
+      while ( index < len && segData[ 3 + index ] != activity.getButton().getKeyCode() )
+      {
+        index++;
+      }
+      if ( index < len )
+      {
+        updateHighlight( activity, address + 7 + index, 1 );
+        int mPos = 3 + len;
+        int nPos = mPos;
+        for ( int i = 0; i < len; i++ )
+        {
+          int incr = 2 * segData[ nPos ] + 1;
+          nPos += incr;
+          if ( i < index )
+          {
+            mPos += incr;
+          }
+        }
+        nPos++;
+        for ( int i = 0; i < index; i++ )
+        {
+          nPos += segData[ nPos ] + 1;
+        }
+        updateHighlight( activity, address + 4 + mPos, 2 * segData[ mPos ] + 1 );
+        updateHighlight( activity, address + 4 + nPos, segData[ nPos ] + 1 );
+      }
+      
+      segment = activity.getHelpSegment();
+      if ( segment != null )
+      {
+        address = segment.getAddress();
+        updateHighlight( activity, address + 4, segment.getHex().length() );
+      }
+    }
+  }
+  
+  private void updateFavoritesHighlights()
+  {
+    int count = favScans.size();
+    if ( count == 0 )
+    {
+      return;
+    }
+    Segment segment = favScans.get( 0 ).getSegment();
+    int address = segment.getAddress();
+    short[] segData = segment.getHex().getData();
+    int mPos = 7;
+    int nPos = 7;
+    for ( int i = 0; i < count; i++ )
+    {
+      nPos += segData[ nPos ] + 1;
+    }
+    nPos++;
+    for ( int i = 0; i < count; i++ )
+    {
+      FavScan fav = favScans.get( i );
+      fav.clearMemoryUsage();
+      updateHighlight( fav, address + 4 + mPos, segData[ mPos ] + 1 );
+      updateHighlight( fav, address + 4 + nPos, segData[ nPos ] + 1 );
+      mPos += segData[ mPos ] + 1;
+      nPos += segData[ nPos ] + 1;
     }
   }
   
@@ -2191,76 +4136,380 @@ public class RemoteConfiguration
     return offset;
   }
   
+  private void updateFavorites()
+  {
+    List< Integer > types = remote.getSegmentTypes();
+    int count = favScans.size();
+    if ( !types.contains( 0x1D ) || count == 0 )
+    {
+      return;
+    }
+    segments.remove( 0x1D );
+    int dataLen = 8;
+    int k = 7;
+    int flags = 0;
+    for ( FavScan fav : favScans )
+    {
+      int size = fav.getChannel().length();
+      k += size + 1;
+      dataLen += size + fav.getName().length() + 2;
+      flags = fav.getSegmentFlags();
+    }
+    if ( favFinalKey != null )
+    {
+      k += count;
+      dataLen += count;
+    }
+    dataLen += remote.doForceEvenStarts() && ( dataLen & 1 ) == 1 ? 1 : 0;
+    Hex segData = new Hex( dataLen );
+    segData.set( ( short )0xFF, dataLen - 1 );
+
+    if ( segments.get( 0x1D ) == null )
+    {
+      segments.put(  0x1D, new ArrayList< Segment >() );
+    }
+    Segment segment = new Segment( 0x1D, flags, segData );
+
+    segData.set( ( short )favKeyDevButton.getButtonIndex(), 0 );
+    segData.set( ( short )remote.getFavKey().getKeyCode(), 1 );
+    segData.set( ( short )favKeyDevButton.getFavoriteWidth(), 2 );
+    segData.set( ( short )favPause, 3 );
+    segData.set( ( short )( favFinalKey == null ? 0xFF : favFinalKey.getKeyCode() ), 4 );
+    segData.set( ( short )0xFF, 5 );
+    segData.set( ( short )count, 6 );
+    segData.set( ( short )0, k++ );
+    int i = 7;
+    for ( FavScan fav : favScans )
+    {
+      String channel = fav.getChannel();
+      int len = channel.length();
+      for ( int j = 0; j < len; j++ )
+      {
+        Button b = remote.getButton( channel.substring( j, j + 1 ) );
+        short keyCode = b != null ? b.getKeyCode() : 0;
+        segData.set( keyCode, i + j + 1 );
+      }
+      if ( favFinalKey != null )
+      {
+        len++;
+        segData.set( favFinalKey.getKeyCode(), i + len );
+      }
+      segData.set( ( short )len, i );
+      i += len + 1;
+      String name = fav.getName();
+      segData.set( ( short )name.length(), k++ );
+      for ( int n = 0; n < name.length(); n++ )
+      {
+        segData.set( ( short )name.charAt( n ), k++ );
+      }
+      fav.setSegment( segment );
+    }
+    segments.get( 0x1D ).add( segment );
+    Button btn = remote.getButton( remote.getFavKey().getKeyCode() );
+    updateActivityData( activities.get( btn ), true );
+  }
+  
   private void updateActivities()
   {
     if ( activities == null )
     {
       return;
     }
-    segments.remove( 0xDB );
-    segments.remove( 0xDC );
-    for ( Activity activity : activities.values() )
+    List< Integer > types = remote.getSegmentTypes();
+    if ( types.contains( 0xDB ) )
     {
-      Button btn = activity.getButton();
-      ActivityGroup[] groups = activity.getActivityGroups();
-      int dataLen = remote.hasActivityControl() ? 4 : groups.length + 2;
-      if ( remote.doForceEvenStarts() && ( dataLen & 1 ) == 1 )
+      segments.remove( 0xDB );
+      segments.remove( 0xDC );
+      for ( Activity activity : activities.values() )
       {
-        dataLen++;
-      }
-      Hex segData = new Hex( dataLen );
-      segData.set( ( short )0, 0 );
-      segData.set( btn.getKeyCode(), 1 );
-      int pos = 2;
-      if ( remote.hasActivityControl() )
-      {
-        if ( activity.getSelector() == null )
+        Button btn = activity.getButton();
+        ActivityGroup[] groups = activity.getActivityGroups();
+        int dataLen = remote.hasActivityControl() ? 4 : groups.length + 2;
+        if ( remote.doForceEvenStarts() && ( dataLen & 1 ) == 1 )
         {
-          segData.put( 0xFF00, pos );
+          dataLen++;
+        }
+        Hex segData = new Hex( dataLen );
+        segData.set( ( short )0, 0 );
+        segData.set( btn.getKeyCode(), 1 );
+        int pos = 2;
+        if ( remote.hasActivityControl() )
+        {
+          if ( activity.getSelector() == null )
+          {
+            segData.put( 0xFF00, pos );
+          }
+          else
+          {
+            segData.set( activity.getSelector().getKeyCode(), pos++ );
+            short val = 0;
+            for ( ActivityGroup group : groups )
+            {
+              int index = Arrays.asList( remote.getDeviceButtons() ).indexOf( group.getDevice() );
+              if ( index >= 0 )
+              {
+                val |= 1 << index;
+              }
+            }
+            segData.set( val, pos++ );
+          }
         }
         else
         {
-          segData.set( activity.getSelector().getKeyCode(), pos++ );
-          short val = 0;
           for ( ActivityGroup group : groups )
           {
-            int index = Arrays.asList( remote.getDeviceButtons() ).indexOf( group.getDevice() );
-            if ( index >= 0 )
-            {
-              val |= 1 << index;
-            }
+            segData.set( ( short )group.getDeviceIndex(), pos++ );
           }
-          segData.set( val, pos++ );
         }
-      }
-      else
-      {
-        for ( ActivityGroup group : groups )
-        {
-          segData.set( ( short )group.getDeviceIndex(), pos++ );
-        }
-      }
 
-      int flags = activity.getSegmentFlags();
-      if ( segments.get( 0xDB ) == null )
-      {
-        segments.put(  0xDB, new ArrayList< Segment >() );
+        int flags = activity.getSegmentFlags();
+        if ( segments.get( 0xDB ) == null )
+        {
+          segments.put(  0xDB, new ArrayList< Segment >() );
+        }
+        segments.get( 0xDB ).add( new Segment( 0xDB, flags, segData, activity ) );
+        segData = new Hex( 4 );
+        segData.set( ( short )0, 0 );
+        segData.set( ( short )activity.getButton().getKeyCode(), 1 );
+        segData.set( ( short )activity.getAudioHelp(), 2 );
+        segData.set( ( short )activity.getVideoHelp(), 3 );
+        flags = activity.getHelpSegmentFlags();
+        if ( segments.get( 0xDC ) == null )
+        {
+          segments.put(  0xDC, new ArrayList< Segment >() );
+        }
+        Segment segment = new Segment( 0xDC, flags, segData );
+        activity.setHelpSegment( segment );
+        segments.get( 0xDC ).add( segment );
       }
-      segments.get( 0xDB ).add( new Segment( 0xDB, flags, segData, activity ) );
-      segData = new Hex( 4 );
-      segData.set( ( short )0, 0 );
-      segData.set( ( short )activity.getButton().getKeyCode(), 1 );
-      segData.set( ( short )activity.getAudioHelp(), 2 );
-      segData.set( ( short )activity.getVideoHelp(), 3 );
-      flags = activity.getHelpSegmentFlags();
-      if ( segments.get( 0xDC ) == null )
-      {
-        segments.put(  0xDC, new ArrayList< Segment >() );
-      }
-      Segment segment = new Segment( 0xDC, flags, segData );
-      activity.setHelpSegment( segment );
-      segments.get( 0xDC ).add( segment );
     }
+    else if ( types.contains( 0x1E ) )
+    {
+      Button act = remote.getButtonByStandardName( "Activities" );
+      if ( act == null )
+      {
+        return;
+      }
+      segments.remove( 0x1E );
+      segments.remove( 0x1F );
+      segments.remove( 0x0B );
+      List< Button > btns = new ArrayList< Button >();
+      List< Activity > activeActivities = new ArrayList< Activity >();
+      int dataLen = 4;
+      int k = 3;
+      int flags = 0;
+      for ( Activity activity : activities.values() )
+      {
+        if ( activity.isActive() )
+        {
+          activeActivities.add( activity );
+        }
+      }
+      Collections.sort( activeActivities, Activity.activitySort );
+      for ( Activity activity : activeActivities )
+      {
+        btns.add( activity.getButton() );
+        Macro macro = activity.getMacro();
+        int size = ( macro == null ) ? 2 : 2 * macro.dataLength() + 2;
+        k += size;
+        dataLen += size + activity.getName().length() + 1;
+        flags = activity.getSegmentFlags();
+        updateActivityData( activity, false );
+      }
+      dataLen += remote.doForceEvenStarts() && ( dataLen & 1 ) == 1 ? 1 : 0;
+      Hex segData = new Hex( dataLen );
+
+      if ( segments.get( 0x1E ) == null )
+      {
+        segments.put(  0x1E, new ArrayList< Segment >() );
+      }
+      Segment segment = new Segment( 0x1E, flags, segData );
+
+      segData.set( ( short )0, 0 );
+      segData.set( act.getKeyCode(), 1 );
+      segData.set( ( short )btns.size(), 2 );
+      segData.set( ( short )0, k++ );
+      segData.set( ( short )0xFF, dataLen - 1 );
+      int i = 3;
+      int j = 3 + btns.size();
+      for ( Button btn : btns )
+      {
+        Activity activity = activities.get( btn );
+        activity.setSegment( segment );
+        activity.getMacro().setSegment( segment );
+        short[] macroData = activity.getMacro().getItemData().getData();
+        int macroLen = macroData.length / 2;
+        segData.set( activity.getSelector().getKeyCode(), i++ );
+        segData.set( ( short )macroLen, j++ );
+        segData.put( macroData, j );
+        j += 2 * macroLen;
+        String name = activity.getName();
+        segData.set( ( short )name.length(), k++ );
+        for ( int n = 0; n < name.length(); n++ )
+        {
+          segData.set( ( short )name.charAt( n ), k++ );
+        }
+      }
+      
+      segments.get( 0x1E ).add( segment );
+    }
+  }
+  
+  private void updateActivityData( Activity activity, boolean assignmentsOnly )
+  {   
+    // First do button assignments, segment type 0x0B
+    int count = 0;
+    ActivityGroup[] groups = activity.getActivityGroups();
+    for ( ActivityGroup group : groups )
+    {
+      count += group.getButtonGroup().length;
+    }
+    int dataLen = 2 * count + 4;
+    Hex segData = new Hex( dataLen );
+    segData.set( ( short )0xFF, dataLen - 1 );
+
+    if ( segments.get( 0x0B ) == null )
+    {
+      segments.put(  0x0B, new ArrayList< Segment >() );
+    }
+    
+    LinkedHashMap< Button, KeySpec > map = new LinkedHashMap< Button, KeySpec >();
+    for ( ActivityGroup group : groups )
+    {
+      DeviceButton db = group.getDevice();
+      for ( Button b : group.getButtonGroup() )
+      {
+        map.put( b, new KeySpec( db, b ) );
+      }
+    }
+//    for ( int code : activityOrder )
+//    {
+//      Button b = remote.getButton( code );
+//      if ( b == null )
+//      {
+//        continue;
+//      }
+//      KeySpec ks = map.get( b );
+//      if ( ks == null || ks.db == null )
+//      {
+//        continue;
+//      }
+    
+    Segment segment = new Segment( 0x0B, groups[ 0 ].getSegmentFlags(), segData );
+    int pos = 0;
+    segData.set( activity.getButton().getKeyCode(), pos++ );
+    segData.set( ( short )0, pos++ );
+    segData.set( ( short )count, pos++ );
+    for ( ActivityGroup group : groups )
+    {
+      group.setSegment( segment );
+    }
+    for ( int code : remote.getActivityOrder() )
+    {
+      Button b = remote.getButton( code );
+      if ( b == null )
+      {
+        continue;
+      }
+      KeySpec ks = map.get( b );
+      if ( ks == null || ks.db == null )
+      {
+        continue;
+      }
+      segData.set( ( short )ks.db.getButtonIndex(), pos + count );
+      segData.set( b.getKeyCode(), pos++ );
+    }
+    segments.get( 0x0B ).add( segment );
+    
+    if ( assignmentsOnly )
+    {
+      return;
+    }
+    
+    // Next do soft button names, segment type 0x0A
+    LinkedHashMap< Button, String > map2 = new LinkedHashMap< Button, String >();
+    if ( segments.get( 0x0A ) == null )
+    {
+      segments.put(  0x0A, new ArrayList< Segment >() );
+    }
+    segment = new Segment( 0x0A, groups[ 0 ].getSegmentFlags(), null );
+    segments.get( 0x0A ).add( segment );
+    
+    for ( ActivityGroup group : groups )
+    {
+      DeviceButton db = group.getDevice();
+      DeviceUpgrade du = db.getUpgrade();
+      if ( du == null || du.getSoftButtons() == null || du.getSoftButtons().isEmpty() 
+          || !remote.isSoftButton( group.getButtonGroup()[ 0 ] ) )
+      {
+        continue;
+      }
+      for ( Button btn : group.getButtonGroup() )
+      {
+        if ( !du.getSoftButtons().contains( btn ) )
+        {
+          continue;
+        }
+        map2.put( btn, du.getFunction( btn.getKeyCode() ).getName() );
+      }
+      group.setSoftNamesSegment( segment );
+    }
+    segData = createNameHex( map2 );
+    segData.set( ( short )activity.getButton().getKeyCode(), 0 );
+    segment.setHex( segData );
+    
+    // Finally do Activity Assists, segment type 0x1F
+    dataLen = 5;
+    for ( int i = 0; i < 3; i++ )
+    {
+      List< Assister > a = activity.getAssists().get( i );
+      if ( a.size() > 0 )
+      {
+        dataLen += 3 * a.size() + 1;
+        for ( Assister assist : a )
+        {
+          dataLen += assist.getDeviceName().length();
+        }
+      }
+    }
+    dataLen += remote.doForceEvenStarts() && ( dataLen & 1 ) == 1 ? 1 : 0;
+    segData = new Hex( dataLen );
+    segData.set( ( short )0xFF, dataLen - 1 );
+
+    if ( segments.get( 0x1F ) == null )
+    {
+      segments.put(  0x1F, new ArrayList< Segment >() );
+    }
+    segment = new Segment( 0x1F, activity.getHelpSegmentFlags(), segData );
+    pos = 0;
+    segData.set( activity.getSelector().getKeyCode(), pos++ );
+    segData.set( ( short )0, pos++ );
+    for ( int i = 0; i < 3; i++ )
+    {
+      List< Assister > a = activity.getAssists().get( i );
+      int aLen = a.size();
+      segData.set( ( short )aLen, pos++ );
+      if ( aLen > 0 )
+      {
+        segData.set( ( short )0, pos + 2 * aLen );
+        int namePos = pos + 2 * aLen + 1;
+        for ( int j = 0; j < aLen; j++ )
+        {
+          segData.set( a.get( j ).button.getKeyCode(), pos + j );
+          segData.set( ( short )a.get( j ).device.getButtonIndex(), pos + j + aLen );
+          int nameLen = a.get( j ).device.getName().length();
+          segData.set( ( short )nameLen, namePos++ );
+          for ( int k = 0; k < nameLen; k++ )
+          {
+            segData.set( ( short )a.get( j ).device.getName().charAt( k ), namePos++ );
+          }
+        }
+        pos = namePos;
+      }
+    }
+    activity.setHelpSegment( segment );
+    segments.get( 0x1F ).add( segment );
+
   }
 
   public List< KeyMove > getUpgradeKeyMoves()
@@ -2286,7 +4535,7 @@ public class RemoteConfiguration
 
   private void updateFavScans()
   {
-    if ( !remote.hasFavKey() || !remote.getFavKey().isSegregated() )
+    if ( hasSegments() || !remote.hasFavKey() || !remote.getFavKey().isSegregated() )
     {
       return;
     }
@@ -2334,13 +4583,14 @@ public class RemoteConfiguration
     int offset = 0;
     AddressRange range = remote.getAdvancedCodeAddress();
     List< Macro > allMacros = new ArrayList< Macro >();
-    allMacros.addAll( getAllMacros() );
+    allMacros.addAll( getAllMacros( false ) );
     
-    if ( hasSegments() )
+    if ( hasSegments() && !remote.isSSD() )
     {
       List< Integer > types = remote.getSegmentTypes();
       if ( types.contains( 1 ) ) segments.remove( 1 );
       if ( types.contains( 2 ) ) segments.remove( 2 );
+      if ( types.contains( 3 ) ) segments.remove( 3 );
       if ( types.contains( 7 ) ) segments.remove( 7 );
       if ( types.contains( 8 ) ) segments.remove( 8 );
       setUpgradeKeyMoves();
@@ -2473,21 +4723,33 @@ public class RemoteConfiguration
     }
   }
   
-  private List< Macro > getAllMacros()
+  private List< Macro > getAllMacros( boolean forSaving )
   {
     List< Macro > allMacros = new ArrayList< Macro >();
-    if ( hasSegments() && activities != null )
+    // for SSD remotes, put activity macros last.  Not sure if order is signficant
+    // for other remotes, so in case it is, leave order unchanged for them
+    if ( remote.isSSD() )
+    {
+      allMacros.addAll( macros );
+    }
+    if ( hasSegments() && ( forSaving && !remote.isSSD() || !remote.usesEZRC() ) && activities != null )
     {
       for ( Activity activity : activities.values() )
       {
-        Macro macro = activity.getMacro();
-        if ( macro != null )
+        if ( activity.isActive() )
         {
-          allMacros.add( macro );
+          Macro macro = activity.getMacro();
+          if ( macro != null )
+          {
+            allMacros.add( macro );
+          }
         }
       }
     }
-    allMacros.addAll( macros );
+    if ( !remote.isSSD() )
+    {
+      allMacros.addAll( macros );
+    }
     return allMacros;
   }
   
@@ -2497,7 +4759,7 @@ public class RemoteConfiguration
     LinkedHashMap< Integer, List< Macro > > bySubset = new LinkedHashMap< Integer, List<Macro> >();
     for ( Macro macro : list )
     {
-      int subset = ( macro.getSegmentFlags() << 8 ) | macro.getDeviceIndex();
+      int subset = ( macro.getSegmentFlags() << 8 ) | macro.getDeviceButtonIndex();
       List< Macro > subList = bySubset.get( subset );
       if ( subList == null )
       {
@@ -2517,7 +4779,11 @@ public class RemoteConfiguration
       {
         type = 2;
       }
-      if ( type == 1 && list.size() > 1 )
+      else if ( type == 0 && segmentTypes.contains( 3 ) )
+      {
+        type = 3;
+      }
+      if ( ( type == 1 || type == 3 ) && list.size() > 1 )
       {
         Macro macro = list.get( 0 );
         list.clear();
@@ -2526,9 +4792,14 @@ public class RemoteConfiguration
       int size = 0;
       for ( Macro macro : list )
       {
-        size += macro.getData().length() + type - 1;
+        size += macro.dataLength() + type - 1;
+        if ( type == 3 )
+        {
+          size += macro.dataLength() + macro.getName().length() + 1;
+        }
       }
       Hex segData = new Hex( size + ( remote.doForceEvenStarts() && ( size & 1 ) == 0 ? 4 : 3 ) );
+      segData.set( ( short )0xFF, segData.length() - 1 );
       int flags = ( subset >> 8 ) & 0xFF;
       segData.set( ( short )( subset & 0xFF ), 0 );
       int pos = 1;
@@ -2539,10 +4810,30 @@ public class RemoteConfiguration
       }
       for ( Macro macro : list )
       {
-        size = macro.getData().length();
+        size = macro.dataLength();
         segData.set( ( short )size, pos++ );
-        segData.put( macro.getData(), pos );
-        pos += size;
+        if ( type == 3 )
+        {
+          Hex hex =  macro.getItemData();
+          segData.put( hex, pos );
+          pos += hex.length();
+          int nameLen = macro.getName().length();
+          segData.set( ( short )nameLen, pos++ );
+          for ( int i = 0; i < nameLen; i++ )
+          {
+            segData.set( ( short )macro.getName().charAt( i ), pos++ );
+          }
+          segData.put( macro.getSerial(), pos );
+          pos += 2;
+        }
+        else
+        {
+          short[] data = macro.getData().getData();
+          for ( int i = 0; i < size; i++ )
+          {
+            segData.set( ( short )( data[ i ] & 0xFF ), pos++ );
+          }
+        }
       }
       if ( segments.get( type ) == null )
       {
@@ -2576,10 +4867,64 @@ public class RemoteConfiguration
   private void updateDeviceButtons()
   {
     DeviceButton[] deviceButtons = remote.getDeviceButtons();
+    
     for ( DeviceButton db : deviceButtons )
     {
       db.store( remote );
       db.doHighlight( highlight );
+    }
+    if ( !hasSegments() || remote.isSSD() )
+    {
+      return;
+    }
+    
+    segments.get( 0 ).clear();
+    for ( DeviceButton db : deviceButtons )
+    {
+//      if ( remote.usesEZRC() && db.getUpgrade() == null )
+//      {
+//        continue;
+//      }
+      segments.get( 0 ).add(  db.getSegment() );
+    }
+    if ( remote.getSegmentTypes().contains( 0x15 ) || remote.getSegmentTypes().contains( 0x11 ) )
+    {
+      LinkedHashMap< Button, String > map = new LinkedHashMap< Button, String >();
+      List< DeviceButton > list = new ArrayList< DeviceButton >();
+      for ( DeviceButton db : deviceButtons )
+      {
+        if ( db.getSegment() != null && db.getDeviceTypeIndex( db.getSegment().getHex().getData() ) != 0xFF )
+        {
+          map.put( remote.getButton( db.getButtonIndex() ), db.getName() );
+          list.add( db );
+        }
+      }
+      
+      if ( remote.getSegmentTypes().contains( 0x15 ) )
+      {
+        Hex hex = createNameHex( map );
+        segments.put( 0x15, new ArrayList< Segment >() );
+        segments.get( 0x15 ).add( new Segment( 0x15, 0xFF, hex ) );
+      }
+      if ( remote.getSegmentTypes().contains( 0x11 ) )
+      {
+        int size = 4 + 3 * list.size();
+        size += ( size & 1 ) == 1 ? 1 : 0;
+        Hex hex = new Hex( size );
+        hex.put( 0xFFFF, size - 2 );
+        hex.put( 0, 0 );
+        hex.set( ( short )list.size(), 2 );
+        int i = 3;
+        for ( DeviceButton db : list )
+        {
+          short[] data = db.getSegment().getHex().getData();
+          hex.set( ( short )db.getDeviceTypeIndex( data ), i );
+          hex.put(  db.getSetupCode( data ), i + 1 );
+          i += 3;
+        }
+        segments.put( 0x11, new ArrayList< Segment >() );
+        segments.get( 0x11 ).add( new Segment( 0x11, 0xFF, hex ) );
+      }
     }
   }
   
@@ -2964,6 +5309,7 @@ public class RemoteConfiguration
         DeviceUpgrade upgrade = new DeviceUpgrade();
         try
         {
+          upgrade.setRemoteConfig( this );
           upgrade.importRawUpgrade( deviceHex, remote, alias, new Hex( pidHex ), protocolCode );
           upgrade.setSetupCode( setupCode );
           upgrade.setButtonIndependent( false );
@@ -3187,8 +5533,10 @@ public class RemoteConfiguration
         return;
       }
       segments.remove( 0x10 );
-      for ( DeviceUpgrade dev : devIndependent )
+      for ( DeviceUpgrade dev : devices )
       {
+        dev.setSoftButtonSegment( null );
+        dev.setSoftFunctionSegment( null );
         Hex hex = dev.getUpgradeHex();
         Hex code = dev.needsProtocolCode() ? dev.getCode() : null;
         int size = hex.length() + ( ( code != null ) ? code.length() : 0 );
@@ -3196,6 +5544,11 @@ public class RemoteConfiguration
         Hex segData = new Hex( size );
         int flags = dev.getSegmentFlags();
         Arrays.fill( segData.getData(), 0, 4, ( short )0 );
+        segData.getData()[ segData.length() - 1 ] = ( short )( remote.usesEZRC() ? 0xFF : 0 );
+        if ( !dev.getButtonIndependent() )
+        {
+          segData.getData()[ 0 ] = ( short )dev.getButtonRestriction().getButtonIndex();
+        }
         if ( code != null )
         {
           segData.put( hex.length() + 5, 2 );
@@ -3214,6 +5567,68 @@ public class RemoteConfiguration
           segments.put( 0x10, new ArrayList< Segment >() );
         }
         segments.get( 0x10 ).add( new Segment( 0x10, flags, segData, dev ) );
+      }
+      
+      if ( remote.getSegmentTypes().contains( 0x0A ) || remote.getSegmentTypes().contains( 0x20 ) )
+      {
+        if ( remote.getSegmentTypes().contains( 0x0A ) )
+        {
+          segments.remove( 0x0A );
+        }
+        if ( remote.getSegmentTypes().contains( 0x20 ) )
+        {
+          segments.remove( 0x20 );
+        }
+        for ( DeviceButton db : remote.getDeviceButtons() )
+        {
+          DeviceUpgrade du = db.getUpgrade();
+//          if ( du == null && remote.usesEZRC() )
+//          {
+//            continue;
+//          }
+          LinkedHashMap< Button, String > map = new LinkedHashMap< Button, String >();
+
+          if ( remote.getSegmentTypes().contains( 0x0A ) )
+          {
+            if ( segments.get( 0x0A ) == null )
+            {
+              segments.put( 0x0A, new ArrayList< Segment >() );
+            }
+            if ( du != null )
+            {
+              for ( Button b : du.getSoftButtons() )
+              {
+                map.put( b, du.getFunction( b.getKeyCode() ).getName() );
+              }
+            }
+            Hex hex = createNameHex( map );
+            hex.set( ( short )db.getButtonIndex(), 0 );
+            Segment segment = new Segment( 0x0A, 0xFF, hex );
+            if ( du != null )
+            {
+              du.setSoftButtonSegment( segment );
+            }
+            segments.get( 0x0A ).add( segment );
+          }
+          
+          map.clear();
+          if ( remote.getSegmentTypes().contains( 0x20 ) && du != null && !du.getHardButtons().isEmpty())
+          {
+            if ( segments.get( 0x20 ) == null )
+            {
+              segments.put( 0x20, new ArrayList< Segment >() );
+            }
+            for ( Button b : du.getHardButtons() )
+            {
+              map.put( b, du.getFunction( b.getKeyCode() ).getName() );
+            }
+            Hex hex = createNameHex( map );
+            hex.set( ( short )db.getButtonIndex(), 0 );
+            Segment segment = new Segment( 0x20, 0xFF, hex );
+            du.setSoftFunctionSegment( segment );
+            segments.get( 0x20 ).add( segment );
+          }
+        }
       }
       return;
     }
@@ -3443,6 +5858,31 @@ public class RemoteConfiguration
     processor.putInt( lastDevAddr - offset, data, offset );
     devAddr.setFreeStart( offset + 2 );
   }
+  
+//  public void assignUpgrades()
+//  {
+//    if ( !remote.usesEZRC() )
+//    {
+//      return;
+//    }
+//    
+//    for ( DeviceButton db : remote.getDeviceButtons() )
+//    {
+//      DeviceUpgrade du = null;
+//      if ( db.getDeviceTypeIndex( db.getSegment().getHex().getData() ) != 0xFF )
+//      {
+//        for ( DeviceUpgrade test : devices )
+//        {
+//          if ( !test.getButtonIndependent() && test.getButtonRestriction() == db )
+//          {
+//            du = test;
+//            break;
+//          }
+//        }
+//      }
+//      db.setUpgrade( du );
+//    }
+//  }
 
   /**
    * Decode learned signals.
@@ -3532,6 +5972,21 @@ public class RemoteConfiguration
     data[ offset++ ] = remote.getSectionTerminator();
     addr.setFreeStart( offset );
   }
+  
+  public int getDataEnd( short[] data )
+  {
+    if ( remote.isSSD() )
+    {
+      // get end of actual data from its format bytes
+      int end = data[ 2 ] + ( data[ 3 ] << 8 ) + ( ( data[ 1 ] & 0xF0 ) << 12 );
+      // round up to nearest 1kB
+      return ( end + 0x3FF ) & ~0x3FF;
+    }
+    else
+    {
+      return data.length;
+    }
+  }
 
   /**
    * Save.
@@ -3545,6 +6000,7 @@ public class RemoteConfiguration
   {
     PrintWriter out = new PrintWriter( new BufferedWriter( new FileWriter( file ) ) );
     PropertyWriter pw = new PropertyWriter( out );
+    short[] dataToSave = RemoteMaster.useSavedData() ? savedData : data;
 
     pw.printHeader( "General" );
     pw.print( "Remote.name", remote.getName() );
@@ -3557,9 +6013,9 @@ public class RemoteConfiguration
 
     pw.printHeader( "Buffer" );
     int base = remote.getBaseAddress();
-    for ( int i = 0; i < data.length; i += 16 )
+    for ( int i = 0; i < getDataEnd( dataToSave ); i += 16 )
     {
-      pw.print( String.format( "%04X", i + base ), Hex.toString( data, i, 16 ) );
+      pw.print( String.format( "%04X", i + base ), Hex.toString( dataToSave, i, 16 ) );
     }
 
     boolean haveNotes = false;
@@ -3601,7 +6057,7 @@ public class RemoteConfiguration
       keyMove.store( pw );
     }
 
-    for ( Macro macro : getAllMacros() )
+    for ( Macro macro : getAllMacros( true ) )
     {
       pw.printHeader( "Macro" );
       macro.store( pw );
@@ -3626,20 +6082,34 @@ public class RemoteConfiguration
 
     for ( TimedMacro tm : timedMacros )
     {
-      String className = tm.getClass().getName();
-      int dot = className.lastIndexOf( '.' );
-      className = className.substring( dot + 1 );
-      pw.printHeader( className );
+      pw.printHeader( "TimedMacro" );
       tm.store( pw );
     }
 
     for ( FavScan fs : favScans )
     {
-      String className = fs.getClass().getName();
-      int dot = className.lastIndexOf( '.' );
-      className = className.substring( dot + 1 );
-      pw.printHeader( className );
+      pw.printHeader( "FavScan" );
       fs.store( pw, this );
+    }
+    
+    if ( remote.usesEZRC() && favScans.size() > 0 )
+    {
+      Button favBtn = remote.getButton( remote.getFavKey().getKeyCode() );
+      Activity activity = null;
+      if ( activities != null && ( activity = activities.get( favBtn )) != null )
+      {
+        pw.printHeader( "FavData" );
+        pw.print( "Pause", favPause );
+        if ( !remote.isSSD() )
+        {
+          pw.print( "FavWidth", favKeyDevButton.getFavoriteWidth() );
+        }
+        if ( favFinalKey != null )
+        {
+          pw.print( "FinalKey", favFinalKey.getKeyCode() );
+        }
+        ActivityGroup.store( pw, activity.getActivityGroups() );
+      }
     }
 
     for ( DeviceUpgrade device : devices )
@@ -3666,7 +6136,19 @@ public class RemoteConfiguration
     {
       for ( Activity activity : activities.values() )
       {
-        pw.printHeader( "Activity" );
+        if ( activity.isActive() )
+        {
+          pw.printHeader( "Activity" );
+          activity.store( pw );
+        }
+      }
+    }
+    
+    if ( remote.getFavKey() != null && remote.getFavKey().getProfiles() != null )
+    {
+      for ( Activity activity : remote.getFavKey().getProfiles() )
+      {
+        pw.printHeader( "Profile" );
         activity.store( pw );
       }
     }
@@ -3749,8 +6231,9 @@ public class RemoteConfiguration
   
   public String getSigString()
   {
-    if ( sigData == null )
+    if ( sigData == null || ( sigData[ 0 ] + sigData[ 1 ] ) == 0xFF )
     {
+      // second case is XSight remotes where sig string is just the 6-character signature
       return null;
     }
     char[] sig = new char[ 26 ];
@@ -3833,6 +6316,23 @@ public class RemoteConfiguration
     return macros;
   }
 
+//  public List< Macro > getTableMacros()
+//  {
+//    if ( !remote.isSSD() )
+//    {
+//      return getMacros();
+//    }
+//    List< Macro > list = new ArrayList< Macro >();
+//    for ( Macro macro : getMacros() )
+//    {
+////      if ( !macro.isSystemMacro() )
+//      {
+//        list.add( macro );
+//      }
+//    }
+//    return list;
+//  }
+  
   public List< FavScan > getFavScans()
   {
     return favScans;
@@ -3898,6 +6398,11 @@ public class RemoteConfiguration
     return sigData;
   }
 
+  public String getEepromFormatVersion()
+  {
+    return eepromFormatVersion;
+  }
+
   public void setSigData( short[] sigData )
   {
     this.sigData = sigData;
@@ -3914,7 +6419,12 @@ public class RemoteConfiguration
   /** The data. */
   private short[] data = null;
   
+  protected short[] origData = null;
+  
   private short[] sigData = null;
+  
+  /** Provisional interpretation of bytes 7-12 of the E2 area of an XSight remote. */
+  private String eepromFormatVersion = null;
   
   private Color[] highlight = null;
 
@@ -3923,6 +6433,13 @@ public class RemoteConfiguration
   
   private LinkedHashMap< Integer, List<Segment> > segments = new LinkedHashMap< Integer, List<Segment> >();
   
+  private LinkedHashMap< String, SSDFile > ssdFiles = new LinkedHashMap< String, SSDFile >();
+  
+  public LinkedHashMap< String, SSDFile > getSsdFiles()
+  {
+    return ssdFiles;
+  }
+
   private LinkedHashMap< Button, Activity > activities = null;
   
   private List< Integer > segmentLoadOrder = new ArrayList< Integer >();
@@ -3979,6 +6496,10 @@ public class RemoteConfiguration
   public void setFavKeyDevButton( DeviceButton devButton )
   {
     this.favKeyDevButton = devButton;
+    if ( remote.usesEZRC() )
+    {
+      return;
+    }
     if ( favScans.size() > 0 )
     {
       int size = favScans.size();
@@ -3996,11 +6517,25 @@ public class RemoteConfiguration
     }
   }
 
+  public int getFavPause()
+  {
+    return favPause;
+  }
+
+  public void setFavPause( int favPause )
+  {
+    this.favPause = favPause;
+  }
+
   public void initializeSetup( int startAddr )
   {
     // Fill buffer with 0xFF
     Arrays.fill( data, startAddr, data.length, ( short )0xFF );
-    if ( hasSegments() )
+    if ( remote.isSSD() )
+    {
+      
+    }
+    else if ( hasSegments() )
     {
       initializeSegments();
     }
@@ -4070,12 +6605,18 @@ public class RemoteConfiguration
     updateFixedData( true );
 
     // If remote has segregated Fav key, initialize Fav section
-    if ( remote.hasFavKey() && remote.getFavKey().isSegregated() )
+    if ( remote.hasFavKey() )
     {
-      int offset = remote.getFavScanAddress().getStart();
-      data[ offset++ ] = 0;
-      data[ offset++ ] = 0;
+      if ( remote.getFavKey().isSegregated() )
+      {
+        int offset = remote.getFavScanAddress().getStart();
+        data[ offset++ ] = 0;
+        data[ offset++ ] = 0;
+      }
     }
+    
+    // Clear the dialogs of data from any previous setup
+    resetDialogs();
   }
 
   public void setDateIndicator()
@@ -4160,6 +6701,21 @@ public class RemoteConfiguration
     return owner.highlightItem.isSelected();
   }
 
+  public Button getFavFinalKey()
+  {
+    return favFinalKey;
+  }
+
+  public void setFavFinalKey( int keyCode )
+  {
+    favFinalKey = ( keyCode == 0xFF ) ? null : remote.getButton( keyCode );
+  }
+
+  public void setFavFinalKey( Button favFinalKey )
+  {
+    this.favFinalKey = favFinalKey;
+  }
+
   /** The notes. */
   private String notes = null;
 
@@ -4167,13 +6723,926 @@ public class RemoteConfiguration
 
   private DeviceButton favKeyDevButton = null;
   
+  private int favPause = 0;
+  
+  private Button favFinalKey = null;
+  
   public ProtocolUpgrade protocolUpgradeUsed = null;
   
   private RemoteMaster owner = null;
+  
+  private LinkedHashMap< Integer, RMIcon > userIcons = null;
+  private LinkedHashMap< Integer, RMIcon > sysIcons = null;
+
+  public LinkedHashMap< Integer, RMIcon > getUserIcons()
+  {
+    return userIcons;
+  }
+
+  public LinkedHashMap< Integer, RMIcon > getSysIcons()
+  {
+    return sysIcons;
+  }
 
   public RemoteMaster getOwner()
   {
     return owner;
   }
+  
+  public static class KeySpec
+  {
+    DeviceButton db = null;
+    Button btn = null;
+    GeneralFunction fn = null;
+    int irSerial = -1;  // unset; only used temporarily during file load
+    int duration = -1;  // unset
+    int delay = 0;
+    
+    public KeySpec( DeviceButton db, Button btn )
+    {
+      this.db = db;
+      this.btn = btn;
+    }
+    
+    public KeySpec( DeviceButton db, GeneralFunction fn )
+    {
+      this.db = db;
+      this.fn = fn;
+    }
+    
+    public KeySpec( DeviceButton db, int irSerial )
+    {
+      this.db = db;
+      this.irSerial = irSerial;
+    }
+    
+    public Button getButton()
+    {
+      if ( fn == null )
+      {
+        return btn;
+      }
+//      else if ( fn.getUsers().isEmpty() )
+      else if ( fn.getSerial() >= 0 )
+      {
+        return null;
+      }
+      else if ( !fn.getUsers().isEmpty() )
+      {
+        Button b = fn.getUsers().get( 0 ).button;
+        if ( ( b.getKeyCode() & 0x80 ) == 0 )
+        {
+          return b;
+        }
+      }
+      return null;
+    }
+    
+    @Override
+    public String toString()
+    {
+      StringBuilder buff = new StringBuilder();
+      buff.append( db.getName() + ";" );
+      if ( duration >= 0 )
+      {
+        buff.append( "Hold(" +  duration / 10 + "." + duration % 10 + ");" );
+      }
+      Button b = fn == null ? btn : fn.getUsers().isEmpty() ? null : fn.getUsers().get( 0 ).button;
+      if ( b != null )
+      {
+//        buff.append( b.getName() );
+        GeneralFunction f = db.getUpgrade().getGeneralFunction(b.getKeyCode() );
+        buff.append( f != null ? f.getName() : b.getName() );
+      }
+      else if ( fn != null )
+      {
+//        buff.append( "Fn(" + fn.getName() + ")" );
+        buff.append( fn.getName() );
+      }
+      if ( delay != 0 )
+      {
+        buff.append( "(" +  delay / 10 + "." + delay % 10 + ")" );
+      }
+      return buff.toString();
+    }
+  }
+  
+  private class Items
+  {
+    DeviceButton db = null;
+    List< DeviceButton > dbList = new ArrayList< DeviceButton >();
+    DeviceUpgrade upgrade = null;
+    Hex fixedData = null;
+    Hex pCode = null;
+    Hex pid = null;
+    int setupCode = 0;
+    String alias = null;
+    List< Key > keys = null;
+    Key key = null;
+    int missingIndex = 0;
+    Macro macro = null;
+    Activity activity = null;
+    List< Activity > activities = new ArrayList< Activity >();
+    List< Assister > assisters = null;
+    LinkedHashMap< Button, KeySpec > map = null;
+    LinkedHashMap< Integer, Macro > macroMap = new LinkedHashMap< Integer, Macro >();
+    LinkedHashMap< GeneralFunction, Integer > iconrefMap = new LinkedHashMap< GeneralFunction, Integer >();
+    Integer softPageIndex = null;
+    FavScan fav = null;
+  }
+  
+  private class Key
+  {
+    Button btn = null;
+    int keycode = 0;
+    int irserial = -1;
+    Integer keyflags = 0;
+    Integer keygid = null;
+    Hex irdata = null;
+    LearnedSignal ls = null;
+    String fname = null;
+    Integer iconref = null;
+    Integer macroref = null;
+  }
+  
+  
+  
+ public class SSDFile
+  {
+    public SSDFile() {};
+    
+    public SSDFile( List< String > tagNames, List< Hex > sectors )
+    {
+      int len = 0;
+      for ( Hex hex : sectors )
+      {
+        len += hex.length();
+      }
+      short[] data = new short[ len ];
+      len = 0;
+      for ( Hex hex : sectors )
+      {
+        System.arraycopy( hex.getData(), 0, data, len, hex.length() );
+        len += hex.length();
+      }
+      this.tagNames = tagNames;
+      this.hex = new Hex( data );
+//      System.err.println( "Constructed hex = " + hex );
+    }
 
+    List< String > tagNames = null;
+    Hex hex = null;
+  }
+  
+  private List< String > tagList = null;
+  
+  private Hex makeBXMLFile( SSDFile file )
+  {
+    if ( file == null )
+    {
+      return null;
+    }
+    int tagSize = 0;
+    short tagCount = 0;
+    for ( String s : file.tagNames )
+    {
+      tagSize += s.length() + 1;
+      tagCount++;
+    }
+    int hexSize = 17 + tagSize + file.hex.length();
+    Hex fileHex = new Hex( hexSize );
+    fileHex.put( new Hex( "ezrc    bxml10", 8 ), 0 );
+    fileHex.put( getLittleEndian( tagSize ), 14 );
+    fileHex.set( tagCount, 16 );
+    int pos = 17;
+    for ( String s : file.tagNames )
+    {
+      fileHex.put( new Hex( s, 8 ), pos );
+      pos += s.length();
+      fileHex.set( ( short  )0, pos++ );
+    }
+    fileHex.put( file.hex, pos );
+    return fileHex;
+  }
+  
+  private short getTag( String name )
+  {
+    int tag = tagList.indexOf( name );
+    if ( tag == -1 )
+    {
+      tag = tagList.size();
+      tagList.add( name );  
+    }
+    return ( short )tag;
+  }
+  
+  private Hex endTag( String name )
+  {
+    int tag = tagList.indexOf( name );
+    if ( tag == -1 )
+    {
+      System.err.println( "Tag error:  undefined end tag \"" + name + "\"" );
+      tag = 0x80;
+    }
+    else
+    {
+      tag |= 0x80;
+    }
+    return new Hex( new short[]{ ( short )tag } );
+  }
+  
+  private Hex makeItem( String tagName, Hex value, boolean end )
+  {
+    Hex hex = new Hex( value.length() + ( end ? 3 : 2 ) );
+    short tag = getTag( tagName );
+    hex.set( tag , 0 );
+    hex.set( ( short )value.length(), 1 );
+    hex.put( value, 2 );
+    if ( end )
+    {
+      hex.set( ( short )( tag | 0x80 ), value.length() + 2 );
+    }
+    return hex;
+  }
+  
+  private SSDFile makeMacrosXCF()
+  {
+    tagList = new ArrayList< String >();
+    List< Hex > work = new ArrayList< Hex >();
+    
+    work.add( makeItem( "macros", new Hex( "macros.xcf", 8 ), false ) );
+    for ( Macro macro : macros )
+    {
+      Activity activity = macro.getActivity();
+      work.add( makeItem( "macro", getLittleEndian( macro.getSerial() ), false ) );
+      if ( macro.getName() == null )
+      {
+        continue;
+      }
+      work.add( makeItem( "name16", new Hex( macro.getName(), 16 ), true ) );
+
+      String btnTag = null;
+      Hex btnHex = null;
+      boolean isSysMacro = false;
+      List< KeySpec > items = null;
+      items = macro.getItems();
+      isSysMacro = macro.isSystemMacro();
+
+      for ( KeySpec item : items )
+      {
+        Button b = item.getButton();
+        boolean ir = b == null;
+        boolean softKey = !ir && remote.isSoftButton( b );
+        boolean hardKey = !ir && !softKey;
+        btnTag = softKey ? "sendsoftkey" : hardKey ? "sendhardkey" : "sendir" ;
+        short dev = ( short )item.db.getSerial();
+        short softPage = ( short )( softKey ? ( b.getKeyCode() - 0x31 ) / 6 : 0 );
+        int val = ir ? item.fn.getSerial() : b.getKeyCode() - 6 * softPage;
+        btnHex = softKey ? new Hex( new short[]{ dev, softPage, ( short )val } ) :
+          hardKey ? new Hex( new short[]{ dev, ( short )val } ) :
+            new Hex( new short[]{ dev, ( short )( val & 0xFF ), ( short )( val >> 8 ) } );
+        short delay = ( short )item.delay;
+        short duration = ( short )item.duration;
+
+        work.add( makeItem( btnTag, btnHex, false ) );
+        if ( isSysMacro || duration >= 0 )
+        {
+          // Value is -1 if absent, value 0 is an explicit value
+          work.add( makeItem( "duration", new Hex( new Hex( getLittleEndian( duration * 100 ), 0, 4 ) ), true ) );
+        }
+        work.add( endTag( btnTag ) );
+        work.add( makeItem( "delay", new Hex( new short[]{ delay } ), true ) );
+      }
+      if ( isSysMacro )
+      {
+        work.add( makeItem( "issystemmacro", new Hex( new short[]{ 1 } ), true ) );
+      }
+      boolean assistantDone = false;
+      if ( isSysMacro || macro.getAssists() != null && !macro.getAssists().isEmpty() )
+      {
+        assistantDone = true;
+        work.add( makeItem( "assistant", new Hex( 0 ), false ) );
+      }
+      if ( activity != null && !activity.getAssists().isEmpty() 
+          || activity == null && macro.getAssists() != null && !macro.getAssists().isEmpty() )
+      {
+        LinkedHashMap< Integer, List< Assister > > assists = 
+            activity != null ? activity.getAssists() : macro.getAssists();
+        String[] tagNames = null;
+        for ( int i = 0; i < 3; i++ )
+        {
+          List< Assister > assisters = assists.get(  2 - i );
+          if ( assisters.size() > 0 )
+          {
+            if ( tagNames == null )
+            {
+              tagNames = new String[]{ "powerkeys", "audioinputs", "pictureinputs" };
+              for ( String tagName : tagNames )
+              {
+                // create the tags, whether they are used or not
+                getTag( tagName );
+              }
+            }
+            work.add( makeItem( tagNames[ i ], new Hex( 0 ), false ) );
+            for ( Assister assister : assists.get(  2 - i ) )
+            {
+              short dev = ( short )( assister.device.getSerial() );
+              GeneralFunction f = assister.function;
+              Button b = f.getUsers().isEmpty() ? null : f.getUsers().get( 0 ).button;
+              boolean ir = b == null;
+              boolean softKey = !ir && remote.isSoftButton( b );
+              boolean hardKey = !ir && !softKey;
+              btnTag = softKey ? "softkey" : hardKey ? "hardkey" : "irref" ;
+              short softPage = ( short )( softKey ? ( b.getKeyCode() - 0x31 ) / 6 : 0 );
+              int val = ir ? f.getSerial() : b.getKeyCode() - 6 * softPage;
+              btnHex = softKey ? new Hex( new short[]{ dev, softPage, ( short )val } )
+                : hardKey ? new Hex( new short[]{ dev, ( short )val } )
+                : new Hex( new short[]{ dev, ( short )( val & 0xFF ), ( short )( val >> 8 ) } );
+              work.add( makeItem( btnTag, btnHex, true ) );
+            }
+            work.add( endTag( tagNames[ i ] ) );
+          }
+        }
+      }
+      if ( assistantDone )
+      {
+        work.add( endTag( "assistant" ) );
+      }
+      work.add( endTag( "macro" ) );
+    }
+    work.add( endTag( "macros" ) );
+    if ( tagList.size() == 1 )
+    {
+      return null;
+    }
+    SSDFile file = new SSDFile( tagList, work );
+    tagList = null;
+    return file;
+  }
+  
+  private SSDFile makeDevicesXCF()
+  {
+    tagList = new ArrayList< String >();
+    List< Hex > work = new ArrayList< Hex >();
+    work.add( makeItem( "devices", new Hex( "devices.xcf", 8 ), false ) );    
+    for ( DeviceButton db : remote.getDeviceButtons() )
+    {
+      Segment seg  = db.getSegment();
+      if ( seg == null )
+      {
+        continue;
+      }
+      short[] segData = seg.getHex().getData();
+      short serial = ( short )( db.getButtonIndex() - 0x50 );
+      work.add( makeItem( "device", new Hex( "" + new Hex( new short[]{ serial } ) + " " + new Hex( db.getName(), 16 ) ), false ) );
+      String brand = remote.getDeviceLabels().getText2( segData, 1 );
+      if ( brand != null )
+      {
+        work.add( makeItem( "brand", new Hex( brand, 8 ), true ) );
+      }
+      String model = remote.getDeviceLabels().getText2( segData, 2 );
+      if ( model != null )
+      {
+        work.add( makeItem( "model", new Hex( model, 8 ), true ) );
+      }
+      model = remote.getDeviceLabels().getText2( segData, 3 );
+      if ( model != null )
+      {
+        work.add( makeItem( "remotemodel", new Hex( model, 8 ), true ) );
+      }
+      int iconref = db.icon.ref;
+      work.add( makeItem( "iconref", new Hex( new short[]{ ( short )iconref } ), true ) );
+      if ( favKeyDevButton == db && favFinalKey != null )
+      {
+        work.add( makeItem( "enterkey", new Hex( new short[]{ ( short )favFinalKey.getKeyCode() } ), true ) );
+      }
+      work.add( makeItem( "favoritewidth", new Hex( new short[]{ ( short )db.getFavoriteWidth() } ), true ) );
+      if ( db.getVpt() == 2 )
+      {
+        work.add( makeItem( "volumemaster", new Hex( 0 ), true ) );
+      }
+      if ( db.getVpt() >= 1 )
+      {
+        work.add( makeItem( "volumelock", new Hex( 0 ), true ) );
+      }
+      String s = new String( new char[]{ ( char )db.getDeviceTypeIndex( segData ) } );
+      s += db.isConstructed() ? "????" : new SetupCode( db.getSetupCode( segData ) ).toString();
+      work.add( makeItem( "codeset", new Hex( s, 8 ), false ) );
+      DeviceUpgrade upg = db.getUpgrade();
+      Protocol prot = upg.getProtocol();
+      if ( !db.isConstructed() )
+      {
+        Hex fixed = prot.getFixedData( upg.getParmValues() );
+        if ( fixed.length() > 0 )
+        {
+          work.add( makeItem( "prefix", fixed, true ) );
+        }
+        work.add( makeItem( "executor", new Hex( new short[]{ prot.getID().getData()[ 1 ], prot.getID().getData()[ 0 ] } ), false ) );
+
+        Hex code = upg.getCode();
+        if ( upg.needsProtocolCode() && code != null && code.length() != 0 )
+        {
+          work.add( makeItem( "objcode", encryptObjcode( code ), true ) );
+        }
+        work.add( endTag( "executor" ) );
+      }
+      List< Button > buttons = new ArrayList< Button >( Arrays.asList( remote.getUpgradeButtons() ) );
+      Collections.sort( buttons, DeviceUpgrade.ButtonSorter );
+      Integer softpage = null;
+      boolean irUsed = false;
+      for ( Button b : buttons )
+      {
+        Function f = upg.getAssignments().getAssignment( b );
+        Macro macro = db.getUpgrade().getMacroMap().get( ( int )b.getKeyCode() );
+//        KeyMove km = db.getUpgrade().getKmMap().get( ( int )b.getKeyCode() );
+        LearnedSignal ls = findLearnedSignal( db, b );
+        String btnTag = "keydef";
+        String name = null;
+        int keyCode = b.getKeyCode();
+        
+        if ( f == null && macro == null && ls == null )
+        {
+          continue;
+        }
+        if ( !remote.isSoftButton( b ) && softpage != null
+            || remote.isSoftButton( b ) && softpage != null && softpage != ( keyCode - 0x31 ) / 6 )
+        {
+          work.add( endTag( "softpage" ) );
+          softpage = null;
+        }
+        if ( remote.isSoftButton( b ) && softpage == null )
+        {
+          softpage = ( keyCode - 0x31 ) / 6;
+          work.add( makeItem( "softpage", new Hex( new short[]{ ( short )( int )softpage } ), false ) );
+        }
+        if ( softpage != null )
+        {
+          keyCode -= 6 * softpage;
+        }
+        Hex btnHex = new Hex( new short[]{ ( short )keyCode } );
+        work.add( makeItem( btnTag, btnHex, false ) );
+        if ( ls != null )
+        {
+          int len = ls.getData().length();
+          Hex hex = new Hex( len + 9 );
+          hex.set( ( short )( len + 8 ), 0 );
+          hex.put( ls.getHeader(), 1 );
+          hex.set( ( short )len, 8 );
+          System.arraycopy( ls.getData().getData(), 0, hex.getData(), 9, len );
+          work.add( makeItem( "learnedkey", hex, true ) );
+          name = ls.getName();
+        }
+        
+        if ( f != null && f.getHex() != null )
+        {
+          work.add( makeItem( "keygid", getLittleEndian( f.getGid() == null ? Function.defaultGID : f.getGid() ), true ) );
+          work.add( makeItem( "keyflags", new Hex( new short[]{ ( short )( f.getKeyflags() == null ? 0 : f.getKeyflags() ) } ), true ) );
+          work.add( makeItem( "irdata", f.getHex(), true ) );
+          if ( f.icon != null && f.icon.ref > 0 )
+          {
+            work.add( makeItem( "iconref", new Hex( new short[]{ ( short )f.icon.ref } ), true ) );
+          }
+          name = f.getName();
+        }
+        
+        if ( macro != null )
+        {
+          work.add( makeItem( "macroref", getLittleEndian( macro.getSerial() ), true ) );
+          name = f != null ? f.getName() : macro.getName();
+        }
+        
+//        if ( km != null )
+//        {
+//          work.add( makeItem( "macroref", getLittleEndian( km.getSerial() ), true ) );
+//          if ( name == null )
+//          {
+//            name = f != null ? f.getName() : km.getName();
+//          }
+//        }
+        if ( name == null )
+        {
+          System.err.println( "Null name at " + db + " : " + b );
+        }
+        work.add( makeItem( "name8", new Hex( name, 8 ), true ) );
+        work.add( endTag( btnTag ) );
+      }
+      if ( softpage != null )
+      {
+        work.add( endTag( "softpage" ) );
+      }
+      List< Integer > fnkeys = new ArrayList< Integer >( upg.getFunctionMap().keySet() );
+      Collections.sort( fnkeys );
+      for ( int fnkey : fnkeys )
+      {
+        Function f = upg.getFunctionMap().get( fnkey );
+//        if ( !f.getUsers().isEmpty() )
+//        {
+//          continue;
+//        }
+        if ( !irUsed )
+        {
+          work.add( makeItem( "irdefs", new Hex( 0 ), false ) );
+          irUsed = true;
+        }
+        Hex btnHex = new Hex( new short[]{ ( short )( fnkey & 0xFF ), ( short )( fnkey >> 8 ) } );
+        work.add( makeItem( "irdef", btnHex, false ) );
+        if ( f != null && f.getHex() != null )
+        {
+          work.add( makeItem( "keygid", getLittleEndian( f.getGid() == null ? Function.defaultGID : f.getGid() ), true ) );
+          work.add( makeItem( "keyflags", new Hex( new short[]{ ( short )( f.getKeyflags() == null ? 0 : f.getKeyflags() ) } ), true ) );
+          work.add( makeItem( "irdata", f.getHex(), true ) );
+          if ( f.icon != null && f.icon.ref > 0 )
+          {
+            work.add( makeItem( "iconref", new Hex( new short[]{ ( short )f.icon.ref } ), true ) );
+          }
+          String name = f.getName();
+          work.add( makeItem( "name8", new Hex( name, 8 ), true ) );
+          work.add( endTag( "irdef" ) );
+        }
+      }
+      if ( irUsed )
+      {
+        work.add( endTag( "irdefs" ) );
+        irUsed = false;
+      }
+
+      work.add( endTag( "codeset" ) );
+      work.add( endTag( "device" ) );
+    }
+    work.add( endTag( "devices" ) );
+    if ( tagList.size() == 1 )
+    {
+      return null;
+    }
+//    if ( ( tagList.size() & 1 ) == 1 )  
+    {
+      // This tag sometimes is included when it is not used, but can't figure out
+      // just when that is.  It doesn't seem to matter if it is included or not, but
+      // it makes checking easier to have it correct.
+      getTag( "learnedkey" );  // tag always present even if unused
+    }
+    SSDFile file = new SSDFile( tagList, work );
+    tagList = null;
+    return file;
+  }
+  
+  private SSDFile makeHomeXCF()
+  {
+    tagList = new ArrayList< String >();
+    List< Hex > work = new ArrayList< Hex >();
+    work.add( makeItem( "root", new Hex( 0 ), false ) );
+    work.add( makeItem( "home", new Hex( 0 ), false ) );
+    for ( String name : new String[]{"devices", "profiles", "favorites", "macros", "activities" } )
+    {
+      String fileName = name + ".xcf";
+      SSDFile file = ssdFiles.get( fileName );
+      work.add( makeItem( name, ( file == null ) ? new Hex( 0 ) : new Hex( fileName, 8 ), true ) );
+    }
+    work.add( endTag( "home" ) );
+    work.add( endTag( "root" ) );
+    SSDFile file = new SSDFile( tagList, work );
+    tagList = null;
+    return file;
+  }
+  
+  private SSDFile makeProfilesXCF()
+  {
+    tagList = new ArrayList< String >();
+    List< Hex > work = new ArrayList< Hex >();
+    LinkedHashMap< Button, KeySpec > map = new LinkedHashMap< Button, KeySpec >();
+    work.add( makeItem( "profiles", new Hex( "profiles.xcf", 8 ), false ) );
+    for ( Activity activity : remote.getFavKey().getProfiles() )
+    {
+      work.add( makeItem( "profile", new Hex( "" + new Hex( new short[]{ ( short )activity.getProfileIndex() } ) + " " + new Hex( activity.getName(), 16 ) ), false ) );
+      if ( activity.icon != null && activity.icon.ref > 0 )
+      {
+        work.add( makeItem( "iconref", new Hex( new short[]{ ( short )activity.icon.ref } ), true ) );
+      }
+      work.add( makeItem( "punchthrumap", new Hex( 0 ), false ) );
+      ActivityGroup[] groups = activity.getActivityGroups();
+      for ( ActivityGroup group : groups )
+      {
+        DeviceButton db = group.getDevice();
+        if ( db == null || db == DeviceButton.noButton )
+        {
+          continue;
+        }
+        for ( Button b : group.getButtonGroup() )
+        {
+          map.put( b, new KeySpec( db, b ) );
+        }
+      }
+      for ( int code : remote.getActivityOrder() )
+      {
+        Button b = remote.getButton( code );
+        if ( b == null )
+        {
+          continue;
+        }
+        KeySpec ks = map.get( b );
+        if ( ks == null )
+        {
+          continue;
+        }
+        short serial = ( short )( ks.db.getButtonIndex() - 0x50 );
+        work.add( makeItem( "punchthruspec", new Hex( new short[]{ serial, ( short )code, ( short )code } ), true ) );
+      }
+      work.add( endTag( "punchthrumap" ) );
+      work.add( endTag( "profile" ) );
+    }
+    work.add( endTag( "profiles" ) );
+    if ( tagList.size() == 1 )
+    {
+      return null;
+    }
+    SSDFile file = new SSDFile( tagList, work );
+    tagList = null;
+    return file;
+  }
+  
+  private SSDFile makeFavoritesXCF()
+  {
+    if ( favScans.isEmpty() )
+    {
+      return null;
+    }
+    tagList = new ArrayList< String >();
+    Activity activity = activities.get( remote.getButtonByStandardName( "Favorites" ) );
+    List< Hex > work = new ArrayList< Hex >();
+    LinkedHashMap< Button, KeySpec > map = new LinkedHashMap< Button, KeySpec >();
+    work.add( makeItem( "favorites", new Hex( "favorites.xcf", 8 ), false ) );
+    work.add( makeItem( "delay", new Hex( new short[]{ ( short )favPause } ), true ) );
+    for ( FavScan favScan : favScans )
+    {
+      work.add( makeItem( "favorite", new Hex( "" + new Hex( new short[]{ ( short )favScan.getSerial() } ) + " " + new Hex( favScan.getName(), 16 ) ), false ) );
+      if ( favScan.getProfileIndices() != null )
+      {
+        for ( int index : favScan.getProfileIndices() )
+        {
+          work.add( makeItem( "profileindex", new Hex( new short[]{ ( short )index } ), true ) );
+        }
+      }
+      work.add( makeItem( "deviceid", new Hex( new short[]{ ( short )( favKeyDevButton.getButtonIndex() - 0x50 ) } ), true ) );
+      if ( favScan.icon != null && favScan.icon.ref > 0 )
+      {
+        work.add( makeItem( "iconref", new Hex( new short[]{ ( short )favScan.icon.ref } ), true ) );
+      }
+      String channel = favScan.getChannel();
+      short[] data = { 0, 0, 0, 0 };
+      for ( int i = 0; i < channel.length(); i++ )
+      {
+        int digit = channel.charAt( channel.length() - i - 1 ) & 0x0F;
+        data[ i / 2 ] |= digit << ( i % 2 << 2 );
+      }
+      work.add( makeItem( "channelnumber", new Hex( data ), true ) );
+      work.add( endTag( "favorite" ) );
+    }
+    work.add( makeItem( "punchthrumap", new Hex( 0 ), false ) );
+    ActivityGroup[] groups = activity.getActivityGroups();
+    for ( ActivityGroup group : groups )
+    {
+      DeviceButton db = group.getDevice();
+      if ( db == null )
+      {
+        continue;
+      }
+      for ( Button b : group.getButtonGroup() )
+      {
+        map.put( b, new KeySpec( db, b ) );
+      }
+    }
+    for ( int code : remote.getActivityOrder() )
+    {
+      Button b = remote.getButton( code );
+      if ( b == null )
+      {
+        continue;
+      }
+      KeySpec ks = map.get( b );
+      if ( ks == null )
+      {
+        continue;
+      }
+      short serial = ( short )( ks.db.getButtonIndex() - 0x50 );
+      work.add( makeItem( "punchthruspec", new Hex( new short[]{ serial, ( short )code, ( short )code } ), true ) );
+    }
+    work.add( endTag( "punchthrumap" ) );
+    work.add( endTag( "favorites" ) );
+    SSDFile file = new SSDFile( tagList, work );
+    tagList = null;
+    return file;
+  }
+  
+  private SSDFile makeActivitiesXCF()
+  {
+    tagList = new ArrayList< String >();
+    List< Hex > work = new ArrayList< Hex >();
+    LinkedHashMap< Button, KeySpec > map = new LinkedHashMap< Button, KeySpec >();
+
+    work.add( makeItem( "activities", new Hex( "activities.xcf", 8 ), false ) );
+    for ( Activity activity : activities.values() )
+    {
+      Button btn = activity.getButton();
+//    for ( Button btn : remote.getButtonGroups().get( "Activity" ) )
+//    {
+//      Activity activity = activities.get( btn );
+      if ( activity == null || !activity.isActive() )
+      {
+        continue;
+      }
+      short serial = ( short )( btn.getKeyCode() & 0x0F );
+      work.add( makeItem( "activity", new Hex( "" + new Hex( new short[]{ serial } ) + " " + new Hex( activity.getName(), 16 ) ), false ) );
+      if ( activity.icon != null && activity.icon.ref > 0 )
+      {
+        work.add( makeItem( "iconref", new Hex( new short[]{ ( short )activity.icon.ref } ), true ) );
+      }
+      work.add( makeItem( "macroref", new Hex( new short[]{ ( short )activity.getMacro().getSerial(), 0 } ), true ) );
+      work.add( makeItem( "punchthrumap", new Hex( 0 ), false ) );
+      ActivityGroup[] groups = activity.getActivityGroups();
+      for ( ActivityGroup group : groups )
+      {
+        DeviceButton db = group.getDevice();
+        for ( Button b : group.getButtonGroup() )
+        {
+          map.put( b, new KeySpec( db, b ) );
+        }
+      }
+      for ( int code : remote.getActivityOrder() )
+      {
+        Button b = remote.getButton( code );
+        if ( b == null )
+        {
+          continue;
+        }
+        KeySpec ks = map.get( b );
+        if ( ks == null || ks.db == null || ks.db == DeviceButton.noButton )
+        {
+          continue;
+        }
+        serial = ( short )( ks.db.getButtonIndex() - 0x50 );
+        work.add( makeItem( "punchthruspec", new Hex( new short[]{ serial, ( short )code, ( short )code } ), true ) );
+      }
+      int count = -1;
+      short softIndex = -1;
+      for ( Button b : remote.getButtonGroups().get( "Soft" ) )
+      {
+        KeySpec ks = map.get( b );
+        if ( ks == null || ks.db == null || ks.db == DeviceButton.noButton )
+        {
+          continue;
+        }
+        DeviceButton db = ks.db;
+        serial = ( short )( db.getButtonIndex() - 0x50 );
+        if ( ( ++count % 6 ) == 0 )
+        {
+          if ( count > 0 )
+          {
+            work.add( endTag( "softpage" ) );
+          }
+          work.add( makeItem( "softpage", new Hex( new short[]{ ++softIndex } ), false ) );
+        }
+        int code = b.getKeyCode() - 6 * softIndex;
+        work.add( makeItem( "punchthruspec", new Hex( new short[]{ serial, ( short )code, ( short )code } ), false ) );
+        DeviceUpgrade upg = db.getUpgrade();
+        GeneralFunction f = null;
+        if ( upg != null && ( f = upg.getGeneralFunction( b.getKeyCode() ) ) != null )
+        {
+          if ( f.icon != null && f.icon.ref > 0 )
+          {
+            work.add( makeItem( "iconref", new Hex( new short[]{ ( short )f.icon.ref } ), true ) );
+          }
+          work.add( makeItem( "name8", new Hex( f.getName(), 8 ), true ) );
+        }
+        work.add( endTag( "punchthruspec" ) );
+      }
+      if ( softIndex >= 0 )
+      {
+        work.add( endTag( "softpage" ) );
+      }
+      work.add( endTag( "punchthrumap" ) );
+      work.add( endTag( "activity" ) );
+    }
+    work.add( endTag( "activities" ) );
+    if ( tagList.size() == 1 )
+    {
+      return null;
+    }
+    SSDFile file = new SSDFile( tagList, work );
+    tagList = null;
+    return file;
+  }
+  
+  private Hex makeUserIconsPKG()
+  {
+    List< Hex > work = new ArrayList< Hex >();
+    List< Integer > refs = new ArrayList< Integer >( userIcons.keySet() );
+    Collections.sort( refs );
+    work.add( new Hex( new short[]{ 0,0,0,0,0,0,0,0,0,0,0,0 } ) );
+    int iconCount = refs.size();
+    work.add( getLittleEndian( iconCount ) );
+    int indexSize = 0x7F;
+    for ( int n : refs )
+    {
+      indexSize = Math.max( indexSize, n + 1 );
+    }
+    work.add( getLittleEndian( indexSize ) );
+    int pos = 16 + 28 * iconCount + indexSize;
+    for ( int i : refs )
+    {
+      RMIcon icon = userIcons.get( i );
+      BufferedImage image = ( BufferedImage )icon.image.getImage();
+      int width = image.getWidth();
+      int height = image.getHeight();
+      int size = width * height;
+      work.add( icon.intro );
+      work.add( getLittleEndian( width ) );
+      work.add( getLittleEndian( height ) );
+      work.add( new Hex( new short[]{ 0,0,0,( short )icon.type } ) );
+      work.add( getLittleEndianWord( pos ) );
+      pos += 2 * size;
+      work.add( getLittleEndianWord( pos ) );
+      work.add( getLittleEndianWord( 2 * size + 0x200 ) );
+      pos += size;
+    }
+    int n = 1;
+    for ( int i = 0; i < indexSize; i++ )
+    {
+      work.add( new Hex( new short[]{ ( short )( refs.contains( i ) ? n++ : 0 ) } ) );
+    }
+    for ( int i : refs )
+    {
+      RMIcon icon = userIcons.get( i );
+      BufferedImage image = ( BufferedImage )icon.image.getImage();
+      int width = image.getWidth();
+      int height = image.getHeight();
+      int size = width * height;
+      Hex hex1 = new Hex( 2 * size );
+      Hex hex2 = new Hex( size );
+      pos = 0;
+      for ( int k = 0; k < height; k++ )
+      {
+        for ( int j = 0; j < width; j++ )
+        {
+          int rgb = image.getRGB( j, k );
+          int alpha = rgb >> 24;
+          double rf = ( ( rgb >> 16 ) & 0xFF )/ 255.0;
+          double gf = ( ( rgb >> 8 ) & 0xFF ) / 255.0;
+          double bf = ( rgb & 0xFF ) / 255.0;
+          int r = ( int )( rf * 31.0 + 0.5 );
+          int g = ( int )( gf * 63.0 + 0.5 );
+          int b = ( int )( bf * 31.0 + 0.5 );
+          int val = ( r << 11 ) | ( g << 5 ) | b;
+          hex1.set( ( short )( val & 0xFF ), 2 * pos );
+          hex1.set( ( short )( ( val >> 8 ) & 0xFF ), 2 * pos + 1 );
+          hex2.set( ( short )alpha, pos++ );
+        }
+      }
+      work.add( hex1 );
+      work.add( hex2 );
+    }
+    SSDFile file = new SSDFile( null, work );
+    return  file.hex;
+  }
+  
+  private Hex getLittleEndian( int n )
+  {
+    return new Hex( new short[]{ ( short )( n & 0xFF), ( short )( ( n >> 8 ) & 0xFF ) } );
+  }
+  
+  private Hex getLittleEndianWord( int n )
+  {
+    return new Hex( new short[]{ ( short )( n & 0xFF), ( short )( ( n >> 8 ) & 0xFF ), ( short )( ( n >> 16 ) & 0xFF ), ( short )( ( n >> 24 ) & 0xFF ) } );
+  }
+  
+  public int getNewMacroSerial()
+  {
+    List< Integer > list = new ArrayList< Integer >();
+    for ( Macro macro : macros )
+    {
+      list.add( macro.getSerial() );
+    }
+    for ( int serial = 1; ; serial++ )
+    {
+      if ( !list.contains( serial ) )
+      {
+        return serial;
+      }
+    }
+  }
+  
+  public static Comparator< Macro > MacroSorter = new Comparator< Macro >()
+  {
+    @Override
+    public int compare( Macro m1, Macro m2 )
+    {
+      return ( new Integer( m1.getSerial()) ).compareTo( new Integer( m2.getSerial()) );
+    }    
+  };
+  
+  public static final int[] encryptionKey = { 0x35, 0x34, 0x6E, 0x64, 0x73, 0x66, 
+    0x6A, 0x6B, 0x68, 0x61, 0x6B, 0x6C, 0x66, 0x64, 0x6A, 0x6B, 0x6C, 0x34, 0x65, 
+    0x37, 0x39, 0x38, 0x09, 0x34, 0x20, 0x2E, 0x22, 0x7E, 0x6C, 0x66, 0x0A, 0x6A, 
+    0x68, 0x66, 0x6B, 0x68, 0x67, 0x38, 0x37, 0x34, 0x39, 0x38, 0x68, 0x74, 0x51, 
+    0x51, 0x34, 0x32, 0x32, 0x39, 0x33, 0x01, 0x37, 0x39 };
+ 
 }

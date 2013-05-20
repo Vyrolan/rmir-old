@@ -1,6 +1,9 @@
 package com.hifiremote.jp1;
 
+import java.util.List;
 import java.util.StringTokenizer;
+
+import com.hifiremote.jp1.GeneralFunction.RMIcon;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -8,6 +11,13 @@ import java.util.StringTokenizer;
  */
 public class FavKey extends RDFParameter
 {
+  public FavKey() {};
+  
+  public FavKey( int keyCode )
+  {
+    this.keyCode = keyCode;
+  }
+  
   public void parse( String text, Remote remote ) throws Exception
   {
     StringTokenizer st = new StringTokenizer( text, "=, \t" );
@@ -97,18 +107,41 @@ public class FavKey extends RDFParameter
 
   }
 
+  public List< Activity > getProfiles()
+  {
+    return profiles;
+  }
+
+  public void setProfiles( List< Activity > profiles )
+  {
+    this.profiles = profiles;
+  }
+  
+  public Activity createProfile( String name, int profileIndex, Remote remote )
+  {
+    Button btn = remote.getButton( keyCode );
+    Activity activity = new Activity( btn, remote );
+    activity.setName( name );
+    activity.setProfileIndex( profileIndex );
+    activity.icon = new RMIcon( 8 );
+    profiles.add( activity );
+    return activity;
+  }
+
   /** The key code. */
-  private int keyCode;
+  private int keyCode = 0;
 
   /** The device button address. */
-  private int deviceButtonAddress;
+  private int deviceButtonAddress = 0;
 
   /** The max entries. */
-  private int maxEntries;
+  private int maxEntries = -1;  // -1 gives no limit, used for segmented remotes 
 
   /** The entry size. */
-  private int entrySize;
+  private int entrySize = -1;   // -1 gives unlimited size, used for segmented remotes
 
   /** The segregated. */
-  private boolean segregated;
+  private boolean segregated = false;
+  
+  private List< Activity > profiles = null;
 }

@@ -70,15 +70,15 @@ public class RMSetterDialog< T > extends JDialog
         {
           MacroDefinitionBox macroBox = ( MacroDefinitionBox )mainPanel;
           macroBox.setButtonEnabler( buttonEnabler );
-          macroBox.setRemoteConfiguration( remoteConfig );
         }
+        mainPanel.setRemoteConfiguration( remoteConfig );
       }
       catch ( Exception e )
       {
         e.printStackTrace();
       }
 
-      contentPane.add( mainPanel, BorderLayout.PAGE_START );
+      contentPane.add( mainPanel, BorderLayout.CENTER );
       contentPane.add( buttonPanel, BorderLayout.PAGE_END );
 
       pack();
