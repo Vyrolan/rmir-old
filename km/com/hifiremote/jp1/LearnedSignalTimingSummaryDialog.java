@@ -173,14 +173,19 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         }
         else
         {
+          String prefix= "";
           if ( ul.oneTime > 0 )
-            appendDurations( summary, analysis.getOneTimeDurationStringList(), "Once:\t" );
-
+          {
+            appendDurations( summary, analysis.getOneTimeDurationStringList(), prefix+"Once:\t" );
+            prefix = "\t\t\t\t\t";
+          }
           if ( ul.repeat > 0 )
-            appendDurations( summary, analysis.getRepeatDurationStringList(), "Repeat:\t" );
-
+          {
+            appendDurations( summary, analysis.getRepeatDurationStringList(), prefix+"Repeat:\t" );
+            prefix = "\t\t\t\t\t";
+          }
           if ( ul.extra > 0 )
-            appendDurations( summary, analysis.getExtraDurationStringList(), "Extra:\t" );
+            appendDurations( summary, analysis.getExtraDurationStringList(), prefix+"Extra:\t" );
         }
       }
       else

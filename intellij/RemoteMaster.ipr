@@ -165,11 +165,27 @@
       <module fileurl="file://$PROJECT_DIR$/RemoteMaster.iml" filepath="$PROJECT_DIR$/RemoteMaster.iml" />
     </modules>
   </component>
+  <component name="ProjectResources">
+    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="" />
+  </component>
+  <component name="libraryTable">
+    <library name="RMIR External Libraries">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/../km/lib/ExtInstall.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../km/lib/hidapi-1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../km/lib/IrpMaster.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../km/lib/l2fprod-common-directorychooser.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../km/lib/TableLayout.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
   </component>
 </project>
 

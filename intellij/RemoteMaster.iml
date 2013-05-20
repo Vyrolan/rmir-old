@@ -63,6 +63,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="RMIR External Libraries" level="project" />
   </component>
 </module>
 
