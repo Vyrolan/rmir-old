@@ -424,17 +424,6 @@ public class Activity extends Highlight
     this.isNew = isNew;
   }
 
-  public Button getSelector()
-  {
-    return selector;
-  }
-
-  public void setSelector( Button selector )
-  {
-    this.selector = selector;
-    selectorName = ( selector == null ) ? null : selector.getName();
-  }
-
   public void store( PropertyWriter pw )
   {
     if ( !active && profileIndex < 0 )

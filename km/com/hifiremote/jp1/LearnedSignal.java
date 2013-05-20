@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import com.hifiremote.decodeir.DecodeIRCaller;;
+import com.hifiremote.decodeir.DecodeIRCaller;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -327,5 +327,5 @@ public class LearnedSignal extends Highlight
 
   /** The decode ir. */
   private static DecodeIRCaller decodeIR = null;
-  
+  private static int hasDecodeIR = 0;
 }

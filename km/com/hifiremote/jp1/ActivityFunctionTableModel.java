@@ -367,7 +367,7 @@ public class ActivityFunctionTableModel extends JP1TableModel< Activity > implem
         btn = ( Button )value;
         keyCode = btn.getKeyCode();
       }
-      if ( remote.hasActivityControl() )
+      else
       {
         keyCode = ( Integer )value;
         btn = remote.getButton( keyCode );
