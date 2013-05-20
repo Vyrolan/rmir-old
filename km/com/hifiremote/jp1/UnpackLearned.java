@@ -246,7 +246,7 @@ public class UnpackLearned
           durations[ total++ ] = bursts[ x ];
           durations[ total++ ] = bursts[ x + 1 ];
           //System.err.println( "Durations[ " + (total-2) + "..." + (total-1) + " ] = " + durations[total-2] + " " + durations[total-1] );
-          
+
         }
       }
       ndx += ( count + 1 ) >> 1;
@@ -273,7 +273,7 @@ public class UnpackLearned
   {
     return ((int) Math.round( (double)value / (double)r )) * r;
   }
-  
+
   public int[] getBursts()
   {
     return getBursts(1);

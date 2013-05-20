@@ -7,24 +7,24 @@ public abstract class LearnedSignalTimingAnalyzerBase
 {
   // collection of successful analyses
   private HashMap<String,LearnedSignalTimingAnalysis> _Analyses;
-  
+
   // data from the learned signal
   private UnpackLearned _Unpacked;
   protected UnpackLearned getUnpacked() { return _Unpacked; }
-  
+
   // rounding info...rounding can be set or it can be automatically determined by the analyzer
   private int _RoundTo = -1;
-  public int getRoundTo() 
+  public int getRoundTo()
   {
     if ( _RoundTo == -1 )
     {
       _RoundTo = calcAutoRoundTo(); // blind acceptance
       _Analyses = null; // force reanalyze on next access
     }
-    return _RoundTo; 
+    return _RoundTo;
   }
-  public void setRoundTo( int roundTo ) 
-  { 
+  public void setRoundTo( int roundTo )
+  {
     if ( !_IsRoundingLocked && roundTo > 0 && _RoundTo != roundTo && checkCandidacy( roundTo ) )
     {
         _RoundTo = roundTo;
@@ -58,7 +58,7 @@ public abstract class LearnedSignalTimingAnalyzerBase
   {
     _Unpacked = u;
   }
-  
+
   // provide a name for the analyzer
   public abstract String getName();
   // calculate a preferred optimal rounding
@@ -69,7 +69,7 @@ public abstract class LearnedSignalTimingAnalyzerBase
   // analyze the symbol
   protected abstract void analyzeImpl();
   // get the preferred analysis that is the "best match"
-  protected abstract String getPreferredAnalysisName();  
+  protected abstract String getPreferredAnalysisName();
 
   protected boolean checkCandidacy( int roundTo )
   {
@@ -97,7 +97,7 @@ public abstract class LearnedSignalTimingAnalyzerBase
       a._RoundTo = roundTo;
       a.analyze();
       return a.hasAnalyses();
-      // It'd be nice if we could steal the analyses here if it was successful, but again we have no idea what 
+      // It'd be nice if we could steal the analyses here if it was successful, but again we have no idea what
       // state the subclass has... Maybe there could be a "copyInternalState" abstract that they would implement?
       // That seems overkill since most (hopefully?) won't have to use this "analyze to be sure" methodology.
       // If most end up using it, then that should be done so subclasses can maintain their internal state
@@ -121,7 +121,7 @@ public abstract class LearnedSignalTimingAnalyzerBase
       analyzeImpl();
     }
   }
-  
+
   public boolean hasAnalyses()
   {
     return ( getAnalyses().size() > 0 );
@@ -168,14 +168,14 @@ public abstract class LearnedSignalTimingAnalyzerBase
     int[][] seps = new int[1][];
     seps[0] = new int[2];
     seps[0][0] = durations[0];
-    seps[0][1] = durations[1];    
+    seps[0][1] = durations[1];
     return splitDurations( durations, seps, false );
   }
   public static int[][] splitDurations( int[] durations, int[][] separators, boolean splitAfter )
   {
     ArrayList<int[]> results = new ArrayList<int[]>();
     ArrayList<Integer> list = new ArrayList<Integer>();
-    
+
     int i = 0;
     while ( i < durations.length )
     {
@@ -195,7 +195,7 @@ public abstract class LearnedSignalTimingAnalyzerBase
           break;
         separator = null;
       }
-      
+
       // if no separator, just add to list and move on
       if ( separator == null || ( i == 0 && !splitAfter ) )
       {
@@ -221,20 +221,20 @@ public abstract class LearnedSignalTimingAnalyzerBase
           list.clear();
           // we know we can add all the separator pieces, so do that now to skip past them
           for ( int s = 0; s < separator.length; s++ )
-            list.add( durations[i++] );         
+            list.add( durations[i++] );
         }
       }
     }
-    
+
     // add final list
     if ( !list.isEmpty() )
       results.add( arrayListToArray( list ) );
-    
+
     i = 0;
     int[][] data = new int[results.size()][];
     for ( int[] r: results )
       data[i++] = r;
-    
+
     return data;
-  } 
+  }
 }

@@ -30,11 +30,11 @@ public class LearnedSignalTimingAnalyzerRaw extends LearnedSignalTimingAnalyzerB
   protected void analyzeImpl()
   {
     System.err.println( "RawAnalyzer: (" + this.hashCode() +") Analyze" );
-    addAnalysis( 
-        new LearnedSignalTimingAnalysis( 
+    addAnalysis(
+        new LearnedSignalTimingAnalysis(
             "Even",
-            getUnpacked().getBursts(), 
-            new int[][] { getUnpacked().getOneTimeDurations( getRoundTo(), true ) }, 
+            getUnpacked().getBursts(),
+            new int[][] { getUnpacked().getOneTimeDurations( getRoundTo(), true ) },
             new int[][] { getUnpacked().getRepeatDurations( getRoundTo(), true ) },
             new int[][] { getUnpacked().getExtraDurations( getRoundTo(), true ) },
             ";",

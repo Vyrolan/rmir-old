@@ -32,13 +32,13 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
   {
     if ( dialog == null )
       dialog = new LearnedSignalTimingSummaryDialog( locationComp );
-    dialog.config = config;   
+    dialog.config = config;
     dialog.generateSummary();
     dialog.pack();
     dialog.setLocationRelativeTo( locationComp );
     dialog.setVisible( true );
   }
-  
+
   public static void reset()
   {
     if ( dialog != null )
@@ -62,14 +62,14 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
     JScrollPane scrollPane = new JScrollPane( summaryTextArea );
     scrollPane.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createTitledBorder( "Timing Summary" ), scrollPane.getBorder() ) );
     contentPane.add( scrollPane, BorderLayout.CENTER );
-       
+
     Box bottomBox = Box.createVerticalBox();
     contentPane.add( bottomBox, BorderLayout.PAGE_END );
-    
+
     // Add the action buttons
     JPanel buttonPanel = new JPanel( new FlowLayout( FlowLayout.RIGHT ) );
     bottomBox.add( buttonPanel );
-    
+
     Box notes = Box.createVerticalBox();
     notes.add( new JLabel( "Notes: Rounding here does not override selected analysis rounding." ) );
     notes.add( new JLabel( "Also analyzed signals will only if the new rounding yields a valid analysis." ) );
@@ -90,12 +90,12 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         generateSummary();
       }
     });
-    
+
     okButton.addActionListener( this );
     okButton.setToolTipText( "Close the Summary" );
     buttonPanel.add( okButton );
   }
-  
+
   private void appendDurations( StringBuilder summary, String[] durationStrings, String intro )
   {
     boolean first = true;
@@ -112,12 +112,12 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
     }
     summary.append( '\n' );
   }
-  
+
   private void generateSummary()
   {
     int r = 1;
     String roundText = burstRoundBox.getText();
-    boolean roundingSet = false; 
+    boolean roundingSet = false;
     if ( roundText != null && !roundText.isEmpty() )
     {
       try
@@ -130,10 +130,10 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         r = 1;
       }
     }
-    
+
     List<LearnedSignal> signals = this.config.getLearnedSignals();
     Remote remote = this.config.getRemote();
-    
+
     StringBuilder summary = new StringBuilder();
     summary.append( "LEARNED SIGNALS:\nLEARNED RAW DATA:\n" );
     summary.append( "#\tDevice\tKey\tNotes\tFreq\tRaw Timing Data\n" );
@@ -153,7 +153,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         summary.append( '\t' );
         summary.append( ul.frequency );
         summary.append( '\t' );
-        
+
         LearnedSignalTimingAnalysis analysis = null;
         if ( roundingSet && !s.getTimingAnalyzer().getSelectedAnalyzer().getIsRoundingLocked() )
         {
@@ -165,7 +165,7 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
         }
         else
           analysis = s.getTimingAnalyzer().getSelectedAnalysis();
-        
+
         if ( ul.oneTime > 0 && ul.extra > 0 && ul.repeat == 0 )
         {
           appendDurations( summary, analysis.getOneTimeDurationStringList(), "Once:\t" );
@@ -191,14 +191,14 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
       else
         summary.append( "** No signal **\n" );
     }
-    
+
     summaryTextArea.setText( summary.toString() );
   }
-  
-  
+
+
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
    */
   public void actionPerformed( ActionEvent event )
@@ -209,11 +209,11 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
       setVisible( false );
     }
   }
-  
+
   private RemoteConfiguration config = null;
 
   private JTextField burstRoundBox = new JTextField();
-  
+
   /** The ok button. */
   private JButton okButton = new JButton( "OK" );
 
@@ -221,5 +221,5 @@ public class LearnedSignalTimingSummaryDialog extends JDialog implements ActionL
 
   /** The dialog. */
   private static LearnedSignalTimingSummaryDialog dialog = null;
-    
+
 }

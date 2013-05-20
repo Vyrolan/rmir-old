@@ -71,7 +71,7 @@ public class DeviceUpgrade extends Highlight
 
   /**
    * Instantiates a new device upgrade.
-   * 
+   *
    * @param base
    *          the base
    */
@@ -166,7 +166,7 @@ public class DeviceUpgrade extends Highlight
 
   /**
    * Instantiates a new device upgrade.
-   * 
+   *
    * @param base
    *          the base
    */
@@ -178,7 +178,7 @@ public class DeviceUpgrade extends Highlight
       protocolName = protocolName.substring( 3 );
     int device = d.device;
     int subDevice = d.subDevice;
-    
+
     description = "Learned Signal Upgrade";
     notes =  "Device Upgrade automatically created by RemoteMaster from " + signals.length + " Learned Signals all with protocol " + protocolName + ", device " + device + ", subdevice " + subDevice + ".";
     setupCode = 2000;
@@ -198,14 +198,14 @@ public class DeviceUpgrade extends Highlight
       }
     }
     devTypeAliasName = "Cable";
-    
+
     protocol = ProtocolManager.getProtocolManager().findByName( protocolName ).get( 0 );
     this.remote = remoteConfig.getRemote();
     this.remoteConfig = remoteConfig;
 
     sizeCmdBytes = protocol.getDefaultCmd().length();
     sizeDevBytes = protocol.getFixedDataLength();
-    
+
     // copy the device parameter values
     DeviceParameter[] protocolDevParms = protocol.getDeviceParameters();
     parmValues = new Value[protocolDevParms.length];
@@ -224,7 +224,7 @@ public class DeviceUpgrade extends Highlight
           parmValues[i] = new Value( protocolDevParms[i].getValueOrDefault() );
       }
     }
-    
+
     // Copy the functions and their assignments
     for ( LearnedSignal s : signals )
     {
@@ -233,19 +233,19 @@ public class DeviceUpgrade extends Highlight
       Button b = remote.getButton( s.getKeyCode() );
       if ( name == null || name.isEmpty() )
         name = b.getName();
-      
+
       short[] hex = new short[d.hex.length];
       for ( int i=0; i < d.hex.length; i++ )
         hex[i] = (short)d.hex[i];
-      
+
       Function f = new Function( name, new Hex( hex ), s.getNotes() );
-      
+
       functions.add( f );
-      
+
       assignments.assign( b, f );
     }
   }
-  
+
   /**
    * Reset.
    */

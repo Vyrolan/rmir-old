@@ -1866,12 +1866,12 @@ public class RemoteMaster extends JP1Frame implements ActionListener, PropertyCh
     item.setSelected( Boolean.parseBoolean( properties.getProperty( item.getActionCommand(), "false" ) ) );
     item.addActionListener( listener );
     advancedSubMenu.add( item );
-    
+
     // Suppress Messages sub menu
     JMenu suppressSubMenu = new JMenu( "Suppress Messages" );
     suppressSubMenu.setMnemonic( KeyEvent.VK_S );
     menu.add( suppressSubMenu );
-    
+
     item = new JCheckBoxMenuItem( "Key Move Detach/Delete" );
     item.setActionCommand( "SuppressKeyMovePrompts" );
     item.setSelected( Boolean.parseBoolean( properties.getProperty( item.getActionCommand(), "false" ) ) );

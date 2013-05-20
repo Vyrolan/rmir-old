@@ -277,7 +277,7 @@ public class LearnedSignal extends Highlight
     }
     return decodes;
   }
-  
+
   private LearnedSignalTimingAnalyzer timingAnalyzer = null;
   public LearnedSignalTimingAnalyzer getTimingAnalyzer()
   {

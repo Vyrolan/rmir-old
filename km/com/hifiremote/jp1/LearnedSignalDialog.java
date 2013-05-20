@@ -161,7 +161,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     advancedAreaControls.add( new JLabel( "  ") );
     advancedAreaControls.add( analysisMessageLabel );
     advancedArea.add( advancedAreaControls );
-    
+
     // setup analyzer/analysis boxes and message label
     analysisMessageLabel.setText( null );
     ItemListener i = new ItemListener() {
@@ -173,7 +173,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     };
     analyzerBox.addItemListener( i );
     analysisBox.addItemListener( i );
-    
+
     // setup round to box
     burstRoundBox.setColumns( 4 );
     burstRoundBox.getDocument().addDocumentListener(new DocumentListener() {
@@ -190,7 +190,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
         setAdvancedAreaTextFields();
       }
     });
-    
+
     burstTextArea.setEditable( false );
     burstTextArea.setLineWrap( true );
     burstTextArea.setWrapStyleWord( true );
@@ -280,7 +280,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     signalTextLock = true;
     signalTextArea.setText( learnedSignal.getSignalHex( config.getRemote() ).toString() );
     signalTextLock = false;
-    
+
     LearnedSignalTimingAnalyzer timingAnalyzer = this.learnedSignal.getTimingAnalyzer();
     if ( !timingAnalyzer.getIsValid() )
     {
@@ -296,10 +296,10 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       extraDurationTextArea.setRows( 1 );
       onceDurationTextArea.getParent().getParent().setVisible( false );
       repeatDurationTextArea.getParent().getParent().setVisible( false );
-      extraDurationTextArea.getParent().getParent().setVisible( false );      
+      extraDurationTextArea.getParent().getParent().setVisible( false );
       analyzerBox.setModel( new DefaultComboBoxModel( new String[] { "..." } ) );
       analysisBox.setModel( new DefaultComboBoxModel( new String[] { "..." } ) );
-      pack();       
+      pack();
     }
     else
     {
@@ -357,7 +357,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     advancedAreaUpdating = true;
 
     LearnedSignalTimingAnalysis analysis;
-    
+
     if ( Boolean.parseBoolean( RemoteMaster.getProperties().getProperty( "LearnedSignalTimingAnalysis", "false" ) ) )
     {
       advancedAreaControls.setVisible( true );
@@ -393,7 +393,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     onceDurationTextArea.setText( temp );
     onceDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
     onceDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-    
+
     temp = analysis.getRepeatDurationString();
     repeatDurationTextArea.setText( temp );
     repeatDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
@@ -403,11 +403,11 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
     extraDurationTextArea.setText( temp );
     extraDurationTextArea.setRows( (int)Math.ceil( (double)temp.length() / 75.0 ) );
     extraDurationTextArea.getParent().getParent().setVisible( !temp.equals( "** No signal **" ) );
-    
-    pack();       
+
+    pack();
     advancedAreaUpdating = false;
   }
-  
+
   private void setRemoteConfiguration( RemoteConfiguration config )
   {
     this.config = config;
@@ -496,7 +496,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
       int keyCode = getKeyCode( boundKey, shift, xShift );
       learnedSignal.setDeviceButtonIndex( deviceIndex );
       learnedSignal.setKeyCode( keyCode );
-      
+
       if ( signalTextHasChanged )
       {
         Hex data = ( new Hex( Hex.parseHex( signalTextArea.getText() ) ) ).subHex( 3 );
@@ -640,7 +640,7 @@ public class LearnedSignalDialog extends JDialog implements ActionListener, Docu
   private JButton advancedButton = new JButton();
   
   private Box advancedArea = null;
-  
+
   private boolean advancedAreaUpdating = false;
   private boolean analysisUpdating = false;
 

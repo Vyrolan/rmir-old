@@ -107,7 +107,7 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
       protocolName = protocolName.substring(3);
     int device = d.device;
     int subDevice = d.subDevice;
-    
+
     for ( LearnedSignal s: signals )
     {
       d = s.getDecodes().get( 0 );
@@ -115,9 +115,9 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
       if ( p.startsWith("48-NEC") )
         p = p.substring(3);
       if ( !p.equals(protocolName) || device != d.device || subDevice != d.subDevice )
-        return false;         
+        return false;
     }
-    
+
     return true;
   }
   private void convertToDeviceUpgrade( LearnedSignal[] signals )
@@ -127,7 +127,7 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
       JOptionPane.showMessageDialog( RemoteMaster.getFrame(), "The Learned Signals you have selected do not all have the\nsame protocol, device, and subdevice so they cannot\nbe automatically converted to a Device Upgrade.", "Unable to convert Learned Signals to Device Upgrade", JOptionPane.ERROR_MESSAGE );
       return;
     }
-    
+
     LearnedSignalDecode d = signals[0].getDecodes().get( 0 );
     String protocolName = d.protocolName;
     if ( protocolName.startsWith("48-NEC") )
@@ -135,7 +135,7 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
     int device = d.device;
     int subDevice = d.subDevice;
     //System.err.println("Checking if can append for protocol " + protocolName + ", device " + device + ", subDevice " + subDevice + "...");
-    
+
     DeviceUpgrade appendUpgrade = null;
     List<DeviceUpgrade> upgrades = remoteConfig.getDeviceUpgrades();
     for ( DeviceUpgrade u: upgrades )
@@ -163,7 +163,7 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
         }
       }
     }
-    
+
     if (appendUpgrade == null)
     {
       DeviceUpgrade upgrade = new DeviceUpgrade( signals, remoteConfig );
@@ -186,12 +186,12 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
         Button b = remoteConfig.getRemote().getButton( s.getKeyCode() );
         if ( origName == null || origName.isEmpty() )
           origName = b.getName();
-        
+
         short[] hex = new short[d.hex.length];
         for ( int i=0; i < d.hex.length; i++ )
           hex[i] = (short)d.hex[i];
         Hex funcHex = new Hex( hex );
-        
+
         Function f = appendUpgrade.getFunction( funcHex );
         if ( f != null )
         {
@@ -209,10 +209,10 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
           if (i > 1)
             renamedFunctions.add( origName );
           f = new Function( name, funcHex, s.getNotes() );
-          
+
           appendUpgrade.getFunctions().add( f );
         }
-        
+
         if ( appendUpgrade.getFunction( b, Button.NORMAL_STATE ) == null )
           appendUpgrade.setFunction( b, f, Button.NORMAL_STATE );
         else if ( b.allowsKeyMove( Button.SHIFTED_STATE ) && appendUpgrade.getFunction( b, Button.SHIFTED_STATE ) == null )
@@ -222,11 +222,11 @@ public class LearnedSignalPanel extends RMTablePanel< LearnedSignal >
         }
         else
           unassignedFunctions.add( origName );
-      }      
+      }
       String msg = "The " + signals.length + " selected Learned Signals were append to existing\n"
           + "Device Upgrade (" + appendUpgrade.getDescription() + " with protocol " + appendUpgrade.getProtocol().getName() + ",\n" 
           + "device " + device + ", and subDevice " + subDevice + ".\n";
-      
+
       boolean comma;
       if ( !existingFunctions.isEmpty() )
       {

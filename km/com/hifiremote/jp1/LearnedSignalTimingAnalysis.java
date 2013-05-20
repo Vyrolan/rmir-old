@@ -11,14 +11,14 @@ public class LearnedSignalTimingAnalysis
   private String _Separator;
   private int _SeparatorFirst;
   private int _SeparatorInterval;
-  
+
   public String getName() { return _Name; }
   public String getMessage() { return _Message; }
   public int[] getBursts() { return _Bursts; }
   public int[][] getOneTimeDurations() { return _OneTimeDurations; }
   public int[][] getRepeatDurations() { return _RepeatDurations; }
   public int[][] getExtraDurations() { return _ExtraDurations; }
-  
+
   public LearnedSignalTimingAnalysis( String name, int[] bursts, int[][] oneTime, int[][] repeat, int[][] extra, String sep, int sepFirst, int sepInterval, String message )
   {
     _Name = name;
@@ -31,7 +31,7 @@ public class LearnedSignalTimingAnalysis
     _SeparatorInterval = sepInterval;
     _Message = message;
   }
-  
+
   private String[] makeDurationStringList( int[][] durations )
   {
     int r = 0;
@@ -52,7 +52,7 @@ public class LearnedSignalTimingAnalysis
   {
     return makeDurationStringList( getExtraDurations() );
   }
-  
+
   public String getBurstString()
   {
     return durationsToString( getBursts(), _Separator, _SeparatorFirst, _SeparatorInterval );
@@ -74,20 +74,20 @@ public class LearnedSignalTimingAnalysis
   {
     if ( durations == null || durations.length == 0 )
       return null;
-    
+
     int num = 0;
     for ( int[] d: durations )
       num += d.length;
-    
+
     int r = 0;
     int[] result = new int[num];
     for ( int[] duration: durations )
       for ( int d: duration )
         result[r++] = d;
-        
+
     return result;
   }
-  
+
   public static String durationsToString( int[] data, String sep, int sepFirst, int sepInterval )
   {
     StringBuilder str = new StringBuilder();
@@ -100,7 +100,7 @@ public class LearnedSignalTimingAnalysis
           isSigned = true;
           break;
         }
-  
+
       for ( int i = 0; i < data.length; i++ )
       {
         if ( i > 0 )
@@ -116,7 +116,7 @@ public class LearnedSignalTimingAnalysis
     }
     if ( str.length() == 0 )
       return "** No signal **";
-  
+
     return str.toString();
   }
 }

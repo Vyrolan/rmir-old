@@ -18,19 +18,19 @@ public class LearnedSignalTimingAnalyzer
         };
     _AnalyzerNames = new String[_Analyzers.length];
     for ( int n = 0; n < _Analyzers.length; n++ )
-      _AnalyzerNames[n] = _Analyzers[n].getName(); 
+      _AnalyzerNames[n] = _Analyzers[n].getName();
   }
-  
+
   public boolean getIsValid()
   {
     return _Data.ok;
   }
-  
+
   public String[] getAnalyzerNames()
   {
     return _AnalyzerNames;
   }
-  
+
   public LearnedSignalTimingAnalyzerBase getAnalyzer( String name )
   {
     for ( int i = 0; i < _AnalyzerNames.length; i++ )
@@ -39,12 +39,12 @@ public class LearnedSignalTimingAnalyzer
     // no match
     return null;
   }
-  
+
   public LearnedSignalTimingAnalyzerBase getAnalyzer( int i )
   {
     return _Analyzers[i];
   }
-  
+
   public LearnedSignalTimingAnalyzerBase getPreferredAnalyzer()
   {
     for ( LearnedSignalTimingAnalyzerBase a: _Analyzers )
@@ -53,17 +53,17 @@ public class LearnedSignalTimingAnalyzer
     // can't actually happen since raw analyzer will always have one
     return null;
   }
-    
+
   public int getNumAnalyzers()
   {
     return _Analyzers.length;
   }
-  
+
   public Iterator<LearnedSignalTimingAnalyzerBase> getAnalyzers()
   {
     return new Iterator<LearnedSignalTimingAnalyzerBase>() 
     {
-      private int i = 0;      
+      private int i = 0;
       @Override
       public boolean hasNext() { return (i+1 < _Analyzers.length); }
       @Override

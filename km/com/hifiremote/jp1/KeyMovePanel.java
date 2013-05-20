@@ -459,7 +459,7 @@ public class KeyMovePanel extends RMTablePanel< KeyMove >
   {
     return upgradeEditor;
   }
-  
+
   private final String MULTI_DEVICE_DETACH_CONFIRM = "At least one of the device upgrades of the attached key moves selected for\n"
   + "detachment is assigned to more than one device button.  The corresponding\n"
   + "key moves of the other device buttons will also be detached.  Are you sure\n"
